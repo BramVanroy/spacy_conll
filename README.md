@@ -1,5 +1,5 @@
 # spaCy2CoNLLU
-Simple script to parse text with spaCy and print the output in CoNLL-U format.
+Simple script to parse text with spaCy and print the output in CoNLL-U format (http://universaldependencies.org/docs/format.html).
 
 ### Requirements
 
