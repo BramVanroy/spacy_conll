@@ -74,20 +74,18 @@ class Spacy2ConllParser:
         return None
 
     def parse(self, input_file=None, input_str=None, input_encoding=None):
-        self._open_h_out()
-
         self._set_input(input_file, input_str)
+        if self.input is None:
+            raise ValueError("No input given. Use 'input_file' or 'input_str'.")
+
+        self._open_h_out()
         self.input_encoding = input_encoding if input_encoding else self.input_encoding
 
-        try:
-            if self.input_is_file:
-                with open(self.input, mode='r', encoding=self.input_encoding) as fhin:
-                    self._iterate(fhin)
-            else:
-                self._iterate(self.input.split('\n'))
-        except ValueError as e:
-            self._close_h_out()
-            raise ValueError("No input given. Use 'input_file' or 'input_str'.")
+        if self.input_is_file:
+            with open(self.input, mode='r', encoding=self.input_encoding) as fhin:
+                self._iterate(fhin)
+        else:
+            self._iterate(self.input.split('\n'))
 
         self._close_h_out()
 
@@ -99,6 +97,9 @@ class Spacy2ConllParser:
             self.input_is_file = True
         elif input_str:
             self.input = input_str
+            self.input_is_file = False
+        else:
+            self.input = None
             self.input_is_file = False
 
     @staticmethod
@@ -113,15 +114,18 @@ class Spacy2ConllParser:
 if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--input_file", default=None, help="Path to file with sentences to parse.")
-    parser.add_argument("--input_encoding", default=getpreferredencoding(), help="Encoding of the input file.")
+    parser.add_argument("--input_encoding", default=getpreferredencoding(), help="Encoding of the input file. Default"
+                                                                                 " value is system default.")
     parser.add_argument("--input_str", default=None, help="Input string to parse.")
     parser.add_argument("--output_file", default=None, help="Path to output file. If not specified, the output will be"
                                                             " printed on standard output.")
-    parser.add_argument("--output_encoding", default=getpreferredencoding(), help="Encoding of the output file.")
+    parser.add_argument("--output_encoding", default=getpreferredencoding(), help="Encoding of the output file. Default"
+                                                                                  " value is system default.")
     parser.add_argument("--model", default='en_core_web_sm', help="spaCy model to use (e.g. 'es_core_news_md').")
-    parser.add_argument("--nlp", default=None, help="Initialised spaCy NLP model. Has precedence over 'model'.")
+    parser.add_argument("--nlp", default=None, help="Optional already initialised spaCy NLP model. Has precedence over"
+                                                    " 'model'.")
 
     args = parser.parse_args()
     spacyconll = Spacy2ConllParser(**vars(args))
