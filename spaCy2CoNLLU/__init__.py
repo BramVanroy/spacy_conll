@@ -1,22 +1,24 @@
 import sys
 from pathlib import Path
 from locale import getpreferredencoding
-import spacy
 
 
 class Spacy2ConllParser:
     def __init__(self, input_file=None, input_str=None, input_encoding=getpreferredencoding(), output_file=None,
-                 output_encoding=getpreferredencoding(), model='en_core_web_sm'):
-        self.input = None
-        self.input_is_file = None
-        self.input_encoding = input_encoding
+                 output_encoding=getpreferredencoding(), model='en_core_web_sm', nlp=None):
         self._set_input(input_file, input_str)
+        self.input_encoding = input_encoding
 
         self.output_file = Path(output_file).resolve() if output_file else None
         self.output_encoding = output_encoding
         self.h_out = None
 
-        self.nlp = spacy.load(model)
+        if nlp is not None:
+            self.nlp = nlp
+        else:
+            model = __import__(model)
+            self.nlp = model.load()
+
         self.tagmap = self.nlp.Defaults.tag_map
 
     def _open_h_out(self):
@@ -76,11 +78,16 @@ class Spacy2ConllParser:
 
         self._set_input(input_file, input_str)
         self.input_encoding = input_encoding if input_encoding else self.input_encoding
-        if self.input_is_file:
-            with open(self.input, mode='r', encoding=self.input_encoding) as fhin:
-                self._iterate(fhin)
-        else:
-            self._iterate(self.input.split('\n'))
+
+        try:
+            if self.input_is_file:
+                with open(self.input, mode='r', encoding=self.input_encoding) as fhin:
+                    self._iterate(fhin)
+            else:
+                self._iterate(self.input.split('\n'))
+        except ValueError as e:
+            self._close_h_out()
+            raise ValueError("No input given. Use 'input_file' or 'input_str'.")
 
         self._close_h_out()
 
@@ -107,13 +114,15 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_file", help="Path to file with sentences to parse.")
-    parser.add_argument("--input_str", help="Input string to parse.")
-    parser.add_argument("--output_file", default='', help="Path to output file. If not specified, the output will be "
-                                                          "printed on standard output.")
-    parser.add_argument("--model", default='en_core_web_sm', help="Spacy model to use (e.g. 'es_core_news_md').")
+    parser.add_argument("--input_file", default=None, help="Path to file with sentences to parse.")
+    parser.add_argument("--input_encoding", default=getpreferredencoding(), help="Encoding of the input file.")
+    parser.add_argument("--input_str", default=None, help="Input string to parse.")
+    parser.add_argument("--output_file", default=None, help="Path to output file. If not specified, the output will be"
+                                                            " printed on standard output.")
+    parser.add_argument("--output_encoding", default=getpreferredencoding(), help="Encoding of the output file.")
+    parser.add_argument("--model", default='en_core_web_sm', help="spaCy model to use (e.g. 'es_core_news_md').")
+    parser.add_argument("--nlp", default=None, help="Initialised spaCy NLP model. Has precedence over 'model'.")
+
     args = parser.parse_args()
-
-    spacyconll = Spacy2ConllParser(input_str="Hello world. How are you today?", output_file="test.txt", input_encoding='utf-8')
-
+    spacyconll = Spacy2ConllParser(**vars(args))
     spacyconll.parse()
