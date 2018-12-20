@@ -64,7 +64,10 @@ class Spacy2ConllParser:
             return '_'
         else:
             feats = [f'{p}={v}' for p, v in self.tagmap[tag].items() if not Spacy2ConllParser._is_number(p)]
-            return '|'.join(feats)
+            if feats:
+                return '|'.join(feats)
+            else:
+                return '_'
 
     def _iterate(self, text):
         line_idx = 0
