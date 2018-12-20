@@ -98,9 +98,6 @@ class Spacy2ConllParser:
         elif input_str:
             self.input = input_str
             self.input_is_file = False
-        else:
-            self.input = None
-            self.input_is_file = False
 
     @staticmethod
     def _is_number(s):
