@@ -43,7 +43,7 @@ class Spacy2ConllParser:
                 else:
                     head_idx = word.head.i + 1 - sent[0].i
 
-                tok_tuple = (
+                line_tuple = (
                     idx,
                     word.text,
                     word.lemma_,
@@ -55,7 +55,7 @@ class Spacy2ConllParser:
                     '_',
                     '_'
                 )
-                self.h_out.write('\t'.join(map(lambda x: str(x), tok_tuple))+'\n')
+                self.h_out.write('\t'.join(map(lambda x: str(x), line_tuple))+'\n')
             self.h_out.write('\n')
         return line_idx
 
