@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='spacy_conll',
-    version='0.0.2',
+    version='0.0.3',
     description='Parses a given input text into CoNLL-U format by transforming spaCy output.',
     keywords='nlp spacy conll conllu tagging',
     packages=['spacy_conll'],

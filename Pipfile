@@ -5,6 +5,3 @@ name = "pypi"
 
 [packages]
 spacy = "*"
-
-[dev-packages]
-pygments = "*"

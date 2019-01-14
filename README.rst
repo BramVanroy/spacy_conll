@@ -26,32 +26,39 @@ Command line
 ------------
 .. code:: bash
 
-    usage: __main__.py [-h] [--input_file INPUT_FILE]
-                       [--input_encoding INPUT_ENCODING] [--input_str INPUT_STR]
-                       [--output_file OUTPUT_FILE]
-                       [--output_encoding OUTPUT_ENCODING] [--model MODEL]
-                       [--nlp NLP]
+    usage: spacy_conll [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR]
+                   [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL] [-n NLP]
+                   [-v] [-d]
+
+    Parse an input string or input file to CoNLL format.
 
     optional arguments:
       -h, --help            show this help message and exit
-      --input_file INPUT_FILE
+      -f INPUT_FILE, --input_file INPUT_FILE
                             Path to file with sentences to parse. Has precedence
                             over 'input_str'. (default: None)
-      --input_encoding INPUT_ENCODING
+      -a INPUT_ENCODING, --input_encoding INPUT_ENCODING
                             Encoding of the input file. Default value is system
                             default. (default: cp1252)
-      --input_str INPUT_STR
+      -b INPUT_STR, --input_str INPUT_STR
                             Input string to parse. (default: None)
-      --output_file OUTPUT_FILE
+      -o OUTPUT_FILE, --output_file OUTPUT_FILE
                             Path to output file. If not specified, the output will
                             be printed on standard output. (default: None)
-      --output_encoding OUTPUT_ENCODING
+      -c OUTPUT_ENCODING, --output_encoding OUTPUT_ENCODING
                             Encoding of the output file. Default value is system
                             default. (default: cp1252)
-      --model MODEL         spaCy model to use (e.g. 'es_core_news_md'). (default:
+      -m MODEL, --model MODEL
+                            spaCy model to use. (default:
                             en_core_web_sm)
-      --nlp NLP             Optional already initialised spaCy NLP model. Has
+      -n NLP, --nlp NLP     Optional already initialised spaCy NLP model. Has
                             precedence over 'model'. (default: None)
+      -v, --verbose         To print the output to stdout, regardless of
+                            'output_file'. (default: False)
+      -d, --include_headers
+                            To include headers before every sentence's output.
+                            These headers include the sentence text and the
+                            sentence ID. (default: False)
 
 For example, parsing a sentence:
 
