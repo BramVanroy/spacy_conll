@@ -13,6 +13,7 @@ class Spacy2ConllParser:
             model = __import__(model)
             self.nlp = model.load()
 
+        # To get the morphological info, we need a tag map
         self.tagmap = self.nlp.Defaults.tag_map
 
     def _sentences_to_conllu(self, doc, line_idx):
@@ -104,15 +105,3 @@ class Spacy2ConllParser:
             return True
         except ValueError:
             return False
-
-
-if __name__=='__main__':
-    prsr = Spacy2ConllParser()
-    s = 'I like horses.\nDo you like eggs?\nI love pancakes!'
-
-    # prsr.parseprint(input_str=s)
-
-    for p in prsr.parse(input_str=s):
-        print(p)
-
-
