@@ -1,3 +1,9 @@
+# Testing
+test/
+
+# Pipfile.lock
+Pipfile.lock
+
 # .idea (JetBrains)
 .idea/
 
