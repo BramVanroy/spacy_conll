@@ -4,13 +4,7 @@ from locale import getpreferredencoding
 
 
 class Spacy2ConllParser:
-    def __init__(self, input_file=None, input_str=None, input_encoding=getpreferredencoding(), output_file=None,
-                 output_encoding=getpreferredencoding(), model='en_core_web_sm', nlp=None):
-        self._set_input(input_file, input_str)
-        self.input_encoding = input_encoding
-
-        self.output_file = Path(output_file).resolve() if output_file else None
-        self.output_encoding = output_encoding
+    def __init__(self, model='en_core_web_sm', nlp=None):
         self.h_out = None
 
         if nlp is not None:
@@ -21,22 +15,12 @@ class Spacy2ConllParser:
 
         self.tagmap = self.nlp.Defaults.tag_map
 
-    def _open_h_out(self):
-        if self.output_file:
-            self.h_out = open(self.output_file, mode='w', encoding=self.output_encoding)
-        else:
-            self.h_out = sys.stdout
-
-    def _close_h_out(self):
-        if self.h_out is not sys.stdout:
-            self.h_out.close()
-
     def _sentences_to_conllu(self, doc, line_idx):
         for sent in doc.sents:
             line_idx += 1
-            self.h_out.write(f'# sent_id = {str(line_idx)}\n')
-            self.h_out.write(f'# text = {sent.sent}\n')
 
+            parsed_sent = f'# sent_id = {str(line_idx)}\n'
+            parsed_sent += f'# text = {sent.sent}\n'
             for idx, word in enumerate(sent, 1):
                 if word.dep_.lower().strip() == 'root':
                     head_idx = 0
@@ -55,15 +39,14 @@ class Spacy2ConllParser:
                     '_',
                     '_'
                 )
-                self.h_out.write('\t'.join(map(lambda x: str(x), line_tuple))+'\n')
-            self.h_out.write('\n')
-        return line_idx
+                parsed_sent += '\t'.join(map(lambda x: str(x), line_tuple)) + '\n'
+            yield line_idx, parsed_sent
 
     def _get_morphology(self, tag):
         if not self.tagmap or tag not in self.tagmap:
             return '_'
         else:
-            feats = [f'{p}={v}' for p, v in self.tagmap[tag].items() if not Spacy2ConllParser._is_number(p)]
+            feats = [f'{prop}={val}' for prop, val in self.tagmap[tag].items() if not Spacy2ConllParser._is_number(prop)]
             if feats:
                 return '|'.join(feats)
             else:
@@ -73,34 +56,46 @@ class Spacy2ConllParser:
         line_idx = 0
         for line in text:
             doc = self.nlp(line.strip())
-            line_idx = self._sentences_to_conllu(doc, line_idx)
-        return None
+            for idx, parsed_sent in self._sentences_to_conllu(doc, line_idx):
+                yield parsed_sent
+            line_idx = idx
 
-    def parse(self, input_file=None, input_str=None, input_encoding=None):
-        self._set_input(input_file, input_str)
-        if self.input is None:
-            raise ValueError("No input given. Use 'input_file' or 'input_str'.")
+    def parse(self, input_file=None, input_str=None, input_encoding=getpreferredencoding()):
+        inp_p, inp_str = self._set_input(input_file, input_str)
 
-        self._open_h_out()
-        self.input_encoding = input_encoding if input_encoding else self.input_encoding
-
-        if self.input_is_file:
-            with open(self.input, mode='r', encoding=self.input_encoding) as fhin:
-                self._iterate(fhin)
+        if inp_p:
+            with open(inp_p, mode='r', encoding=input_encoding) as fhin:
+                return self._iterate(fhin)
         else:
-            self._iterate(self.input.split('\n'))
+            return self._iterate(inp_str.split('\n'))
 
-        self._close_h_out()
+    def parseprint(self, input_file=None, input_str=None, input_encoding=getpreferredencoding(),
+                   output_file=None, output_encoding=getpreferredencoding()):
+        # Open output stream
+        if output_file:
+            h_out = open(Path(output_file).resolve(), mode='w', encoding=output_encoding)
+        else:
+            h_out = sys.stdout
 
-    def _set_input(self, input_file, input_str):
+        # Get parsed sentences
+        for parsed_sent in self.parse(input_file, input_str, input_encoding):
+            h_out.write(parsed_sent + '\n')
+
+        # Close output stream
+        if h_out is not sys.stdout:
+            h_out.close()
+
+    @staticmethod
+    def _set_input(input_file, inp_str):
         if input_file:
-            self.input = Path(input_file).resolve()
-            if not self.input.exists() or not self.input.is_file():
-                raise ValueError(f"'input_file' must be a file. '{str(self.input)}' given.")
-            self.input_is_file = True
-        elif input_str:
-            self.input = input_str
-            self.input_is_file = False
+            inp_p = Path(input_file).resolve()
+            if not inp_p.exists() or not inp_p.is_file():
+                raise ValueError(f"'input_file' must be a file. '{str(inp_p)}' given.")
+            return inp_p, None
+        elif inp_str:
+            return None, inp_str
+        else:
+            raise ValueError("No input given. Use 'input_file' or 'input_str'.")
 
     @staticmethod
     def _is_number(s):
@@ -109,3 +104,15 @@ class Spacy2ConllParser:
             return True
         except ValueError:
             return False
+
+
+if __name__=='__main__':
+    prsr = Spacy2ConllParser()
+    s = 'I like horses.\nDo you like eggs?\nI love pancakes!'
+
+    # prsr.parseprint(input_str=s)
+
+    for p in prsr.parse(input_str=s):
+        print(p)
+
+

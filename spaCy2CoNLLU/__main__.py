@@ -17,5 +17,11 @@ if __name__ == '__main__':
                                                     " 'model'.")
 
     args = parser.parse_args()
-    spacyconll = Spacy2ConllParser(**vars(args))
-    spacyconll.parse()
+    spacyconll = Spacy2ConllParser(model=args.model, nlp=args.nlp)
+
+    # Remove 'model' and 'nlp' from the arguments
+    args = vars(args)
+    for k in ['model', 'nlp']:
+        args.pop(k, None)
+
+    spacyconll.parseprint(**args)
