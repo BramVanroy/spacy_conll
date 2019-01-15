@@ -80,8 +80,8 @@ For example, parsing an input file and writing output to output file:
 
 In Python
 ------------
-There are two main methods, `parse` and `parseprint()`. The latter is a convenience method for printing the output of
-`parse()` to a file or stdout.
+There are two main methods, :code:`parse()` and :code:`parseprint()`. The latter is a convenience method for printing the output of
+:code:`parse()` to stdout (default) or a file.
 
 .. code:: python
 
