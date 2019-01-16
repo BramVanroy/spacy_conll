@@ -2,6 +2,8 @@ import sys
 from pathlib import Path
 from locale import getpreferredencoding
 
+from spacy.tokens import Doc
+
 
 class Spacy2ConllParser:
     def __init__(self, model='en_core_web_sm', nlp=None, verbose=False):
@@ -16,7 +18,7 @@ class Spacy2ConllParser:
         self.tagmap = self.nlp.Defaults.tag_map
 
         self.verbose = verbose
-        self.include_headers = False
+        self.is_tokenized = self.include_headers = False
 
     def _close_h_out(self):
         # Close output stream
@@ -34,9 +36,23 @@ class Spacy2ConllParser:
                 return '_'
 
     def _iterate(self, text):
+        tagger = self.nlp.get_pipe('tagger')
+        parser = self.nlp.get_pipe('parser')
+
         line_idx = 0
         for line in text:
-            doc = self.nlp(line.strip())
+            # Only strip new lines and carriages returns. Other space characters might be meaningful
+            line = line.strip('\r\n')
+            if self.is_tokenized:
+                # Remove empty strings from tokens
+                tokens = list(filter(None, line.split(' ')))
+                doc = Doc(self.nlp.vocab, words=tokens)
+            else:
+                doc = self.nlp(line)
+
+            tagger(doc)
+            parser(doc)
+
             last_idx = line_idx
             for idx, parsed_sent in self._sentences_to_conllu(doc, line_idx):
                 yield parsed_sent
@@ -84,7 +100,9 @@ class Spacy2ConllParser:
 
             yield line_idx, parsed_sent
 
-    def parse(self, input_file=None, input_str=None, input_encoding=getpreferredencoding(), include_headers=False):
+    def parse(self, input_file=None, input_str=None, input_encoding=getpreferredencoding(), is_tokenized=False,
+              include_headers=False):
+        self.is_tokenized = is_tokenized
         inp_p, inp_str = self._set_input(input_file, input_str)
         self.include_headers = include_headers
 
@@ -94,13 +112,13 @@ class Spacy2ConllParser:
         else:
             yield from self._iterate(inp_str.split('\n'))
 
-    def parseprint(self, input_file=None, input_str=None, input_encoding=getpreferredencoding(),
+    def parseprint(self, input_file=None, input_str=None, input_encoding=getpreferredencoding(), is_tokenized=False,
                    output_file=None, output_encoding=getpreferredencoding(), include_headers=False):
         self._open_h_out(output_file, output_encoding)
 
         # Get parsed sentences
         for parsed_sent in self.parse(input_file=input_file, input_str=input_str, input_encoding=input_encoding,
-                                      include_headers=include_headers):
+                                      is_tokenized=is_tokenized, include_headers=include_headers):
             self.h_out.write(parsed_sent + '\n')
 
         self._close_h_out()
