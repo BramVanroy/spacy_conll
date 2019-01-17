@@ -3,6 +3,11 @@ History
 #######
 
 **************************
+0.1.6 (January 17th, 2019)
+**************************
+Minor bugfix.
+
+**************************
 0.1.5 (January 17th, 2019)
 **************************
 Added the :code:`-s|--disable_sbd` flag. By default, spaCy does automatic sentence boundary detection. You may not

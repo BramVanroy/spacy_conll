@@ -24,6 +24,7 @@ class Spacy2ConllParser:
 
         self.verbose = verbose
         self.is_tokenized = self.include_headers = False
+        self.tokenizer = None
 
     def _close_h_out(self):
         # Close output stream
@@ -54,7 +55,7 @@ class Spacy2ConllParser:
                 tokens = list(filter(None, line.split(' ')))
                 doc = Doc(self.nlp.vocab, words=tokens)
             else:
-                doc = self.nlp(line)
+                doc = self.tokenizer(line)
 
             tagger(doc)
             if self.disable_sbd:
@@ -110,7 +111,9 @@ class Spacy2ConllParser:
 
     def parse(self, input_file=None, input_str=None, input_encoding=getpreferredencoding(), is_tokenized=False,
               include_headers=False):
-        self.is_tokenized = is_tokenized
+
+        self._set_tokenizer(is_tokenized)
+
         inp_p, inp_str = self._set_input(input_file, input_str)
         self.include_headers = include_headers
 
@@ -130,6 +133,13 @@ class Spacy2ConllParser:
             self.h_out.write(parsed_sent + '\n')
 
         self._close_h_out()
+
+    def _set_tokenizer(self, is_tokenized):
+        if not is_tokenized:
+            from spacy.tokenizer import Tokenizer
+            self.tokenizer = Tokenizer(self.nlp.vocab)
+
+        self.is_tokenized = is_tokenized
 
     @staticmethod
     def _set_input(input_file, inp_str):
