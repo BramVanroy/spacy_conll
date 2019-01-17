@@ -21,20 +21,24 @@ def main():
     parser.add_argument('-m', '--model', default='en_core_web_sm', help="spaCy model to use.")
     parser.add_argument('-n', '--nlp', default=None,
                         help="Optional already initialised spaCy NLP model. Has precedence over 'model'.")
+    parser.add_argument('-s', '--disable_sbd', default=False, action="store_true",
+                        help="Disables spaCy automatic sentence boundary detection. In practice, disabling means that"
+                             " every line will be parsed as one sentence, regardless of its actual content.")
+
     # Additional arguments
     parser.add_argument('-d', '--include_headers', default=False, action="store_true",
-                        help="To include headers before every sentence's output. These headers include the sentence"
-                             " text and the sentence ID.")
+                        help="To include headers before the output of every sentence. These headers include the"
+                             " sentence text and the sentence ID.")
     parser.add_argument('-v', '--verbose', default=False, action="store_true",
                         help="To print the output to stdout, regardless of 'output_file'.")
 
     args = parser.parse_args()
 
-    spacyconll = Spacy2ConllParser(model=args.model, nlp=args.nlp, verbose=args.verbose)
+    spacyconll = Spacy2ConllParser(model=args.model, nlp=args.nlp, disable_sbd=args.disable_sbd, verbose=args.verbose)
 
     args = vars(args)
     # Remove 'model' and 'nlp' from the arguments
-    for k in ['model', 'nlp', 'verbose']:
+    for k in ['model', 'nlp', 'disable_sbd', 'verbose']:
         args.pop(k, None)
 
     spacyconll.parseprint(**args)

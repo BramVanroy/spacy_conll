@@ -27,8 +27,8 @@ Command line
 .. code:: bash
 
     usage: spacy_conll [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR]
-                   [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL] [-n NLP]
-                   [-v] [-d]
+                       [-t] [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL]
+                       [-n NLP] [-s] [-d] [-v]
 
     Parse an input string or input file to CoNLL format.
 
@@ -42,6 +42,8 @@ Command line
                             default. (default: cp1252)
       -b INPUT_STR, --input_str INPUT_STR
                             Input string to parse. (default: None)
+      -t, --is_tokenized    Enable this option when your text has already been
+                            tokenized (space-seperated). (default: False)
       -o OUTPUT_FILE, --output_file OUTPUT_FILE
                             Path to output file. If not specified, the output will
                             be printed on standard output. (default: None)
@@ -49,16 +51,19 @@ Command line
                             Encoding of the output file. Default value is system
                             default. (default: cp1252)
       -m MODEL, --model MODEL
-                            spaCy model to use. (default:
-                            en_core_web_sm)
+                            spaCy model to use. (default: en_core_web_sm)
       -n NLP, --nlp NLP     Optional already initialised spaCy NLP model. Has
                             precedence over 'model'. (default: None)
+      -s, --disable_sbd     Disables spaCy automatic sentence boundary detection.
+                            In practice, disabling means that every line will be
+                            parsed as one sentence, regardless of its actual
+                            content. (default: False)
+      -d, --include_headers
+                            To include headers before the output of every
+                            sentence. These headers include the sentence text and
+                            the sentence ID. (default: False)
       -v, --verbose         To print the output to stdout, regardless of
                             'output_file'. (default: False)
-      -d, --include_headers
-                            To include headers before every sentence's output.
-                            These headers include the sentence text and the
-                            sentence ID. (default: False)
 
 For example, parsing a sentence:
 

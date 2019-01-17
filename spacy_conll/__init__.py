@@ -6,13 +6,18 @@ from spacy.tokens import Doc
 
 
 class Spacy2ConllParser:
-    def __init__(self, model='en_core_web_sm', nlp=None, verbose=False):
+    def __init__(self, model='en_core_web_sm', nlp=None, disable_sbd=False, verbose=False):
         self.h_out = None
         if nlp is not None:
             self.nlp = nlp
         else:
             model = __import__(model)
             self.nlp = model.load()
+
+        if disable_sbd:
+            self.nlp.add_pipe(Spacy2ConllParser.prevent_sbd, name='prevent-sbd', before='parser')
+
+        self.disable_sbd = disable_sbd
 
         # To get the morphological info, we need a tag map
         self.tagmap = self.nlp.Defaults.tag_map
@@ -37,6 +42,7 @@ class Spacy2ConllParser:
 
     def _iterate(self, text):
         tagger = self.nlp.get_pipe('tagger')
+        sbd_preventer = self.nlp.get_pipe('prevent-sbd') if self.disable_sbd else None
         parser = self.nlp.get_pipe('parser')
 
         line_idx = 0
@@ -51,6 +57,8 @@ class Spacy2ConllParser:
                 doc = self.nlp(line)
 
             tagger(doc)
+            if self.disable_sbd:
+                sbd_preventer(doc)
             parser(doc)
 
             last_idx = line_idx
@@ -142,3 +150,10 @@ class Spacy2ConllParser:
             return True
         except ValueError:
             return False
+
+    @staticmethod
+    def prevent_sbd(doc):
+        """ Disables spaCy's sentence boundary detection """
+        for token in doc:
+            token.is_sent_start = False
+        return doc

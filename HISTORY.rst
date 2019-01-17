@@ -3,6 +3,12 @@ History
 #######
 
 **************************
+0.1.5 (January 17th, 2019)
+**************************
+Added the :code:`-s|--disable_sbd` flag. By default, spaCy does automatic sentence boundary detection. You may not
+always want this. When you want to parse every line explicitly as one sentence, you can disable this functionality.
+
+**************************
 0.1.0 (January 16th, 2019)
 **************************
 Added the :code:`-t|--is_tokenized` flag. It indicates that your text has already been tokenized and that it should not
