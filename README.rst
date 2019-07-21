@@ -94,7 +94,7 @@ There are two main methods, :code:`parse()` and :code:`parseprint()`. The latter
     spacyconll = Spacy2ConllParser()
 
     # `parse` returns a generator of the parsed sentences
-    for parsed_sent in spacyconll.parse(input_str='I like cookies.\nWhat about you?\nI don't like 'em!'):
+    for parsed_sent in spacyconll.parse(input_str="I like cookies.\nWhat about you?\nI don't like 'em!"):
         do_something_(parsed_sent)
 
     # `parseprint` prints output to stdout (default) or a file (use `output_file` parameter)
