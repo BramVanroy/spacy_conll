@@ -26,11 +26,12 @@ Command line
 ------------
 .. code:: bash
 
-    usage: spacy_conll [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR]
-                       [-t] [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL]
-                       [-n NLP] [-s] [-d] [-v]
+    > python -m spacy_conll -h
+    usage: __main__.py [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR]
+                       [-t] [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL] [-s]
+                       [-d] [-e] [-v]
 
-    Parse an input string or input file to CoNLL format.
+    Parse an input string or input file to CoNLL-U format.
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -39,7 +40,7 @@ Command line
                             over 'input_str'. (default: None)
       -a INPUT_ENCODING, --input_encoding INPUT_ENCODING
                             Encoding of the input file. Default value is system
-                            default. (default: depends on your system)
+                            default.
       -b INPUT_STR, --input_str INPUT_STR
                             Input string to parse. (default: None)
       -t, --is_tokenized    Enable this option when your text has already been
@@ -49,11 +50,9 @@ Command line
                             be printed on standard output. (default: None)
       -c OUTPUT_ENCODING, --output_encoding OUTPUT_ENCODING
                             Encoding of the output file. Default value is system
-                            default. (default: depends on your system)
+                            default.
       -m MODEL, --model MODEL
                             spaCy model to use. (default: en_core_web_sm)
-      -n NLP, --nlp NLP     Optional already initialised spaCy NLP model. Has
-                            precedence over 'model'. (default: None)
       -s, --disable_sbd     Disables spaCy automatic sentence boundary detection.
                             In practice, disabling means that every line will be
                             parsed as one sentence, regardless of its actual
@@ -62,29 +61,50 @@ Command line
                             To include headers before the output of every
                             sentence. These headers include the sentence text and
                             the sentence ID. (default: False)
+      -e, --no_force_counting
+                            To disable force counting the 'sent_id', starting from
+                            1 and increasing for each sentence. Instead, 'sent_id'
+                            will depend on how spaCy returns the sentences. Must
+                            have 'include_headers' enabled. (default: False)
       -v, --verbose         To print the output to stdout, regardless of
                             'output_file'. (default: False)
+      -j N_PROCESS, --n_process N_PROCESS
+                            Number of processors to use in nlp.pipe(). -1 will use
+                            as many cores as available. Requires spaCy v2.2.2
+                            (default: 1)
+
 
 For example, parsing a sentence:
 
 .. code:: bash
 
-    > python -m spacy_conll --input_str "I like cookies."
+    >  python -m spacy_conll --input_str "I like cookies . What about you ?" --is_tokenized --include_headers
     # sent_id = 1
-    # text = I like cookies.
+    # text = I like cookies .
     1       I       -PRON-  PRON    PRP     PronType=prs    2       nsubj   _       _
     2       like    like    VERB    VBP     VerbForm=fin|Tense=pres 0       ROOT    _       _
     3       cookies cookie  NOUN    NNS     Number=plur     2       dobj    _       _
     4       .       .       PUNCT   .       PunctType=peri  2       punct   _       _
 
+    # sent_id = 2
+    # text = What about you ?
+    1       What    what    NOUN    WP      PronType=int|rel        2       dep     _       _
+    2       about   about   ADP     IN      _       0       ROOT    _       _
+    3       you     -PRON-  PRON    PRP     PronType=prs    2       pobj    _       _
+    4       ?       ?       PUNCT   .       PunctType=peri  2       punct   _       _
+
 For example, parsing an input file and writing output to output file:
 
 .. code:: bash
 
-    > python -m spacy_conll --input_file large-input.txt --output_file large-conll-output.txt
+    > python -m spacy_conll --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd
 
 In Python
-------------
+---------
+
+
+**DEPRECATED:** :code:`Spacy2ConllParser`
+
 There are two main methods, :code:`parse()` and :code:`parseprint()`. The latter is a convenience method for printing the output of
 :code:`parse()` to stdout (default) or a file.
 

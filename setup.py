@@ -2,23 +2,24 @@ from setuptools import setup
 
 setup(
     name='spacy_conll',
-    version='0.1.6',
-    description='Parses a given input text into CoNLL-U format by transforming spaCy output.',
-    keywords='nlp spacy conll conllu tagging',
+    version='1.0',
+    description='A custom pipeline component for spaCy that can convert any parsed Doc'
+                ' or its sentences into CoNLL-U format. Also provides a command line entry point.',
+    keywords='nlp spacy spacy-extension conll conllu tagging',
     packages=['spacy_conll'],
     url='https://github.com/BramVanroy/spacy_conll',
     author='Bram Vanroy, Raquel G. Alhama',
     author_email='bramvanroy@hotmail.com, rgalhama@gmail.com',
     license='BSD 2',
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering',
         'Topic :: Text Processing',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-        "Operating System :: OS Independent"
+        'Operating System :: OS Independent'
     ],
     project_urls={
         'Bug Reports': 'https://github.com/BramVanroy/spacy_conll/issues',
