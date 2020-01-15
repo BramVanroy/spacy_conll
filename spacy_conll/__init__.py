@@ -1,6 +1,7 @@
 from spacy.tokens import Doc, Span
 
-# NOTE: DEPRECATED: import here for backward-compatibility
+# NOTE: SpacyConllParser is deprecated
+# import here for backward-compatibility
 from spacy_conll.SpacyConllParser import Spacy2ConllParser
 
 

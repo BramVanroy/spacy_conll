@@ -3,6 +3,11 @@ History
 #######
 
 **************************
+1.0.1 (January 15th, 2020)
+**************************
+Minor documentation changes for PyPi.
+
+**************************
 1.0.0 (January 13th, 2020)
 **************************
 - Complete overhaul. Can now be used a custom pipeline component in spaCy.

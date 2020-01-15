@@ -5,6 +5,7 @@ import warnings
 
 from spacy.tokens import Doc
 
+# DEPRECATED. Use the pipeline component instead
 
 class Spacy2ConllParser:
     def __init__(self, model='en_core_web_sm', nlp=None, disable_sbd=False, verbose=False):
