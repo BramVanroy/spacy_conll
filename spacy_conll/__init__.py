@@ -1,169 +1,148 @@
-import sys
-from pathlib import Path
-from locale import getpreferredencoding
+from spacy.tokens import Doc, Span
 
-from spacy.tokens import Doc
+# NOTE: SpacyConllParser is deprecated
+# import here for backward-compatibility
+from spacy_conll.SpacyConllParser import Spacy2ConllParser
 
 
-class Spacy2ConllParser:
-    def __init__(self, model='en_core_web_sm', nlp=None, disable_sbd=False, verbose=False):
-        self.h_out = None
-        if nlp is not None:
-            self.nlp = nlp
-        else:
-            model = __import__(model)
-            self.nlp = model.load()
+class ConllFormatter:
+    """ Pipeline component for spaCy that adds CoNLL-U properties to a Doc and
+        its sentences. A string representation, representation including a
+        header, and the CoNLL-U format in tuples, are added as custom attributes."""
+    name = 'conll_formatter'
 
-        if disable_sbd:
-            self.nlp.add_pipe(Spacy2ConllParser.prevent_sbd, name='prevent-sbd', before='parser')
+    def __init__(self,
+                 nlp,
+                 *,
+                 conll_str_attr='conll_str',
+                 conll_str_headers_attr='conll_str_headers',
+                 conll_attr='conll'
+                 ):
+        """ ConllFormatter constructor. The names of the extensions that are set
+            can be changed with '*_attr' arguments.
 
-        self.disable_sbd = disable_sbd
-
+        :param nlp: an initialized spaCy nlp object
+        :param conll_str_attr: an optional string to use as the extension name for conll_str
+        :param conll_str_headers_attr: an optional string to use as the extension name for conll_str_headers
+        :param conll_attr: an optional string to use as the extension name for conll
+        """
         # To get the morphological info, we need a tag map
-        self.tagmap = self.nlp.Defaults.tag_map
+        self._tagmap = nlp.Defaults.tag_map
 
-        self.verbose = verbose
-        self.is_tokenized = self.include_headers = False
-        self.tokenizer = None
+        # Set custom attribute names
+        self._attrs = {
+            'conll_str': conll_str_attr,
+            'conll_str_headers': conll_str_headers_attr,
+            'conll': conll_attr
+        }
+        # Initialize extensions
+        self._set_extensions()
 
-    def _close_h_out(self):
-        # Close output stream
-        if self.h_out is not sys.stdout:
-            self.h_out.close()
+    def __call__(self, doc):
+        """ Runs the pipeline component, adding the extensions to ._..
+            Adds a string representation, string representation containing a header,
+            and a tuple representation of the CoNLL format to the given Doc and its
+            sentences.
+
+        :param doc: the input Doc
+        :return: the modified Doc containing the newly added extensions
+        """
+        # We need to hook the extensions again when using
+        # multiprocessing in Windows
+        # see: https://github.com/explosion/spaCy/issues/4903
+        self._set_extensions()
+
+        conll_strs = []
+        conll_strs_w_headers = []
+        conlls = []
+        for sent_idx, sent in enumerate(doc.sents, 1):
+            conll_str, conll_str_w_headers, conll = self._get_span_conll(sent, sent_idx)
+            conll_strs.append(conll_str)
+            conll_strs_w_headers.append(conll_str_w_headers)
+            conlls.append(conll)
+
+            sent._.set(self._attrs['conll_str'], conll_str)
+            sent._.set(self._attrs['conll_str_headers'], conll_str_w_headers)
+            sent._.set(self._attrs['conll'], conll)
+
+        doc._.set(self._attrs['conll_str'], '\n'.join(conll_strs))
+        doc._.set(self._attrs['conll_str_headers'], '\n'.join(conll_strs_w_headers))
+        doc._.set(self._attrs['conll'], conlls)
+
+        return doc
+
+    def _get_span_conll(self, span, span_idx=1):
+        """ Converts a span's properties into CoNLL-U format.
+
+        :param span: a spaCy Span
+        :param span_idx: optional index, corresponding to the n-th sentence
+                         in the parent Doc
+        :return: a string representation, string representation containing a header,
+                 and a list of tuples representation of the CoNLL format of 'span'
+        """
+        conll_str_w_headers = f"# sent_id = {span_idx}\n# text = {span.text}\n"
+
+        conll_str = ''
+        conll = []
+        for word_idx, word in enumerate(span, 1):
+            if word.dep_.lower().strip() == 'root':
+                head_idx = 0
+            else:
+                head_idx = word.head.i + 1 - span[0].i
+
+            token_conll = (
+                word_idx,
+                word.text,
+                word.lemma_,
+                word.pos_,
+                word.tag_,
+                self._get_morphology(word.tag_),
+                head_idx,
+                word.dep_,
+                '_',
+                '_'
+            )
+            conll.append(token_conll)
+            conll_str += '\t'.join(map(str, token_conll)) + '\n'
+
+        conll_str_w_headers += conll_str
+
+        return conll_str, conll_str_w_headers, conll
 
     def _get_morphology(self, tag):
-        if not self.tagmap or tag not in self.tagmap:
+        """ Expands a tag into its morphological features by using a tagmap.
+
+        :param tag: the tag to expand
+        :return: a string entailing the tag's morphological features
+        """
+        if not self._tagmap or tag not in self._tagmap:
             return '_'
         else:
-            feats = [f'{prop}={val}' for prop, val in self.tagmap[tag].items() if not Spacy2ConllParser._is_number(prop)]
+            feats = [f"{prop}={val}" for prop, val in self._tagmap[tag].items() if not self._is_number(prop)]
             if feats:
                 return '|'.join(feats)
             else:
                 return '_'
 
-    def _iterate(self, text):
-        tagger = self.nlp.get_pipe('tagger')
-        sbd_preventer = self.nlp.get_pipe('prevent-sbd') if self.disable_sbd else None
-        parser = self.nlp.get_pipe('parser')
+    def _set_extensions(self):
+        """ Sets the default extensions if they do not exist yet. """
+        for obj in Span, Doc:
+            if not obj.has_extension(self._attrs['conll_str']):
+                obj.set_extension(self._attrs['conll_str'], default=None)
+            if not obj.has_extension(self._attrs['conll_str_headers']):
+                obj.set_extension(self._attrs['conll_str_headers'], default=None)
+            if not obj.has_extension(self._attrs['conll']):
+                obj.set_extension(self._attrs['conll'], default=None)
 
-        line_idx = 0
-        for line in text:
-            # Only strip new lines and carriages returns. Other space characters might be meaningful
-            line = line.strip('\r\n')
-            if self.is_tokenized:
-                # Remove empty strings from tokens
-                tokens = list(filter(None, line.split(' ')))
-                doc = Doc(self.nlp.vocab, words=tokens)
-            else:
-                doc = self.tokenizer(line)
-
-            tagger(doc)
-            if self.disable_sbd:
-                sbd_preventer(doc)
-            parser(doc)
-
-            last_idx = line_idx
-            for idx, parsed_sent in self._sentences_to_conllu(doc, line_idx):
-                yield parsed_sent
-                last_idx = idx
-            line_idx = last_idx
-
-    def _open_h_out(self, output_file, output_encoding):
-        # Open output stream
-        if output_file:
-            self.h_out = open(Path(output_file).resolve(), mode='w', encoding=output_encoding)
-        else:
-            self.h_out = sys.stdout
-
-    def _sentences_to_conllu(self, doc, line_idx):
-        for sent in doc.sents:
-            line_idx += 1
-            parsed_sent = ''
-
-            if self.include_headers:
-                parsed_sent = f'# sent_id = {str(line_idx)}\n'
-                parsed_sent += f'# text = {sent.sent}\n'
-
-            for idx, word in enumerate(sent, 1):
-                if word.dep_.lower().strip() == 'root':
-                    head_idx = 0
-                else:
-                    head_idx = word.head.i + 1 - sent[0].i
-
-                line_tuple = (
-                    idx,
-                    word.text,
-                    word.lemma_,
-                    word.pos_,
-                    word.tag_,
-                    self._get_morphology(word.tag_),
-                    head_idx,
-                    word.dep_,
-                    '_',
-                    '_'
-                )
-                parsed_sent += '\t'.join(map(lambda x: str(x), line_tuple)) + '\n'
-
-            if self.h_out is not sys.stdout and self.verbose:
-                print(parsed_sent)
-
-            yield line_idx, parsed_sent
-
-    def parse(self, input_file=None, input_str=None, input_encoding=getpreferredencoding(), is_tokenized=False,
-              include_headers=False):
-
-        self._set_tokenizer(is_tokenized)
-
-        inp_p, inp_str = self._set_input(input_file, input_str)
-        self.include_headers = include_headers
-
-        if inp_p:
-            with open(inp_p, mode='r', encoding=input_encoding) as fhin:
-                yield from self._iterate(fhin)
-        else:
-            yield from self._iterate(inp_str.split('\n'))
-
-    def parseprint(self, input_file=None, input_str=None, input_encoding=getpreferredencoding(), is_tokenized=False,
-                   output_file=None, output_encoding=getpreferredencoding(), include_headers=False):
-        self._open_h_out(output_file, output_encoding)
-
-        # Get parsed sentences
-        for parsed_sent in self.parse(input_file=input_file, input_str=input_str, input_encoding=input_encoding,
-                                      is_tokenized=is_tokenized, include_headers=include_headers):
-            self.h_out.write(parsed_sent + '\n')
-
-        self._close_h_out()
-
-    def _set_tokenizer(self, is_tokenized):
-        if not is_tokenized:
-            from spacy.tokenizer import Tokenizer
-            self.tokenizer = Tokenizer(self.nlp.vocab)
-
-        self.is_tokenized = is_tokenized
-
-    @staticmethod
-    def _set_input(input_file, inp_str):
-        if input_file:
-            inp_p = Path(input_file).resolve()
-            if not inp_p.exists() or not inp_p.is_file():
-                raise ValueError(f"'input_file' must be a file. '{str(inp_p)}' given.")
-            return inp_p, None
-        elif inp_str:
-            return None, inp_str
-        else:
-            raise ValueError("No input given. Use 'input_file' or 'input_str'.")
 
     @staticmethod
     def _is_number(s):
+        """ Checks whether a string is actually a number.
+        :param s: string to test
+        :return: whether or not 's' is a number
+        """
         try:
             float(s)
             return True
         except ValueError:
             return False
-
-    @staticmethod
-    def prevent_sbd(doc):
-        """ Disables spaCy's sentence boundary detection """
-        for token in doc:
-            token.is_sent_start = False
-        return doc

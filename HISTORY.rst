@@ -3,6 +3,21 @@ History
 #######
 
 **************************
+1.0.1 (January 15th, 2020)
+**************************
+Minor documentation changes for PyPi.
+
+**************************
+1.0.0 (January 13th, 2020)
+**************************
+- Complete overhaul. Can now be used a custom pipeline component in spaCy.
+- Spacy2ConllParser is now deprecated.
+- The CLI interface does not rely on Spacy2ConllParser anymore but uses the custom pipeline component instead.
+- Added :code:`-e|--no_force_counting` to the CLI options. By default, when using :code:`-d|--include_headers`,
+  parsed sentence will be numbered incrementally. This can be disabled so that the sentence numbering depends on how
+  spaCy segments the sentences.
+
+**************************
 0.1.6 (January 17th, 2019)
 **************************
 Minor bugfix.
