@@ -6,3 +6,6 @@ verify_ssl = true
 [packages]
 spacy = "*"
 packaging = "*"
+
+[dev-packages]
+pytest = "*"
