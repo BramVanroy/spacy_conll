@@ -17,8 +17,8 @@ class ConllFormatter:
                  conll_str_headers_attr='conll_str_headers',
                  conll_attr='conll'
                  ):
-        """ ConllFormatter constructor. The extension that are set can be changed with
-            *_attr arguments.
+        """ ConllFormatter constructor. The names of the extensions that are set
+            can be changed with '*_attr' arguments.
 
         :param nlp: an initialized spaCy nlp object
         :param conll_str_attr: an optional string to use as the extension name for conll_str
@@ -34,6 +34,7 @@ class ConllFormatter:
             'conll_str_headers': conll_str_headers_attr,
             'conll': conll_attr
         }
+        # Initialize extensions
         self._set_extensions()
 
     def __call__(self, doc):
@@ -76,7 +77,7 @@ class ConllFormatter:
         :param span_idx: optional index, corresponding to the n-th sentence
                          in the parent Doc
         :return: a string representation, string representation containing a header,
-                 and a tuple representation of the CoNLL format of 'span'
+                 and a list of tuples representation of the CoNLL format of 'span'
         """
         conll_str_w_headers = f"# sent_id = {span_idx}\n# text = {span.text}\n"
 
