@@ -10,13 +10,13 @@ own scripts by adding it as a custom component to a spaCy pipeline.
 Installation
 ============
 
-Requires `spacy`_ and an `installed spaCy language model`_.
+Requires `spaCy`_ and an `installed spaCy language model`_.
 
 .. code:: bash
 
   pip install spacy_conll
 
-.. _spacy: https://spacy.io/usage/models#section-quickstart
+.. _spaCy: https://spacy.io/usage/models#section-quickstart
 .. _installed spaCy language model: https://spacy.io/usage/models
 
 =====
