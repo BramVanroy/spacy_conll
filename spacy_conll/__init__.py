@@ -14,27 +14,44 @@ class ConllFormatter:
     def __init__(self,
                  nlp,
                  *,
-                 conll_str_attr='conll_str',
-                 conll_str_headers_attr='conll_str_headers',
-                 conll_attr='conll'
+                 ext_names=None,
+                 field_names=None
                  ):
         """ ConllFormatter constructor. The names of the extensions that are set
             can be changed with '*_attr' arguments.
 
         :param nlp: an initialized spaCy nlp object
-        :param conll_str_attr: an optional string to use as the extension name for conll_str
-        :param conll_str_headers_attr: an optional string to use as the extension name for conll_str_headers
-        :param conll_attr: an optional string to use as the extension name for conll
+        :param ext_names: dictionary containing names for the custom spaCy extensions
+        :param field_names dictionary containing names for the CoNLL fields
         """
         # To get the morphological info, we need a tag map
         self._tagmap = nlp.Defaults.tag_map
 
         # Set custom attribute names
-        self._attrs = {
-            'conll_str': conll_str_attr,
-            'conll_str_headers': conll_str_headers_attr,
-            'conll': conll_attr
+        self._ext_names = {
+            'conll_str': 'conll_str',
+            'conll_str_headers': 'conll_str_headers',
+            'conll': 'conll',
+            'conll_dicts': 'conll_dicts'
         }
+        if ext_names:
+            self._ext_names = self._merge_dicts_strict(self._ext_names, ext_names)
+
+        self._field_names = {
+            'id': 'id',
+            'form': 'form',
+            'lemma': 'lemma',
+            'upostag': 'upostag',
+            'xpostag': 'xpostag',
+            'feats': 'feats',
+            'head': 'head',
+            'deprel': 'deprel',
+            'deps': 'deps',
+            'misc': 'misc'
+        }
+        if field_names:
+            self._field_names = self._merge_dicts_strict(self._field_names, field_names)
+
         # Initialize extensions
         self._set_extensions()
 
@@ -61,13 +78,13 @@ class ConllFormatter:
             conll_strs_w_headers.append(conll_str_w_headers)
             conlls.append(conll)
 
-            sent._.set(self._attrs['conll_str'], conll_str)
-            sent._.set(self._attrs['conll_str_headers'], conll_str_w_headers)
-            sent._.set(self._attrs['conll'], conll)
+            sent._.set(self._ext_names['conll_str'], conll_str)
+            sent._.set(self._ext_names['conll_str_headers'], conll_str_w_headers)
+            sent._.set(self._ext_names['conll'], conll)
 
-        doc._.set(self._attrs['conll_str'], '\n'.join(conll_strs))
-        doc._.set(self._attrs['conll_str_headers'], '\n'.join(conll_strs_w_headers))
-        doc._.set(self._attrs['conll'], conlls)
+        doc._.set(self._ext_names['conll_str'], '\n'.join(conll_strs))
+        doc._.set(self._ext_names['conll_str_headers'], '\n'.join(conll_strs_w_headers))
+        doc._.set(self._ext_names['conll'], conlls)
 
         return doc
 
@@ -127,12 +144,12 @@ class ConllFormatter:
     def _set_extensions(self):
         """ Sets the default extensions if they do not exist yet. """
         for obj in Span, Doc:
-            if not obj.has_extension(self._attrs['conll_str']):
-                obj.set_extension(self._attrs['conll_str'], default=None)
-            if not obj.has_extension(self._attrs['conll_str_headers']):
-                obj.set_extension(self._attrs['conll_str_headers'], default=None)
-            if not obj.has_extension(self._attrs['conll']):
-                obj.set_extension(self._attrs['conll'], default=None)
+            if not obj.has_extension(self._ext_names['conll_str']):
+                obj.set_extension(self._ext_names['conll_str'], default=None)
+            if not obj.has_extension(self._ext_names['conll_str_headers']):
+                obj.set_extension(self._ext_names['conll_str_headers'], default=None)
+            if not obj.has_extension(self._ext_names['conll']):
+                obj.set_extension(self._ext_names['conll'], default=None)
 
 
     @staticmethod
@@ -146,3 +163,19 @@ class ConllFormatter:
             return True
         except ValueError:
             return False
+
+    @staticmethod
+    def _merge_dicts_strict(d1, d2):
+        """ Merge two dicts in a strict manner, i.e. the second dict overwrites keys
+            of the first dict but all keys in the second dict have to be present in
+            the first dict.
+        :param d1: base dict which will be overwritten
+        :param d2: dict with new values that will overwrite d1
+        :return: the merged dict (but d1 will be modified in-place anyway!)
+        """
+        for k, v in d2.items():
+            if k not in d1:
+                raise KeyError(f"This key does not exist in the original dict. Valid keys are {list(d1.keys())}")
+            d1[k] = v
+
+        return d1
