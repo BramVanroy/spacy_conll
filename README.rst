@@ -2,7 +2,9 @@
 Parsing to CoNLL with spaCy
 ===========================
 This module allows you to parse a text to `CoNLL-U format`_. You can use it as a command line tool, or embed it in your
-own scripts by adding it as a custom component to a spaCy pipeline.
+own scripts by adding it as a custom component to a spaCy pipeline. 
+
+Note that the module simply takes spaCy output and puts it in a formatted string adhering to the linked ConLL-U format. It does not as of yet do an explicit tagset mapping of spaCy to UD tags. The output tags depend on the spaCy model used.
 
 .. _`CoNLL-U format`: https://universaldependencies.org/format.html
 
