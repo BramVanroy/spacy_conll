@@ -10,7 +10,7 @@ own scripts by adding it as a custom component to a spaCy pipeline.
 Installation
 ============
 
-Requires `spaCy`_ and an `installed spaCy language model`_. When using the module from the command line, you also need the `packaging` package.
+Requires `spaCy`_ and an `installed spaCy language model`_. When using the module from the command line, you also need the :code:`packaging` package.
 
 .. code:: bash
 
