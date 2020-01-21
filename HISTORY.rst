@@ -3,6 +3,11 @@ History
 #######
 
 **************************
+1.1.0 (January 21st, 2020)
+**************************
+Include dependencies in :code:`setup.py` rather than expecting users to install dependencies manually.
+
+**************************
 1.0.1 (January 15th, 2020)
 **************************
 Minor documentation changes for PyPi.
