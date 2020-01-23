@@ -42,7 +42,7 @@ Command line
                             over 'input_str'. (default: None)
       -a INPUT_ENCODING, --input_encoding INPUT_ENCODING
                             Encoding of the input file. Default value is system
-                            default. (default: cp1252)
+                            default.
       -b INPUT_STR, --input_str INPUT_STR
                             Input string to parse. (default: None)
       -t, --is_tokenized    Indicates whether your text has already been tokenized
@@ -52,7 +52,7 @@ Command line
                             be printed on standard output. (default: None)
       -c OUTPUT_ENCODING, --output_encoding OUTPUT_ENCODING
                             Encoding of the output file. Default value is system
-                            default. (default: cp1252)
+                            default.
       -m MODEL, --model MODEL
                             spaCy model to use (must be installed). (default:
                             en_core_web_sm)
