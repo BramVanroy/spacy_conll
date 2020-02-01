@@ -123,6 +123,13 @@ For example, parsing a large input file and writing output to output file, using
 
     > python -m spacy_conll --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
 
+You can also use Stanford NLP's models to retrieve UD tags. You can do this by using the :code:`-u` flag. This option
+has limited options due to the API of :code:`stanfordnlp`. It is not possible to disable sentence segmentation and
+control the tokenisation at the same time. When using the :code:`-u` flag you can only enable the :code:`--is_tokenized`
+flag which behaves different when used with spaCy. With spaCy, it will simply not try to tokenize the text and use
+spaces as token separators. When using :code:`stanfordnlp`, it will also be assumed that the text is sentence split
+by newline. No further sentence segmentation is done.
+
 In Python
 ---------
 spaCy
