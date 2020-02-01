@@ -1,13 +1,13 @@
-===========================
-Parsing to CoNLL with spaCy
-===========================
+================================================
+Parsing to CoNLL with spaCy or spacy-stanfordnlp
+================================================
 This module allows you to parse a text to `CoNLL-U format`_. You can use it as a command line tool, or embed it in your
-own scripts by adding it as a custom component to a spaCy pipeline. 
+own scripts by adding it as a custom component to a spaCy or spacy-stanfordnlp pipeline.
 
 Note that the module simply takes spaCy output and puts it in a formatted string adhering to the linked ConLL-U format.
 The output tags depend on the spaCy model used. If you want Universal Depencies tags as output, I advise you to use
 this library in combination with `spacy_stanfordnlp`_, which is a spaCy interface using :code:`stanfordnlp` and its
-models behind the scenes. Those models use the Universal Dependencies formalism.
+models behind the scenes. Those models use the Universal Dependencies formalism. See this README for more information.
 
 .. _`CoNLL-U format`: https://universaldependencies.org/format.html
 .. _`spacy_stanfordnlp`: https://github.com/explosion/spacy-stanfordnlp
@@ -123,12 +123,12 @@ For example, parsing a large input file and writing output to output file, using
 
     > python -m spacy_conll --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
 
-You can also use Stanford NLP's models to retrieve UD tags. You can do this by using the :code:`-u` flag. This option
-has limited options due to the API of :code:`stanfordnlp`. It is not possible to disable sentence segmentation and
-control the tokenisation at the same time. When using the :code:`-u` flag you can only enable the :code:`--is_tokenized`
-flag which behaves different when used with spaCy. With spaCy, it will simply not try to tokenize the text and use
-spaces as token separators. When using :code:`stanfordnlp`, it will also be assumed that the text is sentence split
-by newline. No further sentence segmentation is done.
+You can also use Stanford NLP's models to retrieve UD tags. You can do this by using the :code:`-u` flag. **NOTE**:
+This option has limited options due to the API of :code:`stanfordnlp`. It is not possible to disable sentence
+segmentation and control the tokenisation at the same time. When using the :code:`-u` flag you can only enable the
+:code:`--is_tokenized` flag which behaves different when used with spaCy. With spaCy, it will simply not try to
+tokenize the text and use spaces as token separators. When using :code:`stanfordnlp`, it will also be assumed that the
+text is sentence split by newline. No further sentence segmentation is done.
 
 In Python
 ---------
