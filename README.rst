@@ -4,15 +4,30 @@ Parsing to CoNLL with spaCy
 This module allows you to parse a text to `CoNLL-U format`_. You can use it as a command line tool, or embed it in your
 own scripts by adding it as a custom component to a spaCy pipeline. 
 
-Note that the module simply takes spaCy output and puts it in a formatted string adhering to the linked ConLL-U format. It does not as of yet do an explicit tagset mapping of spaCy to UD tags. The output tags depend on the spaCy model used.
+Note that the module simply takes spaCy output and puts it in a formatted string adhering to the linked ConLL-U format.
+The output tags depend on the spaCy model used. If you want Universal Depencies tags as output, I advise you to use
+this library in combination with `spacy_stanfordnlp`_, which is a spaCy interface using :code:`stanfordnlp` and its
+models behind the scenes. Those models use the Universal Dependencies formalism.
 
 .. _`CoNLL-U format`: https://universaldependencies.org/format.html
+.. _`spacy_stanfordnlp`: https://github.com/explosion/spacy-stanfordnlp
 
 ============
 Installation
 ============
 
-Requires `spaCy`_ and an `installed spaCy language model`_. When using the module from the command line, you also need the :code:`packaging` package.
+Requires `spaCy`_ and an `installed spaCy language model`_. When using the module from the command line, you also need
+the :code:`packaging` package. See section `spaCy`_ for usage.
+
+Because `spaCy's models`_ are not necessarily trained on Universal Dependencies conventions, their output labels are
+not UD either. By using :code:`spacy-stanfordnlp`, we get the easy-to-use interface of spaCy as a wrapper around
+:code:`stanfordnlp` and its models that *are* trained on UD data. If you want to use the Stanford NLP models, you also
+need :code:`spacy-stanfordnlp` and `a corresponding model`_. See the section `spacy-stanfordnlp`_ for usage.
+
+**NOTE**: :code:`spacy-stanfordnlp` is not automatically installed as a dependency for this library, because it might be
+too much overhead for those who don't need UD. If you wish to use its functionality, you have to install it manually.
+
+To install the library, simply use pip.
 
 .. code:: bash
 
@@ -20,6 +35,7 @@ Requires `spaCy`_ and an `installed spaCy language model`_. When using the modul
 
 .. _spaCy: https://spacy.io/usage/models#section-quickstart
 .. _installed spaCy language model: https://spacy.io/usage/models
+.. _`a corresponding model`: https://stanfordnlp.github.io/stanfordnlp/models.html
 
 =====
 Usage
@@ -30,8 +46,8 @@ Command line
 
     > python -m spacy_conll -h
     usage: [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR]
-           [-t] [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL] [-s]
-           [-d] [-e] [-j N_PROCESS] [-v]
+                       [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL_OR_LANG]
+                       [-s] [-t] [-d] [-e] [-j N_PROCESS] [-u] [-v]
 
     Parse an input string or input file to CoNLL-U format.
 
@@ -45,21 +61,23 @@ Command line
                             default.
       -b INPUT_STR, --input_str INPUT_STR
                             Input string to parse. (default: None)
-      -t, --is_tokenized    Indicates whether your text has already been tokenized
-                            (space-seperated). (default: False)
       -o OUTPUT_FILE, --output_file OUTPUT_FILE
                             Path to output file. If not specified, the output will
                             be printed on standard output. (default: None)
       -c OUTPUT_ENCODING, --output_encoding OUTPUT_ENCODING
                             Encoding of the output file. Default value is system
                             default.
-      -m MODEL, --model MODEL
-                            spaCy model to use (must be installed). (default:
-                            en_core_web_sm)
+      -m MODEL_OR_LANG, --model_or_lang MODEL_OR_LANG
+                            spaCy or stanfordnlp model or language to use (must be
+                            installed). (default: None)
       -s, --disable_sbd     Disables spaCy automatic sentence boundary detection.
                             In practice, disabling means that every line will be
                             parsed as one sentence, regardless of its actual
-                            content. (default: False)
+                            content. Only works when using spaCy. (default: False)
+      -t, --is_tokenized    Indicates whether your text has already been tokenized
+                            (space-seperated). When used in conjunction with
+                            spacy-stanfordnlp, it will also be assumed that the
+                            text is sentence split by newline. (default: False)
       -d, --include_headers
                             To include headers before the output of every
                             sentence. These headers include the sentence text and
@@ -73,6 +91,9 @@ Command line
                             Number of processes to use in nlp.pipe(). -1 will use
                             as many cores as available. Requires spaCy v2.2.2.
                             (default: 1)
+      -u, --use_stanfordnlp
+                            Use stanfordnlp models rather than spaCy models.
+                            Requires spacy-stanfordnlp. (default: False)
       -v, --verbose         To print the output to stdout, regardless of
                             'output_file'. (default: False)
 
@@ -104,6 +125,8 @@ For example, parsing a large input file and writing output to output file, using
 
 In Python
 ---------
+spaCy
++++++
 
 :code:`spacy_conll` is intended to be used a custom pipeline component in spaCy. Three custom extensions are accessible,
 by default named :code:`conll_str`, :code:`conll_str_headers`, and :code:`conll`.
@@ -145,7 +168,60 @@ The snippet above will return (and print) the following string:
     2	you	-PRON-	PRON	PRP	PronType=prs	1	nsubj	_	_
     3	?	?	PUNCT	.	PunctType=peri	1	punct	_	_
 
+
+spacy-stanfordnlp
++++++++++++++++++
+
+Using :code:`spacy_conll` in conjunction with :code:`spacy-stanfordnlp` is similar to using it with :code:`spacy`:
+in practice we are still simply adding a custom component pipeline to the existing pipeline, but this time that pipeline
+is a Stanford NLP pipeline that is wrapped in spaCy's API.
+
+.. code:: python
+
+    from spacy_stanfordnlp import StanfordNLPLanguage
+    import stanfordnlp
+
+    from spacy_conll import ConllFormatter
+
+
+    snlp = stanfordnlp.Pipeline(lang='en')
+    nlp = StanfordNLPLanguage(snlp)
+    conllformatter = ConllFormatter(nlp)
+    nlp.add_pipe(conllformatter, last=True)
+
+    s = 'A cookie is a baked or cooked food that is typically small, flat and sweet.'
+
+    doc = nlp(s)
+    print(doc._.conll_str)
+
+Output:
+
+.. code:: text
+
+    1	A	a	DET	DT	_	2	det	_	_
+    2	cookie	cookie	NOUN	NN	Number=sing	8	nsubj	_	_
+    3	is	be	AUX	VBZ	VerbForm=fin|Tense=pres|Number=sing|Person=three	8	cop	_	_
+    4	a	a	DET	DT	_	8	det	_	_
+    5	baked	bake	VERB	VBN	VerbForm=part|Tense=past|Aspect=perf	8	amod	_	_
+    6	or	or	CCONJ	CC	ConjType=comp	7	cc	_	_
+    7	cooked	cook	VERB	VBN	VerbForm=part|Tense=past|Aspect=perf	5	conj	_	_
+    8	food	food	NOUN	NN	Number=sing	0	root	_	_
+    9	that	that	PRON	WDT	_	12	nsubj	_	_
+    10	is	be	AUX	VBZ	VerbForm=fin|Tense=pres|Number=sing|Person=three	12	cop	_	_
+    11	typically	typically	ADV	RB	Degree=pos	12	advmod	_	_
+    12	small	small	ADJ	JJ	Degree=pos	8	acl:relcl	_	_
+    13	,	,	PUNCT	,	PunctType=comm	14	punct	_	_
+    14	flat	flat	ADJ	JJ	Degree=pos	12	conj	_	_
+    15	and	and	CCONJ	CC	ConjType=comp	16	cc	_	_
+    16	sweet	sweet	ADJ	JJ	Degree=pos	12	conj	_	_
+    17	.	.	PUNCT	.	PunctType=peri	8	punct	_	_
+
+.. _`spaCy's models`: https://spacy.io/models
+
+----
+
 **DEPRECATED:** :code:`Spacy2ConllParser`
++++++++++++++++++++++++++++++++++++++++++
 
 There are two main methods, :code:`parse()` and :code:`parseprint()`. The latter is a convenience method for printing the output of
 :code:`parse()` to stdout (default) or a file.
