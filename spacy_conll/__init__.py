@@ -1,3 +1,7 @@
+__version__ = '1.2.0'
+
+from collections import OrderedDict, defaultdict
+
 from spacy.tokens import Doc, Span
 
 # NOTE: SpacyConllParser is deprecated
@@ -15,14 +19,18 @@ class ConllFormatter:
                  nlp,
                  *,
                  ext_names=None,
-                 field_names=None
+                 field_names=None,
+                 conversion_maps=None
                  ):
         """ ConllFormatter constructor. The names of the extensions that are set
             can be changed with '*_attr' arguments.
 
         :param nlp: an initialized spaCy nlp object
         :param ext_names: dictionary containing names for the custom spaCy extensions
-        :param field_names dictionary containing names for the CoNLL fields
+        :param field_names: dictionary containing names for the CoNLL fields
+        :param conversion_maps: two-level dictionary that contains a field_name (e.g. 'lemma', 'upostag')
+               on the first level, and the conversion map on the second.
+               E.g. {'lemma': {'-PRON-': 'PRON'}} will map the lemma '-PRON-' to 'PRON'
         """
         # To get the morphological info, we need a tag map
         self._tagmap = nlp.Defaults.tag_map
@@ -31,13 +39,12 @@ class ConllFormatter:
         self._ext_names = {
             'conll_str': 'conll_str',
             'conll_str_headers': 'conll_str_headers',
-            'conll': 'conll',
-            'conll_dicts': 'conll_dicts'
+            'conll': 'conll'
         }
         if ext_names:
             self._ext_names = self._merge_dicts_strict(self._ext_names, ext_names)
 
-        self._field_names = {
+        self._field_names = OrderedDict({
             'id': 'id',
             'form': 'form',
             'lemma': 'lemma',
@@ -48,9 +55,12 @@ class ConllFormatter:
             'deprel': 'deprel',
             'deps': 'deps',
             'misc': 'misc'
-        }
+        })
+
         if field_names:
             self._field_names = self._merge_dicts_strict(self._field_names, field_names)
+
+        self._conversion_maps = conversion_maps
 
         # Initialize extensions
         self._set_extensions()
@@ -100,7 +110,7 @@ class ConllFormatter:
         conll_str_w_headers = f"# sent_id = {span_idx}\n# text = {span.text}\n"
 
         conll_str = ''
-        conll = []
+        conll = defaultdict(list)
         for word_idx, word in enumerate(span, 1):
             if word.dep_.lower().strip() == 'root':
                 head_idx = 0
@@ -119,12 +129,21 @@ class ConllFormatter:
                 '_',
                 '_'
             )
-            conll.append(token_conll)
+
+            token_conll_d = dict(zip(self._field_names.values(), token_conll))
+
+            if self._conversion_maps:
+                token_conll_d = self._map_conll(token_conll_d)
+                token_conll = token_conll_d.values()
+
+            for column_name, v in token_conll_d.items():
+                conll[column_name].append(v)
+
             conll_str += '\t'.join(map(str, token_conll)) + '\n'
 
         conll_str_w_headers += conll_str
 
-        return conll_str, conll_str_w_headers, conll
+        return conll_str, conll_str_w_headers, dict(conll)
 
     def _get_morphology(self, tag):
         """ Expands a tag into its morphological features by using a tagmap.
@@ -140,6 +159,22 @@ class ConllFormatter:
                 return '|'.join(feats)
             else:
                 return '_'
+
+    def _map_conll(self, token_conll_d):
+        """ Maps labels according to a given `self._conversion_maps`.
+            This can be useful when users want to change the output labels of a
+            model to their own tagset.
+
+        :param token_conll_d: a token's conll representation as dict (field_name: value)
+        :return: the modified dict where the labels have been replaced according to the converison maps
+        """
+        for k, v in token_conll_d.items():
+            try:
+                token_conll_d[k] = self._conversion_maps[k][v]
+            except KeyError:
+                continue
+
+        return token_conll_d
 
     def _set_extensions(self):
         """ Sets the default extensions if they do not exist yet. """

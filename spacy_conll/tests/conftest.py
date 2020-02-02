@@ -1,15 +1,25 @@
 import pytest
 
 import spacy
+from spacy_stanfordnlp import StanfordNLPLanguage
+import stanfordnlp
 
 from spacy_conll import ConllFormatter
 
 
 @pytest.fixture(scope='session')
-def en_small_with_formatter():
+def spacy_en_small_with_formatter():
     nlp = spacy.load('en_core_web_sm')
     conllformatter = ConllFormatter(nlp)
     nlp.add_pipe(conllformatter, after='parser')
+    return nlp
+
+@pytest.fixture(scope='session')
+def spacy_stanfordnlp_en_with_formatter():
+    snlp = stanfordnlp.Pipeline(lang='en')
+    nlp = StanfordNLPLanguage(snlp)
+    conllformatter = ConllFormatter(nlp)
+    nlp.add_pipe(conllformatter, last=True)
     return nlp
 
 @pytest.fixture(scope='session')
