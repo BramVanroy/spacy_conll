@@ -6,12 +6,12 @@ with Path('README.rst').open(encoding='utf-8') as fhin:
 
 setup(
     name='spacy_conll',
-    version='1.1.0',
+    version='1.2.0',
     description='A custom pipeline component for spaCy that can convert any parsed Doc'
                 ' and its sentences into CoNLL-U format. Also provides a command line entry point.',
     long_description=long_description,
     long_description_content_type='text/x-rst',
-    keywords='nlp spacy spacy-extension conll conllu tagging',
+    keywords='nlp spacy spacy-extension conll conllu tagging parsing stanfordnlp spacy_stanfordnlp',
     packages=['spacy_conll'],
     url='https://github.com/BramVanroy/spacy_conll',
     author='Bram Vanroy, Raquel G. Alhama',

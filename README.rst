@@ -178,6 +178,57 @@ The snippet above will return (and print) the following string:
     3	?	?	PUNCT	.	PunctType=peri	1	punct	_	_
 
 
+An advanced example, showing the more complex options:
+
+* :code:`ext_names`: changes the attribute names to a custom key by using a dictionary. You can change:
+
+ * :code:`conll_str`: a string representation of the CoNLL format
+ * :code:`conll_str_headers`: the same a conll_str but with leading lines containing sentence index and sentence text
+ * :code:`conll`: a dictionary containing the field names and their values. For a Doc object, this returns a list of
+                  dictionaries where each dictionary is a sentence
+
+* :code:`field_names`: a dictionary containing a mapping of field names so that you can name them as you wish
+* :code:`conversion_maps`: a two-level dictionary that looks like :code:`{field_name: {tag_name: replacement}}`
+                           In other words, you can specify in which field a certain value should be replaced by another.
+                           This is especially useful when you are not satisfied with the tagset of a model and wish
+                           to change some tags to an alternative.
+
+The example below
+
+* changes the custom attribute :code:`conll` to :code:`connl_for_pd`;
+* changes the :code:`lemma` field to :code:`word_lemma`;
+* converts any :code:`-PRON-` to :code:`PRON`;
+* as a bonus: uses the output dictionary to create a pandas DataFrame.
+
+.. code:: python
+
+    import pandas as pd
+    import spacy
+    from spacy_conll import ConllFormatter
+
+
+    nlp = spacy.load('en')
+    conllformatter = ConllFormatter(nlp,
+                                    ext_names={'conll': 'connl_for_pd'},
+                                    field_names={'lemma': 'word_lemma'},
+                                    conversion_maps={'word_lemma': {'-PRON-': 'PRON'}})
+    nlp.add_pipe(conllformatter, after='parser')
+    doc = nlp('I like cookies.')
+    df = pd.DataFrame.from_dict(doc._.connl_for_pd[0])
+    print(df)
+
+The snippet above will output a pandas DataFrame:
+
+.. code:: text
+
+       id     form word_lemma upostag  ... head deprel  deps misc
+    0   1        I       PRON    PRON  ...    2  nsubj     _    _
+    1   2     like       like    VERB  ...    0   ROOT     _    _
+    2   3  cookies     cookie    NOUN  ...    2   dobj     _    _
+    3   4        .          .   PUNCT  ...    2  punct     _    _
+
+    [4 rows x 10 columns]
+
 spacy-stanfordnlp
 +++++++++++++++++
 
