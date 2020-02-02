@@ -182,16 +182,15 @@ An advanced example, showing the more complex options:
 
 * :code:`ext_names`: changes the attribute names to a custom key by using a dictionary. You can change:
 
- * :code:`conll_str`: a string representation of the CoNLL format
- * :code:`conll_str_headers`: the same a conll_str but with leading lines containing sentence index and sentence text
- * :code:`conll`: a dictionary containing the field names and their values. For a Doc object, this returns a list of
-                  dictionaries where each dictionary is a sentence
+  * :code:`conll_str`: a string representation of the CoNLL format
+  * :code:`conll_str_headers`: the same a conll_str but with leading lines containing sentence index and sentence text
+  * :code:`conll`: a dictionary containing the field names and their values. For a :code:`Doc` object, this returns a list
+    of dictionaries where each dictionary is a sentence
 
 * :code:`field_names`: a dictionary containing a mapping of field names so that you can name them as you wish
-* :code:`conversion_maps`: a two-level dictionary that looks like :code:`{field_name: {tag_name: replacement}}`
-                           In other words, you can specify in which field a certain value should be replaced by another.
-                           This is especially useful when you are not satisfied with the tagset of a model and wish
-                           to change some tags to an alternative.
+* :code:`conversion_maps`: a two-level dictionary that looks like :code:`{field_name: {tag_name: replacement}}`.
+  In other words, you can specify in which field a certain value should be replaced by another. This is especially
+  useful when you are not satisfied with the tagset of a model and wish to change some tags to an alternative
 
 The example below
 
