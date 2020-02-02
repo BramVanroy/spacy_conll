@@ -8,4 +8,7 @@ spacy = "*"
 packaging = "*"
 
 [dev-packages]
+torch = "*"
+spacy-stanfordnlp = "*"
 pytest = "*"
+pygments = "*"
