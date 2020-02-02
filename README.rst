@@ -183,7 +183,8 @@ An advanced example, showing the more complex options:
 * :code:`ext_names`: changes the attribute names to a custom key by using a dictionary. You can change:
 
   * :code:`conll_str`: a string representation of the CoNLL format
-  * :code:`conll_str_headers`: the same a conll_str but with leading lines containing sentence index and sentence text
+  * :code:`conll_str_headers`: the same as :code:`conll_str` but with leading lines containing sentence index
+    and sentence text
   * :code:`conll`: a dictionary containing the field names and their values. For a :code:`Doc` object, this returns a list
     of dictionaries where each dictionary is a sentence
 
