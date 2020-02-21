@@ -127,7 +127,7 @@ class ConllFormatter:
                 head_idx,
                 word.dep_,
                 '_',
-                '_'
+                '_' if word.whitespace_ else 'SpaceAfter=No'
             )
 
             token_conll_d = dict(zip(self._field_names.values(), token_conll))
