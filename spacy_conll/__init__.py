@@ -1,7 +1,8 @@
+from typing import Optional, Dict, Union
+
 __version__ = '1.3.0'
 
-from collections import OrderedDict
-
+from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
 
 try:
@@ -18,11 +19,11 @@ class ConllFormatter:
     name = 'conll_formatter'
 
     def __init__(self,
-                 nlp,
+                 nlp: Language,
                  *,
-                 ext_names=None,
-                 conversion_maps=None,
-                 include_headers=False
+                 ext_names: Optional[Dict[str, str]] = None,
+                 conversion_maps: Optional[Dict[str, str]] = None,
+                 include_headers: bool = False
                  ):
         """ ConllFormatter constructor. The names of the extensions that are set
             can be changed with '*_attr' arguments.
@@ -60,7 +61,7 @@ class ConllFormatter:
         # Initialize extensions
         self._set_extensions()
 
-    def __call__(self, doc):
+    def __call__(self, doc: Doc):
         """Runs the pipeline component, adding the extensions to ._..
            Adds a string representation, string representation containing a header,
            and a tuple representation of the CoNLL format to the given Doc and its
@@ -87,7 +88,7 @@ class ConllFormatter:
 
         return doc
 
-    def _get_morphology(self, tag):
+    def _get_morphology(self, tag: str):
         """Expands a tag into its morphological features by using a tagmap.
 
         :param tag: the tag to expand
@@ -102,7 +103,7 @@ class ConllFormatter:
             else:
                 return '_'
 
-    def _map_conll(self, token_conll_d):
+    def _map_conll(self, token_conll_d: Dict[str, Union[str, int]]):
         """Maps labels according to a given `self._conversion_maps`.
             This can be useful when users want to change the output labels of a
             model to their own tagset.
@@ -130,7 +131,7 @@ class ConllFormatter:
                 if not obj.has_extension(self._ext_names['conll_pd']):
                     obj.set_extension(self._ext_names['conll_pd'], default=None)
 
-    def _set_span_conll(self, span, span_idx=1):
+    def _set_span_conll(self, span: Span, span_idx: int = 1):
         """Sets a span's properties according to the CoNLL-U format.
 
         :param span: a spaCy Span
@@ -151,7 +152,7 @@ class ConllFormatter:
         if PD_AVAILABLE:
             span._.set(self._ext_names['conll_pd'], pd.DataFrame([t._.conll for t in span]))
 
-    def _set_token_conll(self, token, token_idx=1):
+    def _set_token_conll(self, token: Token, token_idx: int = 1):
         """Sets a token's properties according to the CoNLL-U format.
 
         :param token: a spaCy Token
@@ -193,7 +194,7 @@ class ConllFormatter:
         return token
 
     @staticmethod
-    def _is_number(s):
+    def _is_number(s: str):
         """Checks whether a string is actually a number.
         :param s: string to test
         :return: whether or not 's' is a number
@@ -205,7 +206,7 @@ class ConllFormatter:
             return False
 
     @staticmethod
-    def _merge_dicts_strict(d1, d2):
+    def _merge_dicts_strict(d1: Dict, d2: Dict):
         """Merge two dicts in a strict manner, i.e. the second dict overwrites keys
            of the first dict but all keys in the second dict have to be present in
            the first dict.
