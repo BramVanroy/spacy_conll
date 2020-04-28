@@ -3,6 +3,13 @@ History
 #######
 
 **************************
+1.3.0 (April 28th, 2020)
+**************************
+* **IMPORTANT**: This will be the last release that supports the deprecated Spacy2ConllParser class!
+* Community addition (@KoichiYasuoka): add SpaceAfter=No to the Misc field when applicable.
+* Fixed failing tests
+
+**************************
 1.2.0 (February 2nd, 2020)
 **************************
 * **BREAKING**: :code:`._.conll` now outputs a dictionary for sentences :code:`fieldname: [value1, value2...]`, and
