@@ -57,7 +57,7 @@ def test_sents_has_conll_single_sentence(spacy_stanfordnlp_en_with_formatter, si
     for sent in doc.sents:
         assert sent.has_extension('conll')
         assert sent._.conll is not None
-        assert isinstance(sent._.conll, list)
+        assert isinstance(sent._.conll, dict)
 
 # Sents: multi-sentence
 def test_sents_has_conll_str_multi_sentence(spacy_stanfordnlp_en_with_formatter, single_string_multi_sentence):
@@ -79,4 +79,4 @@ def test_sents_has_conll_multi_sentence(spacy_stanfordnlp_en_with_formatter, sin
     for sent in doc.sents:
         assert sent.has_extension('conll')
         assert sent._.conll is not None
-        assert isinstance(sent._.conll, list)
+        assert isinstance(sent._.conll, dict)
