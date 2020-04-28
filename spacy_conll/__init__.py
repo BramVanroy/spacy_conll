@@ -21,7 +21,6 @@ class ConllFormatter:
                  nlp,
                  *,
                  ext_names=None,
-                 field_names=None,
                  conversion_maps=None,
                  include_headers=False
                  ):
@@ -29,8 +28,9 @@ class ConllFormatter:
             can be changed with '*_attr' arguments.
 
         :param nlp: an initialized spaCy nlp object
-        :param ext_names: dictionary containing names for the custom spaCy extensions
-        :param field_names: dictionary containing names for the CoNLL fields
+        :param ext_names: dictionary containing names for the custom spaCy extensions. You can rename the following
+               extensions: conll, conll_pd, conll_str.
+               E.g. {'conll': 'conll_dict', 'conll_pd': 'conll_pandas'} will rename the properties accordingly
         :param conversion_maps: two-level dictionary that contains a field_name (e.g. 'lemma', 'upostag')
                on the first level, and the conversion map on the second.
                E.g. {'lemma': {'-PRON-': 'PRON'}} will map the lemma '-PRON-' to 'PRON'
@@ -50,21 +50,8 @@ class ConllFormatter:
         if ext_names:
             self._ext_names = self._merge_dicts_strict(self._ext_names, ext_names)
 
-        self._field_names = OrderedDict({
-            'id': 'id',
-            'form': 'form',
-            'lemma': 'lemma',
-            'upostag': 'upostag',
-            'xpostag': 'xpostag',
-            'feats': 'feats',
-            'head': 'head',
-            'deprel': 'deprel',
-            'deps': 'deps',
-            'misc': 'misc'
-        })
-
-        if field_names:
-            self._field_names = self._merge_dicts_strict(self._field_names, field_names)
+        self._field_names = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats',
+                             'head', 'deprel', 'deps', 'misc']
 
         self._conversion_maps = conversion_maps
 
@@ -190,7 +177,7 @@ class ConllFormatter:
         )
 
         # turn field name values (keys) and token values (values) into dict
-        token_conll_d = dict(zip(self._field_names.values(), token_conll))
+        token_conll_d = dict(zip(self._field_names, token_conll))
 
         # convert proeprties if needed
         if self._conversion_maps:
