@@ -7,98 +7,46 @@ from typing import Optional
 
 from packaging import version
 import spacy
-from spacy.language import Language
-from spacy.tokens import Doc
 
-from spacy_conll import ConllFormatter
+# using absolute import, assuming the package has been installed!
+from spacy_conll import init_parser
 
 SENT_ID_RE = re.compile(r"(?<=# sent_id = )(\d+)")
 
 
-def init_nlp(model_or_lang: str,
-             is_tokenized: bool = False,
-             disable_sbd: bool = False,
-             include_headers: bool = False,
-             parser: str = 'spacy') -> Language:
-    """Initialise a spacy-wrapped parser given a language or model and some options.
-
-    :param model_or_lang: language model to use (must be installed). Defaults to an English model
-    :param is_tokenized: indicates whether your text has already been tokenized (space-seperated;
-        does not work for udpipe)
-    :param disable_sbd: disables spaCy automatic sentence boundary detection (only works for spaCy)
-    :param include_headers: to include headers before the output of every sentence
-    :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
-        'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
-        installed, e.g. spacy-stanza.
-    :return: an initialised Language object; the parser
-    """
-
-    model_or_lang = 'en' if model_or_lang is None else model_or_lang
-
-    if parser == 'spacy':
-        nlp = spacy.load(model_or_lang)
-        if is_tokenized:
-            nlp.tokenizer = nlp.tokenizer.tokens_from_list
-        if disable_sbd:
-            nlp.add_pipe(_prevent_sbd, name='prevent-sbd', before='parser')
-    elif parser == 'stanfordnlp':
-        from spacy_stanfordnlp import StanfordNLPLanguage
-        import stanfordnlp
-
-        snlp = stanfordnlp.Pipeline(lang=model_or_lang, tokenize_pretokenized=is_tokenized)
-        nlp = StanfordNLPLanguage(snlp)
-    elif parser == 'stanza':
-        import stanza
-        from spacy_stanza import StanzaLanguage
-
-        snlp = stanza.Pipeline(lang=model_or_lang, tokenize_pretokenized=is_tokenized)
-        nlp = StanzaLanguage(snlp)
-    elif parser == 'udpipe':
-        import spacy_udpipe
-
-        nlp = spacy_udpipe.load(model_or_lang)
-    else:
-        raise ValueError("Unexpected value for 'parser'. Options are: 'spacy', 'stanfordnlp', 'stanza', 'udpipe'")
-
-    conllformatter = ConllFormatter(nlp, include_headers=include_headers)
-    nlp.add_pipe(conllformatter, last=True)
-
-    return nlp
-
-
-def main(input_file: Optional[str] = None,
-         input_encoding: str = getpreferredencoding(),
-         input_str: Optional[str] = None,
-         is_tokenized: bool = False,
-         output_file: Optional[str] = None,
-         output_encoding: str = getpreferredencoding(),
-         model_or_lang: Optional[str] = None,
-         disable_sbd: bool = False,
-         include_headers: bool = False,
-         no_force_counting: bool = False,
-         n_process: int = 1,
-         parser: str = 'spacy',
-         verbose: bool = False
-         ):
+def parse(input_file: Optional[str] = None,
+          input_encoding: str = getpreferredencoding(),
+          input_str: Optional[str] = None,
+          is_tokenized: bool = False,
+          output_file: Optional[str] = None,
+          output_encoding: str = getpreferredencoding(),
+          model_or_lang: Optional[str] = None,
+          disable_sbd: bool = False,
+          include_headers: bool = False,
+          no_force_counting: bool = False,
+          n_process: int = 1,
+          parser: str = 'spacy',
+          verbose: bool = False
+          ):
     """ Parse an input string or input file to CoNLL-U format
 
-    :param input_file: path to file with sentences to parse. Has precedence over 'input_str'
-    :param input_encoding: encoding of the input file. Default value is system default
-    :param input_str: input string to parse
-    :param is_tokenized: indicates whether your text has already been tokenized (space-seperated)
-    :param output_file: path to output file. If not specified, the output will be printed on standard output
-    :param output_encoding: encoding of the output file. Default value is system default
-    :param model_or_lang: language model to use (must be installed). Defaults to an English model
-    :param disable_sbd: disables spaCy automatic sentence boundary detection (only works for spaCy)
-    :param include_headers: to include headers before the output of every sentence
-    :param no_force_counting: to disable force counting the 'sent_id', starting from 1 and increasing for each sentence
-    :param n_process: number of processes to use in nlp.pipe(). -1 will use as many cores as available
-    :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
-        'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
-        installed, e.g. spacy-stanza.
-    :param verbose: to print the output to stdout, regardless of 'output_file'
-    """
-    nlp = init_nlp(model_or_lang, is_tokenized, disable_sbd, include_headers, parser)
+        :param input_file: path to file with sentences to parse. Has precedence over 'input_str'
+        :param input_encoding: encoding of the input file. Default value is system default
+        :param input_str: input string to parse
+        :param is_tokenized: indicates whether your text has already been tokenized (space-seperated)
+        :param output_file: path to output file. If not specified, the output will be printed on standard output
+        :param output_encoding: encoding of the output file. Default value is system default
+        :param model_or_lang: language model to use (must be installed). Defaults to an English model
+        :param disable_sbd: disables spaCy automatic sentence boundary detection (only works for spaCy)
+        :param include_headers: to include headers before the output of every sentence
+        :param no_force_counting: to disable force counting the 'sent_id', starting from 1 and increasing for each sentence
+        :param n_process: number of processes to use in nlp.pipe(). -1 will use as many cores as available
+        :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
+            'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
+            installed, e.g. spacy-stanza.
+        :param verbose: to print the output to stdout, regardless of 'output_file'
+        """
+    nlp = init_parser(model_or_lang, is_tokenized, disable_sbd, include_headers, parser)
 
     # Gather input:
     # Collect lines in 'lines' variable, taking into account 'is_tokenized'
@@ -150,14 +98,7 @@ def main(input_file: Optional[str] = None,
     fhout.close()
 
 
-def _prevent_sbd(doc: Doc):
-    """ Disables spaCy's sentence boundary detection. """
-    for token in doc:
-        token.is_sent_start = False
-    return doc
-
-
-if __name__ == '__main__':
+def main():
     cparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                       description='Parse an input string or input file to CoNLL-U format using a'
                                                   ' spacy-wrapped parser.')
@@ -207,4 +148,8 @@ if __name__ == '__main__':
                          help="To always print the output to stdout, regardless of 'output_file'.")
 
     args = cparser.parse_args()
-    main(**vars(args))
+    parse(**vars(args))
+
+
+if __name__ == '__main__':
+    main()
