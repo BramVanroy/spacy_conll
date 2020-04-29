@@ -1,31 +1,36 @@
 import pytest
 
-import spacy
-from spacy_stanfordnlp import StanfordNLPLanguage
-import stanfordnlp
+from spacy_conll import init_parser
 
-from spacy_conll import ConllFormatter
+# flow inspired by https://stackoverflow.com/a/61486898/1150683
+# pass (uninvoked) function as a parameter to fixtures
 
+def spacy_en():
+    return init_parser('en', parser='spacy')
 
-@pytest.fixture(scope='session')
-def spacy_en_small_with_formatter():
-    nlp = spacy.load('en_core_web_sm')
-    conllformatter = ConllFormatter(nlp)
-    nlp.add_pipe(conllformatter, after='parser')
-    return nlp
+def spacy_stanfordnlp_en():
+    return init_parser('en', parser='stanfordnlp')
 
-@pytest.fixture(scope='session')
-def spacy_stanfordnlp_en_with_formatter():
-    snlp = stanfordnlp.Pipeline(lang='en')
-    nlp = StanfordNLPLanguage(snlp)
-    conllformatter = ConllFormatter(nlp)
-    nlp.add_pipe(conllformatter, last=True)
-    return nlp
+def spacy_stanza_en():
+    return init_parser('en', parser='stanza')
 
-@pytest.fixture(scope='session')
-def single_string_single_sentence():
-    return 'A cookie is a baked or cooked food that is typically small, flat and sweet.'
+def spacy_udpipe_en():
+    return init_parser('en', parser='udpipe')
 
-@pytest.fixture(scope='session')
-def single_string_multi_sentence():
-    return 'A cookie is a baked or cooked food that is typically small, flat and sweet. It usually contains flour, sugar and some type of oil or fat. It may include other ingredients such as raisins, oats, chocolate chips, nuts, etc.'
+@pytest.fixture(params=[spacy_en, spacy_stanfordnlp_en, spacy_stanza_en, spacy_udpipe_en])
+def parser(request):
+    yield request.param
+
+def single_sent():
+    return "A cookie is a baked or cooked food that is typically small, flat and sweet."
+
+def multi_sent():
+    return "A cookie is a baked or cooked food that is typically small, flat and sweet. It usually contains flour, sugar and some type of oil or fat. It may include other ingredients such as raisins, oats, chocolate chips, nuts, etc."
+
+@pytest.fixture(params=[single_sent, multi_sent])
+def text(request):
+    yield request.param
+
+@pytest.fixture
+def doc(parser, text):
+    yield parser()(text())
