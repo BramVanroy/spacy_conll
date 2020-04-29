@@ -3,6 +3,8 @@ from typing import Optional, Dict, Union
 from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
 
+COMPONENT_NAME = 'conll_formatter'
+CONLL_FIELD_NAMES = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'head', 'deprel', 'deps', 'misc']
 
 try:
     PD_AVAILABLE = True
@@ -15,7 +17,7 @@ class ConllFormatter:
     """Pipeline component for spaCy that adds CoNLL-U properties to a Doc and
        its sentences. A string representation, representation including a
        header, and the CoNLL-U format in tuples, are added as custom attributes."""
-    name = 'conll_formatter'
+    name = COMPONENT_NAME
 
     def __init__(self,
                  nlp: Language,
@@ -49,9 +51,6 @@ class ConllFormatter:
         }
         if ext_names:
             self._ext_names = self._merge_dicts_strict(self._ext_names, ext_names)
-
-        self._field_names = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats',
-                             'head', 'deprel', 'deps', 'misc']
 
         self._conversion_maps = conversion_maps
 
@@ -177,7 +176,7 @@ class ConllFormatter:
         )
 
         # turn field name values (keys) and token values (values) into dict
-        token_conll_d = dict(zip(self._field_names, token_conll))
+        token_conll_d = dict(zip(CONLL_FIELD_NAMES, token_conll))
 
         # convert proeprties if needed
         if self._conversion_maps:
