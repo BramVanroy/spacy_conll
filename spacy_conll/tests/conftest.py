@@ -5,17 +5,27 @@ from spacy_conll import init_parser
 # flow inspired by https://stackoverflow.com/a/61486898/1150683
 # pass (uninvoked) function as a parameter to fixtures
 
+PARSERS = {}
+
 def spacy_en():
-    return init_parser('en', parser='spacy')
+    if 'spacy' not in PARSERS:
+        PARSERS['spacy'] = init_parser('en', parser='spacy')
+    return PARSERS['spacy']
 
 def spacy_stanfordnlp_en():
-    return init_parser('en', parser='stanfordnlp')
+    if 'stanfordnlp' not in PARSERS:
+        PARSERS['stanfordnlp'] = init_parser('en', parser='stanfordnlp')
+    return PARSERS['stanfordnlp']
 
 def spacy_stanza_en():
-    return init_parser('en', parser='stanza')
+    if 'stanza' not in PARSERS:
+        PARSERS['stanza'] = init_parser('en', parser='stanza')
+    return PARSERS['stanza']
 
 def spacy_udpipe_en():
-    return init_parser('en', parser='udpipe')
+    if 'udpipe' not in PARSERS:
+        PARSERS['udpipe'] = init_parser('en', parser='udpipe')
+    return PARSERS['udpipe']
 
 @pytest.fixture(params=[spacy_en, spacy_stanfordnlp_en, spacy_stanza_en, spacy_udpipe_en])
 def parser(request):
