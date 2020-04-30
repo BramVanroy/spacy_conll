@@ -38,6 +38,6 @@ setup(
         'packaging'
     ],
     entry_points={
-        'console_scripts': ['conll_parse=spacy_conll.__main__:main']
+        'console_scripts': ['parse_as_conll=spacy_conll.__main__:main']
     }
 )

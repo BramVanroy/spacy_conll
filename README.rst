@@ -31,6 +31,9 @@ around ``stanza`` and ``UDPipe`` respectively, including their models that *are*
 for this library, because it might be too much overhead for those who don't need UD. If you wish to use their
 functionality (e.g. better performance, real UD output), you have to install them manually.
 
+If you want to retrieve CoNLL info as a ``pandas`` DataFrame, this library will automatically export it if it detects that
+``pandas`` is installed. See the Usage section for more.
+
 To install the library, simply use pip.
 
 .. code:: bash
@@ -44,16 +47,51 @@ To install the library, simply use pip.
 
 Usage
 =====
+When the :code:`ConllFormatter` is added to a spaCy pipeline, it adds CoNLL properties for :code:`Token`, sentence
+:code:`Span` and :code:`Doc`. Note that arbitrary :code:`Span`'s are not included and do not receive these properties.
+
+On all three of these levels, two custom properties are exposed by default, :code:`._.conll` and its string
+representation :code:`._.conll_str`. However, if you have ``pandas`` installed, then :code:`._.conll_pd` will be added
+automatically, too!
+
+- :code:`._.conll`: raw CoNLL format
+    - in :code:`Token`: a dictionary containing all the expected CoNLL fields as keys and the parsed properties as
+      values.
+    - in sentence :code:`Span`: a list of its tokens' :code:`._.conll` dictionaries (list of dictionaries).
+    - in a :code:`Doc`: a list of its sentences' :code:`._.conll` lists (list of list of dictionaries).
+- :code:`._.conll_str`: string representation of the CoNLL format
+    - in :code:`Token`: tab-separated representation of the contents of the CoNLL fields ending with a newline.
+    - in sentence :code:`Span`: the expected CoNLL format where each row represents a token. When
+      :code:`ConllFormatter(include_headers=True)` is used, two header lines are included as well, as per the
+      `CoNLL format`_.
+    - in :code:`Doc`: all its sentences' :code:`._.conll_str` combined and separated by new lines.
+- :code:`._.conll_pd`: ``pandas`` representation of the CoNLL format
+    - in :code:`Token`: a :code:`Series` representation of this token's CoNLL properties.
+    - in sentence :code:`Span`: a :code:`DataFrame` representation of this sentence, with the CoNLL names as column
+      headers.
+    - in :code:`Doc`: a concatenation of its sentences' :code:`DataFrame`'s, leading to a new a :code:`DataFrame` whose
+      index is reset.
+
+
+.. _`CoNLL format`: https://universaldependencies.org/format.html#sentence-boundaries-and-comments
+
+
 Command line
 ------------
+
+Upon installation, a command-line script is added under tha alias :code:`parse_as_conll`. You can use it to parse a
+string or file into CoNLL format given a number of options.
+
 .. code:: bash
 
-    > python -m spacy_conll -h
-    usage: [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR]
-                       [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL_OR_LANG]
-                       [-s] [-t] [-d] [-e] [-j N_PROCESS] [-u] [-v]
+    > parse_as_conll  -h
+    usage: parse_as_conll [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR]
+                          [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL_OR_LANG]
+                          [-s] [-t] [-d] [-e] [-j N_PROCESS]
+                          [-p {spacy,stanfordnlp,stanza,udpipe}] [-v]
 
-    Parse an input string or input file to CoNLL-U format.
+    Parse an input string or input file to CoNLL-U format using a spaCy-wrapped
+    parser.
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -62,7 +100,7 @@ Command line
                             over 'input_str'. (default: None)
       -a INPUT_ENCODING, --input_encoding INPUT_ENCODING
                             Encoding of the input file. Default value is system
-                            default.
+                            default. (default: cp1252)
       -b INPUT_STR, --input_str INPUT_STR
                             Input string to parse. (default: None)
       -o OUTPUT_FILE, --output_file OUTPUT_FILE
@@ -70,22 +108,25 @@ Command line
                             be printed on standard output. (default: None)
       -c OUTPUT_ENCODING, --output_encoding OUTPUT_ENCODING
                             Encoding of the output file. Default value is system
-                            default.
+                            default. (default: cp1252)
       -m MODEL_OR_LANG, --model_or_lang MODEL_OR_LANG
                             spaCy or stanfordnlp model or language to use (must be
                             installed). (default: None)
       -s, --disable_sbd     Disables spaCy automatic sentence boundary detection.
                             In practice, disabling means that every line will be
                             parsed as one sentence, regardless of its actual
-                            content. Only works when using spaCy. (default: False)
+                            content. Only works when using 'spacy' as 'parser'.
+                            (default: False)
       -t, --is_tokenized    Indicates whether your text has already been tokenized
                             (space-seperated). When used in conjunction with
                             spacy-stanfordnlp, it will also be assumed that the
-                            text is sentence split by newline. (default: False)
+                            text is sentence split by newline. Does not work for
+                            'udpipe' as 'parser'. (default: False)
       -d, --include_headers
                             To include headers before the output of every
                             sentence. These headers include the sentence text and
-                            the sentence ID. (default: False)
+                            the sentence ID as per the CoNLL format. (default:
+                            False)
       -e, --no_force_counting
                             To disable force counting the 'sent_id', starting from
                             1 and increasing for each sentence. Instead, 'sent_id'
@@ -94,11 +135,16 @@ Command line
       -j N_PROCESS, --n_process N_PROCESS
                             Number of processes to use in nlp.pipe(). -1 will use
                             as many cores as available. Requires spaCy v2.2.2.
+                            Might not work for a 'parser' other than 'spacy'.
                             (default: 1)
-      -u, --use_stanfordnlp
-                            Use stanfordnlp models rather than spaCy models.
-                            Requires spacy-stanfordnlp. (default: False)
-      -v, --verbose         To print the output to stdout, regardless of
+      -p {spacy,stanfordnlp,stanza,udpipe}, --parser {spacy,stanfordnlp,stanza,udpipe}
+                            Which parser to use. Parsers other than 'spacy' need
+                            to be installed separately. So if you wish to use
+                            'stanfordnlp' models, 'spacy-stanfordnlp' needs to be
+                            installed. For 'stanza' you need 'spacy-stanza', and
+                            for 'udpipe' the 'spacy-udpipe' library is required.
+                            (default: spacy)
+      -v, --verbose         To always print the output to stdout, regardless of
                             'output_file'. (default: False)
 
 
@@ -106,7 +152,7 @@ For example, parsing a single line, multi-sentence string:
 
 .. code:: bash
 
-    >  python -m spacy_conll --input_str "I like cookies . What about you ?" --is_tokenized --include_headers
+    >  parse_as_conll --input_str "I like cookies . What about you ?" --is_tokenized --include_headers
     # sent_id = 1
     # text = I like cookies .
     1       I       -PRON-  PRON    PRP     PronType=prs    2       nsubj   _       _
@@ -116,16 +162,16 @@ For example, parsing a single line, multi-sentence string:
 
     # sent_id = 2
     # text = What about you ?
-    1       What    what    NOUN    WP      PronType=int|rel        2       dep     _       _
+    1       What    what    PRON    WP      _       2       dep     _       _
     2       about   about   ADP     IN      _       0       ROOT    _       _
     3       you     -PRON-  PRON    PRP     PronType=prs    2       pobj    _       _
     4       ?       ?       PUNCT   .       PunctType=peri  2       punct   _       _
 
-For example, parsing a large input file and writing output to output file, using four processes:
+For example, parsing a large input file and writing output to a given output file, using four processes:
 
 .. code:: bash
 
-    > python -m spacy_conll --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
+    > parse_as_conll --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
 
 You can also use Stanford NLP's models to retrieve UD tags. You can do this by using the :code:`-u` flag. **NOTE**:
 Using Stanford's models has limited options due to the API of :code:`stanfordnlp`. It is not possible to disable
