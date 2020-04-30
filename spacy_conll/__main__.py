@@ -20,12 +20,12 @@ def parse(input_file: Optional[str] = None,
           is_tokenized: bool = False,
           output_file: Optional[str] = None,
           output_encoding: str = getpreferredencoding(),
+          parser: str = 'spacy',
           model_or_lang: Optional[str] = None,
           disable_sbd: bool = False,
           include_headers: bool = False,
           no_force_counting: bool = False,
           n_process: int = 1,
-          parser: str = 'spacy',
           verbose: bool = False
           ):
     """ Parse an input string or input file to CoNLL-U format
@@ -36,17 +36,17 @@ def parse(input_file: Optional[str] = None,
         :param is_tokenized: indicates whether your text has already been tokenized (space-seperated)
         :param output_file: path to output file. If not specified, the output will be printed on standard output
         :param output_encoding: encoding of the output file. Default value is system default
+        :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
+            'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
+            installed, e.g. spacy-stanza.
         :param model_or_lang: language model to use (must be installed). Defaults to an English model
         :param disable_sbd: disables spaCy automatic sentence boundary detection (only works for spaCy)
         :param include_headers: to include headers before the output of every sentence
         :param no_force_counting: to disable force counting the 'sent_id', starting from 1 and increasing for each sentence
         :param n_process: number of processes to use in nlp.pipe(). -1 will use as many cores as available
-        :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
-            'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
-            installed, e.g. spacy-stanza.
         :param verbose: to print the output to stdout, regardless of 'output_file'
         """
-    nlp = init_parser(model_or_lang, is_tokenized, disable_sbd, include_headers, parser)
+    nlp = init_parser(parser, model_or_lang, is_tokenized, disable_sbd, include_headers)
 
     # Gather input:
     # Collect lines in 'lines' variable, taking into account 'is_tokenized'
@@ -101,7 +101,7 @@ def parse(input_file: Optional[str] = None,
 def main():
     cparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                       description='Parse an input string or input file to CoNLL-U format using a'
-                                                  ' spacy-wrapped parser.')
+                                                  ' spaCy-wrapped parser.')
 
     # Input arguments
     cparser.add_argument('-f', '--input_file', default=None,
@@ -117,8 +117,8 @@ def main():
                          help='Encoding of the output file. Default value is system default.')
 
     # Model/pipeline arguments
-    cparser.add_argument('-m', '--model_or_lang', default=None,
-                         help='spaCy or stanfordnlp model or language to use (must be installed).')
+    cparser.add_argument('-m', '--model_or_lang', default='en',
+                         help='language model to use (must be installed). Defaults to an English model')
     cparser.add_argument('-s', '--disable_sbd', default=False, action='store_true',
                          help="Disables spaCy automatic sentence boundary detection. In practice, disabling means that"
                               " every line will be parsed as one sentence, regardless of its actual content."
