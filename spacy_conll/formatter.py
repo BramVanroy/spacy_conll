@@ -178,7 +178,7 @@ class ConllFormatter:
         # turn field name values (keys) and token values (values) into dict
         token_conll_d = dict(zip(CONLL_FIELD_NAMES, token_conll))
 
-        # convert proeprties if needed
+        # convert properties if needed
         if self._conversion_maps:
             token_conll_d = self._map_conll(token_conll_d)
 
