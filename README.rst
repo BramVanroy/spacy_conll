@@ -1,33 +1,35 @@
 ================================================
 Parsing to CoNLL with spaCy or spacy-stanfordnlp
 ================================================
-This module allows you to parse a text to `CoNLL-U format`_. You can use it as a command line tool, or embed it in your
-own scripts by adding it as a custom component to a spaCy or spacy-stanfordnlp pipeline.
+This module allows you to parse text into `CoNLL-U format`_. You can use it as a command line tool, or embed it in your
+own scripts by adding it as a custom component to a spaCy, ``spacy-stanfordnlp``, ``spacy-stanza``, or ``spacy-udpipe``
+pipeline.
 
 Note that the module simply takes a parser's output and puts it in a formatted string adhering to the linked ConLL-U
 format. The output tags depend on the spaCy model used. If you want Universal Depencies tags as output, I advise you to
-use this library in combination with `spacy_stanfordnlp`_, which is a spaCy interface using :code:`stanfordnlp` and its
-models behind the scenes. Those models use the Universal Dependencies formalism. See the remainder README for more
-information and usage guidelines.
+use this library in combination with `spacy-stanza`_, which is a spaCy interface using ``stanza`` and its
+models behind the scenes. Those models use the Universal Dependencies formalism and yield state-of-the-art performance.
+``stanza`` is a new and improved version of ``stanfordnlp``. The spaCy wrapper for ``stanfordnlp``,
+``spacy-stanfordnlp`` is also supported in this library but its development has been superseded by the ``stanza``
+wrapper. Its use is not recommended. As an alternative to the Stanford models, you can use the spaCy
+wrapper for ``UDPipe``, `spacy-udpipe`_, which is slightly less accurate than ``stanza`` but much faster.
+
 
 .. _`CoNLL-U format`: https://universaldependencies.org/format.html
-.. _`spacy_stanfordnlp`: https://github.com/explosion/spacy-stanfordnlp
+.. _`spacy-stanza`: https://github.com/explosion/spacy-stanza
+.. _`spacy-udpipe`: https://github.com/TakeLab/spacy-udpipe
 
-============
 Installation
 ============
-
-Requires `spaCy`_ and an `installed spaCy language model`_. When using the module from the command line, you also need
-the :code:`packaging` package. See section `spaCy`_ for usage.
+By default, this package automatically installs only `spaCy`_  and the ``packaging`` package as dependencies.
 
 Because `spaCy's models`_ are not necessarily trained on Universal Dependencies conventions, their output labels are
-not UD either. By using :code:`spacy-stanfordnlp`, we get the easy-to-use interface of spaCy as a wrapper around
-:code:`stanfordnlp` and its models that *are* trained on UD data. If you want to use the Stanford NLP models, you also
-need :code:`spacy-stanfordnlp` and `a corresponding model`_. See the section `spacy-stanfordnlp`_ for usage.
+not UD either. By using ``spacy-stanza`` or ``spacy-udpipe``, we get the easy-to-use interface of spaCy as a wrapper
+around ``stanza`` and ``UDPipe`` respectively, including their models that *are* trained on UD data.
 
-**NOTE**: :code:`spacy-stanfordnlp` is not automatically installed as a dependency for this library, because it might be
-too much overhead for those who don't need UD. If you wish to use its functionality, you have to install it manually.
-By default, only :code:`spacy` and :code:`packaging` are installed as dependencies.
+**NOTE**: ``spacy-stanfordnlp``, ``spacy-stanza`` and ``spacy-udpipe`` are not installed automatically as a dependency
+for this library, because it might be too much overhead for those who don't need UD. If you wish to use their
+functionality (e.g. better performance, real UD output), you have to install them manually.
 
 To install the library, simply use pip.
 
@@ -39,7 +41,7 @@ To install the library, simply use pip.
 .. _installed spaCy language model: https://spacy.io/usage/models
 .. _`a corresponding model`: https://stanfordnlp.github.io/stanfordnlp/models.html
 
-=====
+
 Usage
 =====
 Command line
