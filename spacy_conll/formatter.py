@@ -7,8 +7,8 @@ COMPONENT_NAME = 'conll_formatter'
 CONLL_FIELD_NAMES = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'head', 'deprel', 'deps', 'misc']
 
 try:
-    PD_AVAILABLE = True
     import pandas as pd
+    PD_AVAILABLE = True
 except ImportError:
     PD_AVAILABLE = False
 
@@ -82,7 +82,7 @@ class ConllFormatter:
         doc._.set(self._ext_names['conll_str'], "\n".join([s._.conll_str for s in doc.sents]))
 
         if PD_AVAILABLE:
-            doc._.set(self._ext_names['conll_pd'], pd.concat([s._.conll_pd for s in doc.sents]))
+            doc._.set(self._ext_names['conll_pd'], pd.concat([s._.conll_pd for s in doc.sents]).reset_index(drop=True))
 
         return doc
 
