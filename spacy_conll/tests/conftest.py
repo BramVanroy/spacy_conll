@@ -9,22 +9,22 @@ PARSERS = {}
 
 def spacy_en():
     if 'spacy' not in PARSERS:
-        PARSERS['spacy'] = init_parser('en', parser='spacy')
+        PARSERS['spacy'] = init_parser('spacy')
     return PARSERS['spacy']
 
 def spacy_stanfordnlp_en():
     if 'stanfordnlp' not in PARSERS:
-        PARSERS['stanfordnlp'] = init_parser('en', parser='stanfordnlp')
+        PARSERS['stanfordnlp'] = init_parser('stanfordnlp')
     return PARSERS['stanfordnlp']
 
 def spacy_stanza_en():
     if 'stanza' not in PARSERS:
-        PARSERS['stanza'] = init_parser('en', parser='stanza')
+        PARSERS['stanza'] = init_parser('stanza')
     return PARSERS['stanza']
 
 def spacy_udpipe_en():
     if 'udpipe' not in PARSERS:
-        PARSERS['udpipe'] = init_parser('en', parser='udpipe')
+        PARSERS['udpipe'] = init_parser('udpipe')
     return PARSERS['udpipe']
 
 @pytest.fixture(params=[spacy_en, spacy_stanfordnlp_en, spacy_stanza_en, spacy_udpipe_en])

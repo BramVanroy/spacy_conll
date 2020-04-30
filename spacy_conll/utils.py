@@ -5,26 +5,23 @@ from spacy.tokens import Doc
 from . import ConllFormatter
 
 
-def init_parser(model_or_lang: str,
+def init_parser(parser: str = 'spacy',
+                model_or_lang: str = 'en',
                 is_tokenized: bool = False,
                 disable_sbd: bool = False,
-                include_headers: bool = False,
-                parser: str = 'spacy') -> Language:
+                include_headers: bool = False) -> Language:
     """Initialise a spacy-wrapped parser given a language or model and some options.
 
+    :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
+    'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
+    installed, e.g. spacy-stanza. Defaults to 'spacy'
     :param model_or_lang: language model to use (must be installed). Defaults to an English model
     :param is_tokenized: indicates whether your text has already been tokenized (space-seperated;
         does not work for udpipe)
     :param disable_sbd: disables spaCy automatic sentence boundary detection (only works for spaCy)
     :param include_headers: to include headers before the output of every sentence
-    :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
-        'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
-        installed, e.g. spacy-stanza.
     :return: an initialised Language object; the parser
     """
-
-    model_or_lang = 'en' if model_or_lang is None else model_or_lang
-
     if parser == 'spacy':
         nlp = spacy.load(model_or_lang)
         if is_tokenized:
