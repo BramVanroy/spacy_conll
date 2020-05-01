@@ -128,12 +128,12 @@ To illustrate, here is an advanced example, showing the more complex options:
 
 The example below
 
-* changes the custom attribute :code:`conll_pd` to :code:`pandas`;
+* changes the custom attribute :code:`conll_pd` to :code:`pandas` (:code:`conll_pd` only availabe if ``pandas`` is
+  installed);
 * converts any :code:`-PRON-` lemma to :code:`PRON`.
 
 .. code:: python
 
-    import pandas as pd
     import spacy
     from spacy_conll import ConllFormatter
 
