@@ -41,8 +41,7 @@ To install the library, simply use pip.
   pip install spacy_conll
 
 .. _spaCy: https://spacy.io/usage/models#section-quickstart
-.. _installed spaCy language model: https://spacy.io/usage/models
-.. _`a corresponding model`: https://stanfordnlp.github.io/stanfordnlp/models.html
+.. _spaCy's models: https://spacy.io/usage/models
 
 
 Usage
@@ -75,6 +74,94 @@ automatically, too!
 
 .. _`CoNLL format`: https://universaldependencies.org/format.html#sentence-boundaries-and-comments
 
+You can use ``spacy_conll`` in your own Python code as a custom pipeline component, or you can use the built-in
+command-line script which offers typically needed functionality. See the following section for more.
+
+In Python
+---------
+This library offers the :code:`ConllFormatter` class which serves as a custom spaCy pipeline component. It can be
+instantiated as follows.
+
+.. code:: python
+
+    nlp = <initialise parser>
+    conllformatter = ConllFormatter(nlp)
+    nlp.add_pipe(conllformatter, last=True)
+
+Because this library supports different spaCy wrappers (``spacy``, ``stanfordnlp``, ``stanza``, and ``udpipe``), a
+convenience function is available as well. With :code:`utils.init_parser` you can easily instantiate a parser with a
+single line. You can find the function's signature below. Have a look at the `source code`_ to read more about all the
+possible arguments.
+
+**NOTE**: :code:`is_tokenized` does not work for ``spacy-udpipe`` and :code:`disable_sbd` only works for ``spacy``.
+
+.. code:: python
+
+    def init_parser(parser: str = 'spacy',
+                    model_or_lang: str = 'en',
+                    *,
+                    is_tokenized: bool = False,
+                    disable_sbd: bool = False,
+                    include_headers: bool = False,
+                    **kwargs) -> Language:
+
+For instance, if you want to load a Dutch ``stanza`` model in silent mode with the CoNLL formatter already attached,
+you can simply use the following snippet. :code:`verbose` is passed to the ``stanza`` pipeline initialisation
+automatically.
+
+.. code:: python
+
+    from spacy_conll import init_parser
+
+    nlp = init_parser('stanza', 'nl', verbose=False)
+
+
+You can add the component manually, too, if you want. This offers some more functionality: it allows you to use your own
+extension names and you can specify conversion maps for the output properties.
+
+To illustrate, here is an advanced example, showing the more complex options:
+
+* :code:`ext_names`: changes the attribute names to a custom key by using a dictionary.
+* :code:`conversion_maps`: a two-level dictionary that looks like :code:`{field_name: {tag_name: replacement}}`.
+  In other words, you can specify in which field a certain value should be replaced by another. This is especially
+  useful when you are not satisfied with the tagset of a model and wish to change some tags to an alternative
+
+The example below
+
+* changes the custom attribute :code:`conll_pd` to :code:`pandas`;
+* converts any :code:`-PRON-` lemma to :code:`PRON`.
+
+.. code:: python
+
+    import pandas as pd
+    import spacy
+    from spacy_conll import ConllFormatter
+
+
+    nlp = spacy.load('en')
+    conllformatter = ConllFormatter(nlp,
+                                    ext_names={'conll_pd': 'pandas'},
+                                    conversion_maps={'lemma': {'-PRON-': 'PRON'}})
+    nlp.add_pipe(conllformatter, after='parser')
+    doc = nlp('I like cookies.')
+    print(doc._.pandas)
+
+The snippet above will output a pandas DataFrame by using :code:`._.pandas` rather than the standard :code:`conll_pd`,
+and all occurrences of "-PRON-" in the lemma field are replaced by "PRON".
+
+.. code:: text
+
+       id     form word_lemma upostag  ... head deprel  deps misc
+    0   1        I       PRON    PRON  ...    2  nsubj     _    _
+    1   2     like       like    VERB  ...    0   ROOT     _    _
+    2   3  cookies     cookie    NOUN  ...    2   dobj     _    _
+    3   4        .          .   PUNCT  ...    2  punct     _    _
+
+    [4 rows x 10 columns]
+
+
+.. _`examples`: examples/
+.. _`source code`: spacy_conll/utils.py
 
 Command line
 ------------
@@ -167,185 +254,12 @@ For example, parsing a single line, multi-sentence string:
     3       you     -PRON-  PRON    PRP     PronType=prs    2       pobj    _       _
     4       ?       ?       PUNCT   .       PunctType=peri  2       punct   _       _
 
-For example, parsing a large input file and writing output to a given output file, using four processes:
+For example, parsing a large input file and writing output to a given output file, using four processes (multiprocessing
+might be only supported in ``spacy``):
 
 .. code:: bash
 
     > parse_as_conll --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
-
-You can also use Stanford NLP's models to retrieve UD tags. You can do this by using the :code:`-u` flag. **NOTE**:
-Using Stanford's models has limited options due to the API of :code:`stanfordnlp`. It is not possible to disable
-sentence segmentation and control the tokenisation at the same time. When using the :code:`-u` flag you can only enable
-the :code:`--is_tokenized` flag which behaves different when used with spaCy. With spaCy, it will simply not try to
-tokenize the text and use spaces as token separators. When using :code:`spacy-stanfordnlp`, it will also be assumed that
-the text is sentence split by newline. No further sentence segmentation is done.
-
-In Python
----------
-spaCy
-+++++
-
-:code:`spacy_conll` is intended to be used a custom pipeline component in spaCy. Three custom extensions are accessible,
-by default named :code:`conll_str`, :code:`conll_str_headers`, and :code:`conll`.
-
-- :code:`conll_str`: returns the string representation of the CoNLL format
-- :code:`conll_str_headers`: returns the string representation of the CoNLL format including headers. These headers
-  consist of two lines, namely :code:`# sent_id = <i>`, indicating which sentence it is in the overall document, and
-  :code:`# text = <sentence>`, which simply shows the original sentence's text
-- :code:`conll`: returns the output as (a list of) tuple(s) where each line is a tuple of its column values
-
-When adding the component to the spaCy pipeline, it is important to insert it *after* the parser, as shown in the
-example below.
-
-.. code:: python
-
-    import spacy
-    from spacy_conll import ConllFormatter
-
-    nlp = spacy.load('en')
-    conllformatter = ConllFormatter(nlp)
-    nlp.add_pipe(conllformatter, after='parser')
-    doc = nlp('I like cookies. Do you?')
-    print(doc._.conll_str_headers)
-
-The snippet above will return (and print) the following string:
-
-.. code:: text
-
-    # sent_id = 1
-    # text = I like cookies.
-    1	I	-PRON-	PRON	PRP	PronType=prs	2	nsubj	_	_
-    2	like	like	VERB	VBP	VerbForm=fin|Tense=pres	0	ROOT	_	_
-    3	cookies	cookie	NOUN	NNS	Number=plur	2	dobj	_	_
-    4	.	.	PUNCT	.	PunctType=peri	2	punct	_	_
-
-    # sent_id = 2
-    # text = Do you?
-    1	Do	do	AUX	VBP	VerbForm=fin|Tense=pres	0	ROOT	_	_
-    2	you	-PRON-	PRON	PRP	PronType=prs	1	nsubj	_	_
-    3	?	?	PUNCT	.	PunctType=peri	1	punct	_	_
-
-
-An advanced example, showing the more complex options:
-
-* :code:`ext_names`: changes the attribute names to a custom key by using a dictionary. You can change:
-
-  * :code:`conll_str`: a string representation of the CoNLL format
-  * :code:`conll_str_headers`: the same as :code:`conll_str` but with leading lines containing sentence index
-    and sentence text
-  * :code:`conll`: a dictionary containing the field names and their values. For a :code:`Doc` object, this returns a list
-    of dictionaries where each dictionary is a sentence
-
-* :code:`field_names`: a dictionary containing a mapping of field names so that you can name them as you wish
-* :code:`conversion_maps`: a two-level dictionary that looks like :code:`{field_name: {tag_name: replacement}}`.
-  In other words, you can specify in which field a certain value should be replaced by another. This is especially
-  useful when you are not satisfied with the tagset of a model and wish to change some tags to an alternative
-
-The example below
-
-* changes the custom attribute :code:`conll` to :code:`connl_for_pd`;
-* changes the :code:`lemma` field to :code:`word_lemma`;
-* converts any :code:`-PRON-` to :code:`PRON`;
-* as a bonus: uses the output dictionary to create a pandas DataFrame.
-
-.. code:: python
-
-    import pandas as pd
-    import spacy
-    from spacy_conll import ConllFormatter
-
-
-    nlp = spacy.load('en')
-    conllformatter = ConllFormatter(nlp,
-                                    ext_names={'conll': 'connl_for_pd'},
-                                    field_names={'lemma': 'word_lemma'},
-                                    conversion_maps={'word_lemma': {'-PRON-': 'PRON'}})
-    nlp.add_pipe(conllformatter, after='parser')
-    doc = nlp('I like cookies.')
-    df = pd.DataFrame.from_dict(doc._.connl_for_pd[0])
-    print(df)
-
-The snippet above will output a pandas DataFrame:
-
-.. code:: text
-
-       id     form word_lemma upostag  ... head deprel  deps misc
-    0   1        I       PRON    PRON  ...    2  nsubj     _    _
-    1   2     like       like    VERB  ...    0   ROOT     _    _
-    2   3  cookies     cookie    NOUN  ...    2   dobj     _    _
-    3   4        .          .   PUNCT  ...    2  punct     _    _
-
-    [4 rows x 10 columns]
-
-spacy-stanfordnlp
-+++++++++++++++++
-
-Using :code:`spacy_conll` in conjunction with :code:`spacy-stanfordnlp` is similar to using it with :code:`spacy`:
-in practice we are still simply adding a custom component pipeline to the existing pipeline, but this time that pipeline
-is a Stanford NLP pipeline that is wrapped in spaCy's API.
-
-.. code:: python
-
-    from spacy_stanfordnlp import StanfordNLPLanguage
-    import stanfordnlp
-
-    from spacy_conll import ConllFormatter
-
-
-    snlp = stanfordnlp.Pipeline(lang='en')
-    nlp = StanfordNLPLanguage(snlp)
-    conllformatter = ConllFormatter(nlp)
-    nlp.add_pipe(conllformatter, last=True)
-
-    s = 'A cookie is a baked or cooked food that is typically small, flat and sweet.'
-
-    doc = nlp(s)
-    print(doc._.conll_str)
-
-Output:
-
-.. code:: text
-
-    1	A	a	DET	DT	_	2	det	_	_
-    2	cookie	cookie	NOUN	NN	Number=sing	8	nsubj	_	_
-    3	is	be	AUX	VBZ	VerbForm=fin|Tense=pres|Number=sing|Person=three	8	cop	_	_
-    4	a	a	DET	DT	_	8	det	_	_
-    5	baked	bake	VERB	VBN	VerbForm=part|Tense=past|Aspect=perf	8	amod	_	_
-    6	or	or	CCONJ	CC	ConjType=comp	7	cc	_	_
-    7	cooked	cook	VERB	VBN	VerbForm=part|Tense=past|Aspect=perf	5	conj	_	_
-    8	food	food	NOUN	NN	Number=sing	0	root	_	_
-    9	that	that	PRON	WDT	_	12	nsubj	_	_
-    10	is	be	AUX	VBZ	VerbForm=fin|Tense=pres|Number=sing|Person=three	12	cop	_	_
-    11	typically	typically	ADV	RB	Degree=pos	12	advmod	_	_
-    12	small	small	ADJ	JJ	Degree=pos	8	acl:relcl	_	_
-    13	,	,	PUNCT	,	PunctType=comm	14	punct	_	_
-    14	flat	flat	ADJ	JJ	Degree=pos	12	conj	_	_
-    15	and	and	CCONJ	CC	ConjType=comp	16	cc	_	_
-    16	sweet	sweet	ADJ	JJ	Degree=pos	12	conj	_	_
-    17	.	.	PUNCT	.	PunctType=peri	8	punct	_	_
-
-.. _`spaCy's models`: https://spacy.io/models
-
-----
-
-**DEPRECATED:** :code:`Spacy2ConllParser`
-+++++++++++++++++++++++++++++++++++++++++
-
-There are two main methods, :code:`parse()` and :code:`parseprint()`. The latter is a convenience method for printing the output of
-:code:`parse()` to stdout (default) or a file.
-
-.. code:: python
-
-    from spacy_conll import Spacy2ConllParser
-    spacyconll = Spacy2ConllParser()
-
-    # `parse` returns a generator of the parsed sentences
-    for parsed_sent in spacyconll.parse(input_str="I like cookies.\nWhat about you?\nI don't like 'em!"):
-        do_something_(parsed_sent)
-
-    # `parseprint` prints output to stdout (default) or a file (use `output_file` parameter)
-    # This method is called when using the command line
-    spacyconll.parseprint(input_str='I like cookies.')
 
 
 =======
