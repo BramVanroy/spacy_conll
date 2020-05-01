@@ -91,7 +91,7 @@ instantiated as follows.
 Because this library supports different spaCy wrappers (``spacy``, ``stanfordnlp``, ``stanza``, and ``udpipe``), a
 convenience function is available as well. With :code:`utils.init_parser` you can easily instantiate a parser with a
 single line. You can find the function's signature below. Have a look at the `source code`_ to read more about all the
-possible arguments.
+possible arguments or try out the `examples`_.
 
 **NOTE**: :code:`is_tokenized` does not work for ``spacy-udpipe`` and :code:`disable_sbd` only works for ``spacy``.
 
