@@ -102,22 +102,22 @@ possible arguments or try out the `examples`_.
                     *,
                     is_tokenized: bool = False,
                     disable_sbd: bool = False,
-                    include_headers: bool = False,
+                    pipeline_opts: Optional[Dict] = None,
                     **kwargs) -> Language:
 
 For instance, if you want to load a Dutch ``stanza`` model in silent mode with the CoNLL formatter already attached,
-you can simply use the following snippet. :code:`verbose` is passed to the ``stanza`` pipeline initialisation
-automatically.
+you can simply use the following snippet. :code:`pipeline_opts` is passed to the ``stanza`` pipeline initialisation
+automatically. :code:`kwargs`, on the other hand, is passed to the :code:`ConllFormatter` initialisation.
 
 .. code:: python
 
     from spacy_conll import init_parser
 
-    nlp = init_parser('stanza', 'nl', verbose=False)
+    nlp = init_parser('stanza', 'nl', pipeline_opts={'verbose': False})
 
 
-You can add the component manually, too, if you want. This offers some more functionality: it allows you to use your own
-extension names and you can specify conversion maps for the output properties.
+The :code:`ConllFormatter` allows you to customize the extension names and you can also specify conversion maps for
+the output properties.
 
 To illustrate, here is an advanced example, showing the more complex options:
 
@@ -128,6 +128,7 @@ To illustrate, here is an advanced example, showing the more complex options:
 
 The example below
 
+* shows how to manually add the component;
 * changes the custom attribute :code:`conll_pd` to :code:`pandas` (:code:`conll_pd` only availabe if ``pandas`` is
   installed);
 * converts any :code:`-PRON-` lemma to :code:`PRON`.
@@ -146,7 +147,19 @@ The example below
     doc = nlp('I like cookies.')
     print(doc._.pandas)
 
-The snippet above will output a pandas DataFrame by using :code:`._.pandas` rather than the standard :code:`conll_pd`,
+This is the same as:
+
+.. code:: python
+
+    from spacy_conll import init_parser
+
+
+    nlp = init_parser(ext_names={'conll_pd': 'pandas'},
+                      conversion_maps={'lemma': {'-PRON-': 'PRON'}})
+    doc = nlp('I like cookies.')
+    print(doc._.pandas)
+
+The snippets above will output a pandas DataFrame by using :code:`._.pandas` rather than the standard :code:`conll_pd`,
 and all occurrences of "-PRON-" in the lemma field are replaced by "PRON".
 
 .. code:: text
