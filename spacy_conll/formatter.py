@@ -8,6 +8,7 @@ CONLL_FIELD_NAMES = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'head
 
 try:
     import pandas as pd
+
     PD_AVAILABLE = True
 except ImportError:
     PD_AVAILABLE = False
@@ -78,11 +79,12 @@ class ConllFormatter:
         for sent_idx, sent in enumerate(doc.sents, 1):
             self._set_span_conll(sent, sent_idx)
 
-        doc._.set(self._ext_names['conll'], [s._.conll for s in doc.sents])
-        doc._.set(self._ext_names['conll_str'], "\n".join([s._.conll_str for s in doc.sents]))
+        doc._.set(self._ext_names['conll'], [s._.get(self._ext_names['conll']) for s in doc.sents])
+        doc._.set(self._ext_names['conll_str'], "\n".join([s._.get(self._ext_names['conll_str']) for s in doc.sents]))
 
         if PD_AVAILABLE:
-            doc._.set(self._ext_names['conll_pd'], pd.concat([s._.conll_pd for s in doc.sents]).reset_index(drop=True))
+            doc._.set(self._ext_names['conll_pd'],
+                      pd.concat([s._.get(self._ext_names['conll_pd']) for s in doc.sents]).reset_index(drop=True))
 
         return doc
 
@@ -143,12 +145,12 @@ class ConllFormatter:
         for token_idx, token in enumerate(span, 1):
             self._set_token_conll(token, token_idx)
 
-        span._.set(self._ext_names['conll'], [t._.conll for t in span])
-        span_conll_str += "".join([t._.conll_str for t in span])
+        span._.set(self._ext_names['conll'], [t._.get(self._ext_names['conll']) for t in span])
+        span_conll_str += "".join([t._.get(self._ext_names['conll_str']) for t in span])
         span._.set(self._ext_names['conll_str'], span_conll_str)
 
         if PD_AVAILABLE:
-            span._.set(self._ext_names['conll_pd'], pd.DataFrame([t._.conll for t in span]))
+            span._.set(self._ext_names['conll_pd'], pd.DataFrame([t._.get(self._ext_names['conll']) for t in span]))
 
     def _set_token_conll(self, token: Token, token_idx: int = 1):
         """Sets a token's properties according to the CoNLL-U format.
