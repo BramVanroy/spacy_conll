@@ -24,7 +24,7 @@ class ConllFormatter:
                  nlp: Language,
                  *,
                  ext_names: Optional[Dict[str, str]] = None,
-                 conversion_maps: Optional[Dict[str, str]] = None,
+                 conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
                  include_headers: bool = False
                  ):
         """ ConllFormatter constructor. The names of the extensions that are set
