@@ -7,6 +7,7 @@ from . import ConllFormatter
 
 def init_parser(parser: str = 'spacy',
                 model_or_lang: str = 'en',
+                *,
                 is_tokenized: bool = False,
                 disable_sbd: bool = False,
                 include_headers: bool = False,
