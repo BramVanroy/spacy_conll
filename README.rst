@@ -179,13 +179,13 @@ and all occurrences of "-PRON-" in the lemma field are replaced by "PRON".
 Command line
 ------------
 
-Upon installation, a command-line script is added under tha alias :code:`parse_as_conll`. You can use it to parse a
+Upon installation, a command-line script is added under tha alias :code:`parse-as-conll`. You can use it to parse a
 string or file into CoNLL format given a number of options.
 
 .. code:: bash
 
-    > parse_as_conll  -h
-    usage: parse_as_conll [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR]
+    > parse-as-conll  -h
+    usage: parse-as-conll [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR]
                           [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL_OR_LANG]
                           [-s] [-t] [-d] [-e] [-j N_PROCESS]
                           [-p {spacy,stanfordnlp,stanza,udpipe}] [-v]
@@ -252,7 +252,7 @@ For example, parsing a single line, multi-sentence string:
 
 .. code:: bash
 
-    >  parse_as_conll --input_str "I like cookies . What about you ?" --is_tokenized --include_headers
+    >  parse-as-conll --input_str "I like cookies . What about you ?" --is_tokenized --include_headers
     # sent_id = 1
     # text = I like cookies .
     1       I       -PRON-  PRON    PRP     PronType=prs    2       nsubj   _       _
@@ -272,7 +272,7 @@ might be only supported in ``spacy``):
 
 .. code:: bash
 
-    > parse_as_conll --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
+    > parse-as-conll --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
 
 
 =======
