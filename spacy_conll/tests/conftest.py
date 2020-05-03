@@ -31,8 +31,20 @@ def spacy_udpipe_en():
 def parser(request):
     yield request.param
 
+@pytest.fixture
+def spacy_ext_names():
+    nlp = init_parser(ext_names={'conll': 'conllu',
+                                 'conll_str': 'conll_text',
+                                 'conll_pd': 'pandas'})
+    return nlp
+
+@pytest.fixture
+def spacy_conversion_map():
+    nlp = init_parser(conversion_maps={'lemma': {'-PRON-': 'PRON'}})
+    return nlp
+
 def single_sent():
-    return "A cookie is a baked or cooked food that is typically small, flat and sweet."
+    return "He wanted to elaborate more on the cookie."
 
 def multi_sent():
     return "A cookie is a baked or cooked food that is typically small, flat and sweet. It usually contains flour, sugar and some type of oil or fat. It may include other ingredients such as raisins, oats, chocolate chips, nuts, etc."
@@ -44,3 +56,11 @@ def text(request):
 @pytest.fixture
 def doc(parser, text):
     yield parser()(text())
+
+@pytest.fixture
+def spacy_ext_names_doc(spacy_ext_names):
+    return spacy_ext_names(single_sent())
+
+@pytest.fixture
+def spacy_conversion_map_doc(spacy_conversion_map):
+    return spacy_conversion_map(single_sent())
