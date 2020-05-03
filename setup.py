@@ -11,7 +11,7 @@ setup(
                 ' and its sentences into CoNLL-U format. Also provides a command line entry point.',
     long_description=long_description,
     long_description_content_type='text/x-rst',
-    keywords='nlp spacy spacy-extension conll conllu tagging parsing stanfordnlp spacy_stanfordnlp',
+    keywords='nlp spacy spacy-extension conll conllu tagging parsing stanza spacy_stanza udpipe spacy_udpipe',
     packages=['spacy_conll'],
     url='https://github.com/BramVanroy/spacy_conll',
     author='Bram Vanroy',
@@ -37,6 +37,10 @@ setup(
         'spacy>=2.0',
         'packaging'
     ],
+    extras_require={
+        "dev":  ["pytest", "flake8", "isort", "black"],
+        "pd": ["pandas"]
+    },
     entry_points={
         'console_scripts': ['parse-as-conll=spacy_conll.__main__:main']
     }

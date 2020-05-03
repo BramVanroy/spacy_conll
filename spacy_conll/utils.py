@@ -7,13 +7,15 @@ from spacy.tokens import Doc
 from . import ConllFormatter
 
 
-def init_parser(parser: str = 'spacy',
-                model_or_lang: str = 'en',
-                *,
-                is_tokenized: bool = False,
-                disable_sbd: bool = False,
-                parser_opts: Optional[Dict] = None,
-                **kwargs) -> Language:
+def init_parser(
+    parser: str = "spacy",
+    model_or_lang: str = "en",
+    *,
+    is_tokenized: bool = False,
+    disable_sbd: bool = False,
+    parser_opts: Optional[Dict] = None,
+    **kwargs,
+) -> Language:
     """Initialise a spacy-wrapped parser given a language or model and some options.
 
     :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
@@ -31,30 +33,36 @@ def init_parser(parser: str = 'spacy',
     """
     parser_opts = {} if parser_opts is None else parser_opts
 
-    if parser == 'spacy':
+    if parser == "spacy":
         nlp = spacy.load(model_or_lang, **parser_opts)
         if is_tokenized:
             nlp.tokenizer = nlp.tokenizer.tokens_from_list
         if disable_sbd:
-            nlp.add_pipe(_prevent_sbd, name='prevent-sbd', before='parser')
-    elif parser == 'stanfordnlp':
+            nlp.add_pipe(_prevent_sbd, name="prevent-sbd", before="parser")
+    elif parser == "stanfordnlp":
         from spacy_stanfordnlp import StanfordNLPLanguage
         import stanfordnlp
 
-        snlp = stanfordnlp.Pipeline(lang=model_or_lang, tokenize_pretokenized=is_tokenized, **parser_opts)
+        snlp = stanfordnlp.Pipeline(
+            lang=model_or_lang, tokenize_pretokenized=is_tokenized, **parser_opts
+        )
         nlp = StanfordNLPLanguage(snlp)
-    elif parser == 'stanza':
+    elif parser == "stanza":
         import stanza
         from spacy_stanza import StanzaLanguage
 
-        snlp = stanza.Pipeline(lang=model_or_lang, tokenize_pretokenized=is_tokenized, **parser_opts)
+        snlp = stanza.Pipeline(
+            lang=model_or_lang, tokenize_pretokenized=is_tokenized, **parser_opts
+        )
         nlp = StanzaLanguage(snlp)
-    elif parser == 'udpipe':
+    elif parser == "udpipe":
         import spacy_udpipe
 
         nlp = spacy_udpipe.load(model_or_lang, **parser_opts)
     else:
-        raise ValueError("Unexpected value for 'parser'. Options are: 'spacy', 'stanfordnlp', 'stanza', 'udpipe'")
+        raise ValueError(
+            "Unexpected value for 'parser'. Options are: 'spacy', 'stanfordnlp', 'stanza', 'udpipe'"
+        )
 
     conllformatter = ConllFormatter(nlp, **kwargs)
     nlp.add_pipe(conllformatter, last=True)

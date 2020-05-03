@@ -1,11 +1,22 @@
 from collections import OrderedDict
-from typing import Optional, Dict, Union
+from typing import Dict, Optional, Union
 
 from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
 
-COMPONENT_NAME = 'conll_formatter'
-CONLL_FIELD_NAMES = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'head', 'deprel', 'deps', 'misc']
+COMPONENT_NAME = "conll_formatter"
+CONLL_FIELD_NAMES = [
+    "id",
+    "form",
+    "lemma",
+    "upostag",
+    "xpostag",
+    "feats",
+    "head",
+    "deprel",
+    "deps",
+    "misc",
+]
 
 try:
     import pandas as pd
@@ -38,15 +49,17 @@ class ConllFormatter:
            - in `Doc`: a concatenation of its sentences' `DataFrame`'s, leading to a new a `DataFrame` whose
              index is reset.
        """
+
     name = COMPONENT_NAME
 
-    def __init__(self,
-                 nlp: Language,
-                 *,
-                 conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
-                 ext_names: Optional[Dict[str, str]] = None,
-                 include_headers: bool = False
-                 ):
+    def __init__(
+        self,
+        nlp: Language,
+        *,
+        conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
+        ext_names: Optional[Dict[str, str]] = None,
+        include_headers: bool = False,
+    ):
         """ ConllFormatter constructor.
         :param nlp: an initialized spaCy nlp object
         :param conversion_maps: two-level dictionary that contains a field_name (e.g. 'lemma', 'upostag')
@@ -63,11 +76,7 @@ class ConllFormatter:
         self._tagmap = nlp.Defaults.tag_map
 
         # Set custom attribute names
-        self._ext_names = {
-            'conll_str': 'conll_str',
-            'conll': 'conll',
-            'conll_pd': 'conll_pd'
-        }
+        self._ext_names = {"conll_str": "conll_str", "conll": "conll", "conll_pd": "conll_pd"}
         if ext_names:
             self._ext_names = self._merge_dicts_strict(self._ext_names, ext_names)
 
@@ -93,12 +102,21 @@ class ConllFormatter:
         for sent_idx, sent in enumerate(doc.sents, 1):
             self._set_span_conll(sent, sent_idx)
 
-        doc._.set(self._ext_names['conll'], [s._.get(self._ext_names['conll']) for s in doc.sents])
-        doc._.set(self._ext_names['conll_str'], "\n".join([s._.get(self._ext_names['conll_str']) for s in doc.sents]))
+        doc._.set(
+            self._ext_names["conll"], [s._.get(self._ext_names["conll"]) for s in doc.sents]
+        )
+        doc._.set(
+            self._ext_names["conll_str"],
+            "\n".join([s._.get(self._ext_names["conll_str"]) for s in doc.sents]),
+        )
 
         if PD_AVAILABLE:
-            doc._.set(self._ext_names['conll_pd'],
-                      pd.concat([s._.get(self._ext_names['conll_pd']) for s in doc.sents]).reset_index(drop=True))
+            doc._.set(
+                self._ext_names["conll_pd"],
+                pd.concat(
+                    [s._.get(self._ext_names["conll_pd"]) for s in doc.sents]
+                ).reset_index(drop=True),
+            )
 
         return doc
 
@@ -108,13 +126,17 @@ class ConllFormatter:
         :return: a string entailing the tag's morphological features
         """
         if not self._tagmap or tag not in self._tagmap:
-            return '_'
+            return "_"
         else:
-            feats = [f"{prop}={val}" for prop, val in self._tagmap[tag].items() if not self._is_number(prop)]
+            feats = [
+                f"{prop}={val}"
+                for prop, val in self._tagmap[tag].items()
+                if not self._is_number(prop)
+            ]
             if feats:
-                return '|'.join(feats)
+                return "|".join(feats)
             else:
-                return '_'
+                return "_"
 
     def _map_conll(self, token_conll_d: Dict[str, Union[str, int]]):
         """Maps labels according to a given `self._conversion_maps`.
@@ -135,14 +157,14 @@ class ConllFormatter:
     def _set_extensions(self):
         """Sets the default extensions if they do not exist yet."""
         for obj in Doc, Span, Token:
-            if not obj.has_extension(self._ext_names['conll_str']):
-                obj.set_extension(self._ext_names['conll_str'], default=None)
-            if not obj.has_extension(self._ext_names['conll']):
-                obj.set_extension(self._ext_names['conll'], default=None)
+            if not obj.has_extension(self._ext_names["conll_str"]):
+                obj.set_extension(self._ext_names["conll_str"], default=None)
+            if not obj.has_extension(self._ext_names["conll"]):
+                obj.set_extension(self._ext_names["conll"], default=None)
 
             if PD_AVAILABLE:
-                if not obj.has_extension(self._ext_names['conll_pd']):
-                    obj.set_extension(self._ext_names['conll_pd'], default=None)
+                if not obj.has_extension(self._ext_names["conll_pd"]):
+                    obj.set_extension(self._ext_names["conll_pd"], default=None)
 
     def _set_span_conll(self, span: Span, span_idx: int = 1):
         """Sets a span's properties according to the CoNLL-U format.
@@ -150,26 +172,29 @@ class ConllFormatter:
         :param span_idx: optional index, corresponding to the n-th sentence
                          in the parent Doc
         """
-        span_conll_str = ''
+        span_conll_str = ""
         if self.include_headers:
             span_conll_str += f"# sent_id = {span_idx}\n# text = {span.text}\n"
 
         for token_idx, token in enumerate(span, 1):
             self._set_token_conll(token, token_idx)
 
-        span._.set(self._ext_names['conll'], [t._.get(self._ext_names['conll']) for t in span])
-        span_conll_str += "".join([t._.get(self._ext_names['conll_str']) for t in span])
-        span._.set(self._ext_names['conll_str'], span_conll_str)
+        span._.set(self._ext_names["conll"], [t._.get(self._ext_names["conll"]) for t in span])
+        span_conll_str += "".join([t._.get(self._ext_names["conll_str"]) for t in span])
+        span._.set(self._ext_names["conll_str"], span_conll_str)
 
         if PD_AVAILABLE:
-            span._.set(self._ext_names['conll_pd'], pd.DataFrame([t._.get(self._ext_names['conll']) for t in span]))
+            span._.set(
+                self._ext_names["conll_pd"],
+                pd.DataFrame([t._.get(self._ext_names["conll"]) for t in span]),
+            )
 
     def _set_token_conll(self, token: Token, token_idx: int = 1):
         """Sets a token's properties according to the CoNLL-U format.
         :param token: a spaCy Token
         :param token_idx: optional index, corresponding to the n-th token in the sentence Span
         """
-        if token.dep_.lower().strip() == 'root':
+        if token.dep_.lower().strip() == "root":
             head_idx = 0
         else:
             head_idx = token.head.i + 1 - token.sent[0].i
@@ -183,8 +208,8 @@ class ConllFormatter:
             self._get_morphology(token.tag_),
             head_idx,
             token.dep_,
-            '_',
-            '_' if token.whitespace_ else 'SpaceAfter=No'
+            "_",
+            "_" if token.whitespace_ else "SpaceAfter=No",
         )
 
         # turn field name values (keys) and token values (values) into dict
@@ -194,12 +219,12 @@ class ConllFormatter:
         if self._conversion_maps:
             token_conll_d = self._map_conll(token_conll_d)
 
-        token._.set(self._ext_names['conll'], token_conll_d)
+        token._.set(self._ext_names["conll"], token_conll_d)
         token_conll_str = "\t".join(map(str, token_conll_d.values())) + "\n"
-        token._.set(self._ext_names['conll_str'], token_conll_str)
+        token._.set(self._ext_names["conll_str"], token_conll_str)
 
         if PD_AVAILABLE:
-            token._.set(self._ext_names['conll_pd'], pd.Series(token_conll_d))
+            token._.set(self._ext_names["conll_pd"], pd.Series(token_conll_d))
 
         return token
 
@@ -226,7 +251,9 @@ class ConllFormatter:
         """
         for k, v in d2.items():
             if k not in d1:
-                raise KeyError(f"This key does not exist in the original dict. Valid keys are {list(d1.keys())}")
+                raise KeyError(
+                    f"This key does not exist in the original dict. Valid keys are {list(d1.keys())}"
+                )
             d1[k] = v
 
         return d1
