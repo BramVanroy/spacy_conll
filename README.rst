@@ -102,18 +102,18 @@ possible arguments or try out the `examples`_.
                     *,
                     is_tokenized: bool = False,
                     disable_sbd: bool = False,
-                    pipeline_opts: Optional[Dict] = None,
+                    parser_opts: Optional[Dict] = None,
                     **kwargs) -> Language:
 
 For instance, if you want to load a Dutch ``stanza`` model in silent mode with the CoNLL formatter already attached,
-you can simply use the following snippet. :code:`pipeline_opts` is passed to the ``stanza`` pipeline initialisation
+you can simply use the following snippet. :code:`parser_opts` is passed to the ``stanza`` pipeline initialisation
 automatically. :code:`kwargs`, on the other hand, is passed to the :code:`ConllFormatter` initialisation.
 
 .. code:: python
 
     from spacy_conll import init_parser
 
-    nlp = init_parser('stanza', 'nl', pipeline_opts={'verbose': False})
+    nlp = init_parser('stanza', 'nl', parser_opts={'verbose': False})
 
 
 The :code:`ConllFormatter` allows you to customize the extension names and you can also specify conversion maps for
