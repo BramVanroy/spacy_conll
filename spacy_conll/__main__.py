@@ -46,20 +46,24 @@ def parse(input_file: Optional[str] = None,
         :param n_process: number of processes to use in nlp.pipe(). -1 will use as many cores as available
         :param verbose: to print the output to stdout, regardless of 'output_file'
         """
-    nlp = init_parser(parser, model_or_lang, is_tokenized, disable_sbd, include_headers)
+    if not input_str and not input_file:
+        raise ValueError("'input_file' or 'input_str' must be given. Use parse-as-conll -h for help.")
+
+    nlp = init_parser(parser, model_or_lang,
+                      is_tokenized=is_tokenized,
+                      disable_sbd=disable_sbd,
+                      include_headers=include_headers)
 
     # Gather input:
     # Collect lines in 'lines' variable, taking into account 'is_tokenized'
     lines = []
-    if input_str is not None:
+    if input_str:
         lines.append(input_str.strip().split(' ') if is_tokenized and parser in ['spacy'] else input_str)
-    elif input_file is not None:
+    elif input_file:
         with Path(input_file).open(encoding=input_encoding) as fhin:
             lines = [l.strip() for l in fhin.readlines()]
             if is_tokenized and parser in ['spacy']:
                 lines = [l.split(' ') for l in lines]
-    else:
-        raise ValueError("'input_file' or 'input_str' must be given.")
 
     # Write to output:
     # If 'output_file' given, write to that file - if, also, 'verbose' is given, also write to stdout
