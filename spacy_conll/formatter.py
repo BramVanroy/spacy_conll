@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import Optional, Dict, Union
 
 from spacy.language import Language
@@ -15,28 +16,45 @@ except ImportError:
 
 
 class ConllFormatter:
-    """Pipeline component for spaCy that adds CoNLL-U properties to a Doc and
-       its sentences. A string representation, representation including a
-       header, and the CoNLL-U format in tuples, are added as custom attributes."""
+    """Pipeline component for spaCy that adds CoNLL-U properties to a Doc, its sentence `Span`s, and Tokens.
+       By default, the custom properties `conll` and `conll_str` are added. If `pandas` is installed,
+       `conll_pd` is added as well.
+
+       - `conll`: raw CoNLL format
+           - in `Token`: a dictionary containing all the expected CoNLL fields as keys and the parsed properties as
+             values.
+           - in sentence `Span`: a list of its tokens' `conll` dictionaries (list of dictionaries).
+           - in a `Doc`: a list of its sentences' `conll` lists (list of list of dictionaries).
+       - `conll_str`: string representation of the CoNLL format
+           - in `Token`: tab-separated representation of the contents of the CoNLL fields ending with a newline.
+           - in sentence `Span`: the expected CoNLL format where each row represents a token. When
+             `ConllFormatter(include_headers=True)` is used, two header lines are included as well, as per the
+             `CoNLL format`_.
+           - in `Doc`: all its sentences' `conll_str` combined and separated by new lines.
+       - `conll_pd`: `pandas` representation of the CoNLL format
+           - in `Token`: a `Series` representation of this token's CoNLL properties.
+           - in sentence `Span`: a `DataFrame` representation of this sentence, with the CoNLL names as column
+             headers.
+           - in `Doc`: a concatenation of its sentences' `DataFrame`'s, leading to a new a `DataFrame` whose
+             index is reset.
+       """
     name = COMPONENT_NAME
 
     def __init__(self,
                  nlp: Language,
                  *,
-                 ext_names: Optional[Dict[str, str]] = None,
                  conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
+                 ext_names: Optional[Dict[str, str]] = None,
                  include_headers: bool = False
                  ):
-        """ ConllFormatter constructor. The names of the extensions that are set
-            can be changed with '*_attr' arguments.
-
+        """ ConllFormatter constructor.
         :param nlp: an initialized spaCy nlp object
-        :param ext_names: dictionary containing names for the custom spaCy extensions. You can rename the following
-               extensions: conll, conll_pd, conll_str.
-               E.g. {'conll': 'conll_dict', 'conll_pd': 'conll_pandas'} will rename the properties accordingly
         :param conversion_maps: two-level dictionary that contains a field_name (e.g. 'lemma', 'upostag')
                on the first level, and the conversion map on the second.
                E.g. {'lemma': {'-PRON-': 'PRON'}} will map the lemma '-PRON-' to 'PRON'
+        :param ext_names: dictionary containing names for the custom spaCy extensions. You can rename the following
+               extensions: conll, conll_pd, conll_str.
+               E.g. {'conll': 'conll_dict', 'conll_pd': 'conll_pandas'} will rename the properties accordingly
         :param include_headers: whether to include the CoNLL headers in the conll_str string output. These consist
                of two lines containing the sentence id and the text as per the CoNLL format
                https://universaldependencies.org/format.html#sentence-boundaries-and-comments
@@ -61,11 +79,7 @@ class ConllFormatter:
         self._set_extensions()
 
     def __call__(self, doc: Doc):
-        """Runs the pipeline component, adding the extensions to ._..
-           Adds a string representation, string representation containing a header,
-           and a tuple representation of the CoNLL format to the given Doc and its
-           sentences.
-
+        """Runs the pipeline component, adding the extensions to Underscore ._.. Adds a string representation, string representation containing a header, and a tuple representation of the CoNLL format to the given Doc and its sentences.
         :param doc: the input Doc
         :return: the modified Doc containing the newly added extensions
         """
@@ -90,7 +104,6 @@ class ConllFormatter:
 
     def _get_morphology(self, tag: str):
         """Expands a tag into its morphological features by using a tagmap.
-
         :param tag: the tag to expand
         :return: a string entailing the tag's morphological features
         """
@@ -120,7 +133,7 @@ class ConllFormatter:
         return token_conll_d
 
     def _set_extensions(self):
-        """ Sets the default extensions if they do not exist yet. """
+        """Sets the default extensions if they do not exist yet."""
         for obj in Doc, Span, Token:
             if not obj.has_extension(self._ext_names['conll_str']):
                 obj.set_extension(self._ext_names['conll_str'], default=None)
@@ -133,7 +146,6 @@ class ConllFormatter:
 
     def _set_span_conll(self, span: Span, span_idx: int = 1):
         """Sets a span's properties according to the CoNLL-U format.
-
         :param span: a spaCy Span
         :param span_idx: optional index, corresponding to the n-th sentence
                          in the parent Doc
@@ -154,10 +166,8 @@ class ConllFormatter:
 
     def _set_token_conll(self, token: Token, token_idx: int = 1):
         """Sets a token's properties according to the CoNLL-U format.
-
         :param token: a spaCy Token
-        :param token_idx: optional index, corresponding to the n-th token
-                          in the sentence Span
+        :param token_idx: optional index, corresponding to the n-th token in the sentence Span
         """
         if token.dep_.lower().strip() == 'root':
             head_idx = 0
@@ -178,14 +188,14 @@ class ConllFormatter:
         )
 
         # turn field name values (keys) and token values (values) into dict
-        token_conll_d = dict(zip(CONLL_FIELD_NAMES, token_conll))
+        token_conll_d = OrderedDict(zip(CONLL_FIELD_NAMES, token_conll))
 
         # convert properties if needed
         if self._conversion_maps:
             token_conll_d = self._map_conll(token_conll_d)
 
         token._.set(self._ext_names['conll'], token_conll_d)
-        token_conll_str = "\t".join(map(str, token_conll)) + "\n"
+        token_conll_str = "\t".join(map(str, token_conll_d.values())) + "\n"
         token._.set(self._ext_names['conll_str'], token_conll_str)
 
         if PD_AVAILABLE:
