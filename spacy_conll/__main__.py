@@ -162,7 +162,7 @@ def main():
         "--disable_sbd",
         default=False,
         action="store_true",
-        help="Disables spaCy automatic sentence boundary detection. In practice, disabling means that"
+        help="Whether to disable spaCy automatic sentence boundary detection. In practice, disabling means that"
         " every line will be parsed as one sentence, regardless of its actual content."
         " Only works when using 'spacy' as 'parser'.",
     )
@@ -171,7 +171,7 @@ def main():
         "--is_tokenized",
         default=False,
         action="store_true",
-        help="Indicates whether your text has already been tokenized (space-seperated)."
+        help="Whether your text has already been tokenized (space-seperated)."
         " When used in conjunction with spacy-stanfordnlp, it will also be assumed that"
         " the text is sentence split by newline. Does not work for 'udpipe' as 'parser'.",
     )
@@ -182,7 +182,7 @@ def main():
         "--include_headers",
         default=False,
         action="store_true",
-        help="To include headers before the output of every sentence. These headers include the"
+        help="Whether to  include headers before the output of every sentence. These headers include the"
         " sentence text and the sentence ID as per the CoNLL format.",
     )
     cparser.add_argument(
@@ -190,7 +190,7 @@ def main():
         "--no_force_counting",
         default=False,
         action="store_true",
-        help="To disable force counting the 'sent_id', starting from 1 and increasing for each"
+        help="Whether to  disable force counting the 'sent_id', starting from 1 and increasing for each"
         " sentence. Instead, 'sent_id' will depend on how spaCy returns the sentences."
         " Must have 'include_headers' enabled.",
     )
@@ -217,7 +217,7 @@ def main():
         "--verbose",
         default=False,
         action="store_true",
-        help="To always print the output to stdout, regardless of 'output_file'.",
+        help="Whether to always print the output to stdout, regardless of 'output_file'.",
     )
 
     args = cparser.parse_args()

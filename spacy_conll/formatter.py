@@ -88,7 +88,9 @@ class ConllFormatter:
         self._set_extensions()
 
     def __call__(self, doc: Doc):
-        """Runs the pipeline component, adding the extensions to Underscore ._.. Adds a string representation, string representation containing a header, and a tuple representation of the CoNLL format to the given Doc and its sentences.
+        """Runs the pipeline component, adding the extensions to Underscore ._.. Adds a string representation,
+           string representation containing a header, and a tuple representation of the CoNLL format to the
+           given Doc and its sentences.
         :param doc: the input Doc
         :return: the modified Doc containing the newly added extensions
         """
