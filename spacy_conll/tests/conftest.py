@@ -8,33 +8,21 @@ from spacy_conll import init_parser
 PARSERS = {}
 
 
-def spacy_en():
-    if "spacy" not in PARSERS:
-        PARSERS["spacy"] = init_parser("spacy")
-    return PARSERS["spacy"]
+def get_parser(name, **kwargs):
+    if f"{name}-{kwargs}" not in PARSERS:
+        PARSERS[f"{name}-{kwargs}"] = init_parser(name, **kwargs)
+
+    return PARSERS[f"{name}-{kwargs}"]
 
 
-def spacy_stanfordnlp_en():
-    if "stanfordnlp" not in PARSERS:
-        PARSERS["stanfordnlp"] = init_parser("stanfordnlp")
-    return PARSERS["stanfordnlp"]
+@pytest.fixture(params=["spacy", "stanfordnlp", "stanza", "udpipe"])
+def base_parser(request):
+    yield get_parser(request.param)
 
-
-def spacy_stanza_en():
-    if "stanza" not in PARSERS:
-        PARSERS["stanza"] = init_parser("stanza")
-    return PARSERS["stanza"]
-
-
-def spacy_udpipe_en():
-    if "udpipe" not in PARSERS:
-        PARSERS["udpipe"] = init_parser("udpipe")
-    return PARSERS["udpipe"]
-
-
-@pytest.fixture(params=[spacy_en, spacy_stanfordnlp_en, spacy_stanza_en, spacy_udpipe_en])
-def parser(request):
-    yield request.param
+# Not testing with UDPipe, which does not support this
+@pytest.fixture(params=["spacy", "stanfordnlp", "stanza"])
+def pretokenized_parser(request):
+    yield get_parser(request.param, is_tokenized=True), request.param
 
 
 @pytest.fixture
@@ -52,7 +40,7 @@ def spacy_conversion_map():
 
 
 def single_sent():
-    return "He wanted to elaborate more on the cookie."
+    return "He wanted to elaborate more on his grandma's cookie."
 
 
 def multi_sent():
@@ -65,8 +53,17 @@ def text(request):
 
 
 @pytest.fixture
-def doc(parser, text):
-    yield parser()(text())
+def base_doc(base_parser, text):
+    yield base_parser(text())
+
+
+@pytest.fixture
+def pretokenized_doc(pretokenized_parser):
+    name = pretokenized_parser[1]
+    if name == 'spacy':
+        yield pretokenized_parser[0](single_sent().split())
+    else:
+        yield pretokenized_parser[0](single_sent())
 
 
 @pytest.fixture
