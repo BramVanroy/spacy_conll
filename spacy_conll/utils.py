@@ -7,6 +7,21 @@ from spacy.tokens import Doc
 from . import ConllFormatter
 
 
+class _PretokenizedTokenizer:
+    def __init__(self, vocab):
+        self.vocab = vocab
+
+    def __call__(self, inp):
+        if isinstance(inp, str):
+            words = inp.split()
+            spaces = [True] * (len(words) - 1) + ([True] if inp[-1].isspace() else [False])
+            return Doc(self.vocab, words=words, spaces=spaces)
+        elif isinstance(inp, list):
+            return Doc(self.vocab, words=inp)
+        else:
+            raise ValueError("Unexpected input format. Expected string to be split on whitespace, or list of tokens.")
+
+
 def init_parser(
     parser: str = "spacy",
     model_or_lang: str = "en",
@@ -19,16 +34,16 @@ def init_parser(
     """Initialise a spacy-wrapped parser given a language or model and some options.
 
     :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
-        'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
-        installed, e.g. spacy-stanza. Defaults to 'spacy'
+           'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
+           installed, e.g. spacy-stanza. Defaults to 'spacy'
     :param model_or_lang: language model to use (must be installed). Defaults to an English model
     :param is_tokenized: indicates whether your text has already been tokenized (space-seperated;
-        does not work for udpipe)
+           does not work for udpipe)
     :param disable_sbd: disables spaCy automatic sentence boundary detection (only works for spaCy)
     :param parser_opts: will be passed to the core pipeline. For spacy and udpipe, it will be passed to their
-        `.load()` initialisations, for stanfordnlp and stanza `pipeline_opts` is passed to to their `.Pipeline()`
-         initialisations
-    :param kwargs: options to be passed to the ConllFormatter initialisations
+           `.load()` initialisations, for stanfordnlp and stanza `pipeline_opts` is passed to to their `.Pipeline()`
+           initialisations
+    :param kwargs: options to be passed to the ConllFormatter initialisation
     :return: an initialised Language object; the parser
     """
     parser_opts = {} if parser_opts is None else parser_opts
@@ -36,7 +51,7 @@ def init_parser(
     if parser == "spacy":
         nlp = spacy.load(model_or_lang, **parser_opts)
         if is_tokenized:
-            nlp.tokenizer = nlp.tokenizer.tokens_from_list
+            nlp.tokenizer = _PretokenizedTokenizer(nlp.vocab)
         if disable_sbd:
             nlp.add_pipe(_prevent_sbd, name="prevent-sbd", before="parser")
     elif parser == "stanfordnlp":
