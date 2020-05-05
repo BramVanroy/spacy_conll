@@ -1,17 +1,26 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
 import spacy
 from spacy.language import Language
 from spacy.tokens import Doc
+from spacy.vocab import Vocab
 
 from . import ConllFormatter
 
 
 class _PretokenizedTokenizer:
-    def __init__(self, vocab):
+    """Custom tokenizer to be used in spaCy when the text is already pretokenized."""
+    def __init__(self, vocab: Vocab):
+        """Initialize tokenizer with a given vocab
+        :param vocab: an existing vocabulary (see https://spacy.io/api/vocab)
+        """
         self.vocab = vocab
 
-    def __call__(self, inp):
+    def __call__(self, inp: Union[List[str], str]) -> Doc:
+        """Call the tokenizer on input `inp`.
+        :param inp: either a string to be split on whitespace, or a list of tokens
+        :return: the created Doc object
+        """
         if isinstance(inp, str):
             words = inp.split()
             spaces = [True] * (len(words) - 1) + ([True] if inp[-1].isspace() else [False])
@@ -32,7 +41,6 @@ def init_parser(
     **kwargs,
 ) -> Language:
     """Initialise a spacy-wrapped parser given a language or model and some options.
-
     :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
            'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
            installed, e.g. spacy-stanza. Defaults to 'spacy'
