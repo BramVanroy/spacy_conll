@@ -33,6 +33,7 @@ def clean_underscore():
 def base_parser(request):
     yield get_parser(request.param)
 
+
 # Not testing with UDPipe, which does not support this
 @pytest.fixture(params=["spacy", "stanfordnlp", "stanza"])
 def pretokenized_parser(request):
@@ -80,7 +81,7 @@ def base_doc(base_parser, text):
 @pytest.fixture
 def pretokenized_doc(pretokenized_parser):
     name = pretokenized_parser[1]
-    if name == 'spacy':
+    if name == "spacy":
         yield pretokenized_parser[0](single_sent().split())
     else:
         yield pretokenized_parser[0](single_sent())

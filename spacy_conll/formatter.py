@@ -59,7 +59,7 @@ class ConllFormatter:
         conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
         ext_names: Optional[Dict[str, str]] = None,
         include_headers: bool = False,
-        disable_pandas: bool = False
+        disable_pandas: bool = False,
     ):
         """ ConllFormatter constructor.
         :param nlp: an initialized spaCy nlp object

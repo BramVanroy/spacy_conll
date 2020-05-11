@@ -10,6 +10,7 @@ from . import ConllFormatter
 
 class SpacyPretokenizedTokenizer:
     """Custom tokenizer to be used in spaCy when the text is already pretokenized."""
+
     def __init__(self, vocab: Vocab):
         """Initialize tokenizer with a given vocab
         :param vocab: an existing vocabulary (see https://spacy.io/api/vocab)
@@ -28,7 +29,9 @@ class SpacyPretokenizedTokenizer:
         elif isinstance(inp, list):
             return Doc(self.vocab, words=inp)
         else:
-            raise ValueError("Unexpected input format. Expected string to be split on whitespace, or list of tokens.")
+            raise ValueError(
+                "Unexpected input format. Expected string to be split on whitespace, or list of tokens."
+            )
 
 
 def init_parser(
