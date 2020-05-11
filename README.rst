@@ -1,6 +1,6 @@
-================================================
-Parsing to CoNLL with spaCy or spacy-stanfordnlp
-================================================
+===========================================================
+Parsing to CoNLL with spaCy, spacy-stanza, and spacy-udpipe
+===========================================================
 This module allows you to parse text into `CoNLL-U format`_. You can use it as a command line tool, or embed it in your
 own scripts by adding it as a custom component to a spaCy, ``spacy-stanfordnlp``, ``spacy-stanza``, or ``spacy-udpipe``
 pipeline.
