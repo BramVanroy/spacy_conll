@@ -2,9 +2,48 @@
 History
 #######
 
-**************************
+**********************
+2.0.0 (May 11th, 2020)
+**********************
+**Fully reworked version!**
+
+* Tested support for both `spacy-stanza`_ and `spacy-udpipe`_! (Not included as a dependency, install manually)
+* Added a useful utility function :code:`init_parser` that can easily initialise a parser together with the custom
+  pipeline component. (See the README or `examples`_.)
+* Added the :code:`disable_pandas` flag the the formatter class in case you would want to disable setting the pandas
+  attribute even when pandas is installed.
+* Added custom properties for Tokens as well. So now a Doc, its sentence Spans as well as Tokens have custom attributes
+* Reworked datatypes of output. In version 2.0.0 the data types are as follows:
+    - :code:`._.conll`: raw CoNLL format
+        - in :code:`Token`: a dictionary containing all the expected CoNLL fields as keys and the parsed properties as
+          values.
+        - in sentence :code:`Span`: a list of its tokens' :code:`._.conll` dictionaries (list of dictionaries).
+        - in a :code:`Doc`: a list of its sentences' :code:`._.conll` lists (list of list of dictionaries).
+    - :code:`._.conll_str`: string representation of the CoNLL format
+        - in :code:`Token`: tab-separated representation of the contents of the CoNLL fields ending with a newline.
+        - in sentence :code:`Span`: the expected CoNLL format where each row represents a token. When
+          :code:`ConllFormatter(include_headers=True)` is used, two header lines are included as well, as per the
+          `CoNLL format`_.
+        - in :code:`Doc`: all its sentences' :code:`._.conll_str` combined and separated by new lines.
+    - :code:`._.conll_pd`: ``pandas`` representation of the CoNLL format
+        - in :code:`Token`: a :code:`Series` representation of this token's CoNLL properties.
+        - in sentence :code:`Span`: a :code:`DataFrame` representation of this sentence, with the CoNLL names as column
+          headers.
+        - in :code:`Doc`: a concatenation of its sentences' :code:`DataFrame`'s, leading to a new a :code:`DataFrame` whose
+          index is reset.
+* :code:`field_names` has been removed, assuming that you do not need to change the column names of the CoNLL properties
+* Removed the :code:`Spacy2ConllParser` class
+* Many doc changes, added tests, and a few examples
+
+
+.. _`spacy-stanza`: https://github.com/explosion/spacy-stanza
+.. _`spacy-udpipe`: https://github.com/TakeLab/spacy-udpipe
+.. _`examples`: examples/
+.. _`CoNLL format`: https://universaldependencies.org/format.html#sentence-boundaries-and-comments
+
+************************
 1.3.0 (April 28th, 2020)
-**************************
+************************
 * **IMPORTANT**: This will be the last release that supports the deprecated Spacy2ConllParser class!
 * Community addition (@KoichiYasuoka): add SpaceAfter=No to the Misc field when applicable.
 * Fixed failing tests
