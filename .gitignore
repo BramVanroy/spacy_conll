@@ -1,6 +1,7 @@
 Pipfile.lock
 TODO.rst
 dummy.py
+examples/*.txt
 
 # .idea (JetBrains)
 .idea/
