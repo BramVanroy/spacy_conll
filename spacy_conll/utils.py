@@ -8,7 +8,7 @@ from spacy.vocab import Vocab
 from . import ConllFormatter
 
 
-class _PretokenizedTokenizer:
+class SpacyPretokenizedTokenizer:
     """Custom tokenizer to be used in spaCy when the text is already pretokenized."""
     def __init__(self, vocab: Vocab):
         """Initialize tokenizer with a given vocab
@@ -45,8 +45,10 @@ def init_parser(
            'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
            installed, e.g. spacy-stanza. Defaults to 'spacy'
     :param model_or_lang: language model to use (must be installed). Defaults to an English model
-    :param is_tokenized: indicates whether your text has already been tokenized (space-seperated;
-           does not work for udpipe)
+    :param is_tokenized: indicates whether your text has already been tokenized (space-seperated). For stanza and
+           stanfordnlp, this will also cause sentence segmentation *only* to be done by splitting on new lines.
+           See the documentation: https://stanfordnlp.github.io/stanfordnlp/tokenize.html
+           See the documentation: https://stanfordnlp.github.io/stanza/tokenize.html
     :param disable_sbd: disables spaCy automatic sentence boundary detection (only works for spaCy)
     :param parser_opts: will be passed to the core pipeline. For spacy and udpipe, it will be passed to their
            `.load()` initialisations, for stanfordnlp and stanza `pipeline_opts` is passed to to their `.Pipeline()`
@@ -59,7 +61,7 @@ def init_parser(
     if parser == "spacy":
         nlp = spacy.load(model_or_lang, **parser_opts)
         if is_tokenized:
-            nlp.tokenizer = _PretokenizedTokenizer(nlp.vocab)
+            nlp.tokenizer = SpacyPretokenizedTokenizer(nlp.vocab)
         if disable_sbd:
             nlp.add_pipe(_prevent_sbd, name="prevent-sbd", before="parser")
     elif parser == "stanfordnlp":

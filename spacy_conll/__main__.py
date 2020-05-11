@@ -1,7 +1,9 @@
 import argparse
 import re
 from locale import getpreferredencoding
+import logging
 from pathlib import Path
+import pkg_resources
 from sys import stdout
 from typing import Optional
 
@@ -11,39 +13,51 @@ from packaging import version
 # using absolute import, assuming the package has been installed!
 from spacy_conll import init_parser
 
+logging.basicConfig(format='%(asctime)s - [%(levelname)s]: %(message)s',
+                    datefmt='%d-%b %H:%M',
+                    level=logging.INFO)
+
 SENT_ID_RE = re.compile(r"(?<=# sent_id = )(\d+)")
 
 
 def parse(
-    input_file: Optional[str] = None,
-    input_encoding: str = getpreferredencoding(),
-    input_str: Optional[str] = None,
-    is_tokenized: bool = False,
-    output_file: Optional[str] = None,
-    output_encoding: str = getpreferredencoding(),
-    parser: str = "spacy",
-    model_or_lang: Optional[str] = None,
-    disable_sbd: bool = False,
-    include_headers: bool = False,
-    no_force_counting: bool = False,
-    n_process: int = 1,
-    verbose: bool = False,
+        input_file: Optional[str] = None,
+        input_encoding: str = getpreferredencoding(),
+        input_str: Optional[str] = None,
+        is_tokenized: bool = False,
+        output_file: Optional[str] = None,
+        output_encoding: str = getpreferredencoding(),
+        parser: str = "spacy",
+        model_or_lang: Optional[str] = None,
+        disable_sbd: bool = False,
+        include_headers: bool = False,
+        no_force_counting: bool = False,
+        n_process: int = 1,
+        verbose: bool = False,
 ):
     """ Parse an input string or input file to CoNLL-U format
 
         :param input_file: path to file with sentences to parse. Has precedence over 'input_str'
         :param input_encoding: encoding of the input file. Default value is system default
         :param input_str: input string to parse
-        :param is_tokenized: indicates whether your text has already been tokenized (space-seperated)
+        :param is_tokenized: indicates whether your text has already been tokenized (space-seperated). Setting this
+               option has difference consequences for different parsers:
+               - SpaCy will simply not do any further tokenisation: we simply split the tokens on whitespace, sentence
+                 segmentation still works as usual
+               - Stanfordnlp and Stanza will not tokenize but in addition, will also only do sentence splitting on
+                 newlines. No additional sentence segmentation is done.
+               - For UDpipe we also simply disable tokenisation and use white-spaced tokens (works from 0.3.0 upwards).
+                 No further sentence segmentation us done.
         :param output_file: path to output file. If not specified, the output will be printed on standard output
         :param output_encoding: encoding of the output file. Default value is system default
-        :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options are
-            'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need to be
-            installed, e.g. spacy-stanza.
+        :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options
+               are 'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need
+               to be installed, e.g. spacy-stanza.
         :param model_or_lang: language model to use (must be installed). Defaults to an English model
-        :param disable_sbd: disables spaCy automatic sentence boundary detection (only works for spaCy)
+        :param disable_sbd: disables spaCy automatic sentence boundary detection (works for spaCy)
         :param include_headers: to include headers before the output of every sentence
-        :param no_force_counting: to disable force counting the 'sent_id', starting from 1 and increasing for each sentence
+        :param no_force_counting: to disable force counting the 'sent_id', starting from 1 and increasing for each
+               sentence
         :param n_process: number of processes to use in nlp.pipe(). -1 will use as many cores as available
         :param verbose: to print the output to stdout, regardless of 'output_file'
         """
@@ -52,26 +66,36 @@ def parse(
             "'input_file' or 'input_str' must be given. Use parse-as-conll -h for help."
         )
 
+    # disable_pandas to prevent multiprocessing issues
     nlp = init_parser(
         parser,
         model_or_lang,
         is_tokenized=is_tokenized,
         disable_sbd=disable_sbd,
         include_headers=include_headers,
+        disable_pandas=True
     )
 
     # Gather input:
     # Collect lines in 'lines' variable, taking into account 'is_tokenized'
     lines = []
     if input_str:
-        lines.append(
-            input_str.strip().split(" ") if is_tokenized and parser in ["spacy"] else input_str
-        )
+        lines = [l.strip() for l in input_str.split("\n")]
     elif input_file:
         with Path(input_file).open(encoding=input_encoding) as fhin:
             lines = [l.strip() for l in fhin.readlines()]
-            if is_tokenized and parser in ["spacy"]:
-                lines = [l.split(" ") for l in lines]
+
+    if is_tokenized:
+        # UDPipe allows pretokenized text since version 0.3.0
+        if parser == "spacy":
+            lines = [l.split(" ") for l in lines]
+        elif parser == "udpipe":
+            if version.parse(pkg_resources.get_distribution("spacy_udpipe").version) >= version.parse("0.3.0"):
+                # UDPipe uses List[str] for presegmented text, and List[List[str]] for pretokenized text
+                lines = [[l.split(" ") for l in lines]]
+            else:
+                logging.warning("UDPipe should have version 0.3.0 or higher when using '--is_tokenized'."
+                                " Continuing with tokenizer.")
 
     # Write to output:
     # If 'output_file' given, write to that file - if, also, 'verbose' is given, also write to stdout
@@ -118,7 +142,7 @@ def main():
     cparser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Parse an input string or input file to CoNLL-U format using a"
-        " spaCy-wrapped parser.",
+                    " spaCy-wrapped parser.",
     )
 
     # Input arguments
@@ -163,17 +187,20 @@ def main():
         default=False,
         action="store_true",
         help="Whether to disable spaCy automatic sentence boundary detection. In practice, disabling means that"
-        " every line will be parsed as one sentence, regardless of its actual content."
-        " Only works when using 'spacy' as 'parser'.",
+             " every line will be parsed as one sentence, regardless of its actual content."
+             " Only works when using 'spacy' as 'parser'.",
     )
     cparser.add_argument(
         "-t",
         "--is_tokenized",
         default=False,
         action="store_true",
-        help="Whether your text has already been tokenized (space-seperated)."
-        " When used in conjunction with spacy-stanfordnlp, it will also be assumed that"
-        " the text is sentence split by newline. Does not work for 'udpipe' as 'parser'.",
+        help="Whether your text has already been tokenized (space-seperated). Setting this"
+             " option has difference consequences for different parsers: SpaCy will simply not do any further"
+             " tokenisation: we simply split the tokens on whitespace; Stanfordnlp and Stanza will not tokenize but in"
+             " addition, will also only do sentence splitting on newlines. No additional sentence segmentation is done;"
+             " For UDpipe we also simply disable tokenisation and use white-spaced tokens (works from 0.3.0 upwards)."
+             " No further sentence segmentation us done."
     )
 
     # Additional arguments
@@ -183,7 +210,7 @@ def main():
         default=False,
         action="store_true",
         help="Whether to  include headers before the output of every sentence. These headers include the"
-        " sentence text and the sentence ID as per the CoNLL format.",
+             " sentence text and the sentence ID as per the CoNLL format.",
     )
     cparser.add_argument(
         "-e",
@@ -191,8 +218,8 @@ def main():
         default=False,
         action="store_true",
         help="Whether to  disable force counting the 'sent_id', starting from 1 and increasing for each"
-        " sentence. Instead, 'sent_id' will depend on how spaCy returns the sentences."
-        " Must have 'include_headers' enabled.",
+             " sentence. Instead, 'sent_id' will depend on how spaCy returns the sentences."
+             " Must have 'include_headers' enabled.",
     )
     cparser.add_argument(
         "-j",
@@ -200,7 +227,7 @@ def main():
         type=int,
         default=1,
         help="Number of processes to use in nlp.pipe(). -1 will use as many cores as available."
-        " Requires spaCy v2.2.2. Might not work for a 'parser' other than 'spacy'.",
+             " Requires spaCy v2.2.2. Might not work for a 'parser' other than 'spacy'.",
     )
     cparser.add_argument(
         "-p",
@@ -208,9 +235,9 @@ def main():
         default="spacy",
         choices=["spacy", "stanfordnlp", "stanza", "udpipe"],
         help="Which parser to use. Parsers other than 'spacy' need to be installed separately."
-        " So if you wish to use 'stanfordnlp' models, 'spacy-stanfordnlp' needs to be installed."
-        " For 'stanza' you need 'spacy-stanza', and for 'udpipe' the 'spacy-udpipe' library is"
-        " required.",
+             " So if you wish to use 'stanfordnlp' models, 'spacy-stanfordnlp' needs to be installed."
+             " For 'stanza' you need 'spacy-stanza', and for 'udpipe' the 'spacy-udpipe' library is"
+             " required.",
     )
     cparser.add_argument(
         "-v",
