@@ -1,4 +1,5 @@
 import pytest
+from spacy.tokens.underscore import Underscore
 
 from spacy_conll import init_parser
 
@@ -13,6 +14,19 @@ def get_parser(name, **kwargs):
         PARSERS[f"{name}-{kwargs}"] = init_parser(name, **kwargs)
 
     return PARSERS[f"{name}-{kwargs}"]
+
+
+@pytest.fixture(scope="function", autouse=True)
+def clean_underscore():
+    # reset the Underscore object after the test, to avoid having state copied across tests
+    # this irequired if we want to test things such as disable_pandas: if we don't do this
+    # conll_pd will be set in one test and cannot be unset in another so `has_extension` will
+    # always return true.
+    # see https://github.com/explosion/spaCy/issues/5424#issuecomment-626773933
+    yield
+    Underscore.doc_extensions = {}
+    Underscore.span_extensions = {}
+    Underscore.token_extensions = {}
 
 
 @pytest.fixture(params=["spacy", "stanfordnlp", "stanza", "udpipe"])
@@ -36,6 +50,12 @@ def spacy_ext_names():
 @pytest.fixture
 def spacy_conversion_map():
     nlp = init_parser(conversion_maps={"lemma": {"-PRON-": "PRON"}})
+    return nlp
+
+
+@pytest.fixture
+def spacy_disabled_pandas():
+    nlp = init_parser(disable_pandas=True)
     return nlp
 
 
@@ -74,3 +94,8 @@ def spacy_ext_names_doc(spacy_ext_names):
 @pytest.fixture
 def spacy_conversion_map_doc(spacy_conversion_map):
     return spacy_conversion_map(single_sent())
+
+
+@pytest.fixture
+def spacy_disabled_pandas_doc(spacy_disabled_pandas):
+    return spacy_disabled_pandas(single_sent())

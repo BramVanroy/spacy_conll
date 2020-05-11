@@ -59,6 +59,7 @@ class ConllFormatter:
         conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
         ext_names: Optional[Dict[str, str]] = None,
         include_headers: bool = False,
+        disable_pandas: bool = False
     ):
         """ ConllFormatter constructor.
         :param nlp: an initialized spaCy nlp object
@@ -70,7 +71,9 @@ class ConllFormatter:
                E.g. {'conll': 'conll_dict', 'conll_pd': 'conll_pandas'} will rename the properties accordingly
         :param include_headers: whether to include the CoNLL headers in the conll_str string output. These consist
                of two lines containing the sentence id and the text as per the CoNLL format
-               https://universaldependencies.org/format.html#sentence-boundaries-and-comments
+               https://universaldependencies.org/format.html#sentence-boundaries-and-comments.
+        :param disable_pandas: whether to disable pandas integration even if it is installed. This is particularly
+               useful to avoid issues when using multiprocessing.
         """
         # To get the morphological info, we need a tag map
         self._tagmap = nlp.Defaults.tag_map
@@ -83,7 +86,7 @@ class ConllFormatter:
         self._conversion_maps = conversion_maps
 
         self.include_headers = include_headers
-
+        self.disable_pandas = disable_pandas
         # Initialize extensions
         self._set_extensions()
 
@@ -112,7 +115,7 @@ class ConllFormatter:
             "\n".join([s._.get(self._ext_names["conll_str"]) for s in doc.sents]),
         )
 
-        if PD_AVAILABLE:
+        if PD_AVAILABLE and not self.disable_pandas:
             doc._.set(
                 self._ext_names["conll_pd"],
                 pd.concat(
@@ -164,7 +167,7 @@ class ConllFormatter:
             if not obj.has_extension(self._ext_names["conll"]):
                 obj.set_extension(self._ext_names["conll"], default=None)
 
-            if PD_AVAILABLE:
+            if PD_AVAILABLE and not self.disable_pandas:
                 if not obj.has_extension(self._ext_names["conll_pd"]):
                     obj.set_extension(self._ext_names["conll_pd"], default=None)
 
@@ -185,7 +188,7 @@ class ConllFormatter:
         span_conll_str += "".join([t._.get(self._ext_names["conll_str"]) for t in span])
         span._.set(self._ext_names["conll_str"], span_conll_str)
 
-        if PD_AVAILABLE:
+        if PD_AVAILABLE and not self.disable_pandas:
             span._.set(
                 self._ext_names["conll_pd"],
                 pd.DataFrame([t._.get(self._ext_names["conll"]) for t in span]),
@@ -225,7 +228,7 @@ class ConllFormatter:
         token_conll_str = "\t".join(map(str, token_conll_d.values())) + "\n"
         token._.set(self._ext_names["conll_str"], token_conll_str)
 
-        if PD_AVAILABLE:
+        if PD_AVAILABLE and not self.disable_pandas:
             token._.set(self._ext_names["conll_pd"], pd.Series(token_conll_d))
 
         return token
