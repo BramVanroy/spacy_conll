@@ -6,7 +6,7 @@ with Path('README.rst').open(encoding='utf-8') as fhin:
 
 setup(
     name='spacy_conll',
-    version='1.3.0',
+    version='2.0.0',
     description='A custom pipeline component for spaCy that can convert any parsed Doc'
                 ' and its sentences into CoNLL-U format. Also provides a command line entry point.',
     long_description=long_description,
