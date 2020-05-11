@@ -107,7 +107,8 @@ possible arguments or try out the `examples`_.
 
 For instance, if you want to load a Dutch ``stanza`` model in silent mode with the CoNLL formatter already attached,
 you can simply use the following snippet. :code:`parser_opts` is passed to the ``stanza`` pipeline initialisation
-automatically. :code:`kwargs`, on the other hand, is passed to the :code:`ConllFormatter` initialisation.
+automatically. Any other keyword arguments (:code:`kwargs`), on the other hand, are passed to the :code:`ConllFormatter`
+initialisation.
 
 .. code:: python
 
@@ -159,8 +160,8 @@ This is the same as:
     doc = nlp('I like cookies.')
     print(doc._.pandas)
 
-The snippets above will output a pandas DataFrame by using :code:`._.pandas` rather than the standard :code:`conll_pd`,
-and all occurrences of "-PRON-" in the lemma field are replaced by "PRON".
+The snippets above will output a pandas DataFrame by using :code:`._.pandas` rather than the standard
+:code:`._.conll_pd`, and all occurrences of "-PRON-" in the lemma field are replaced by "PRON".
 
 .. code:: text
 
@@ -210,28 +211,35 @@ string or file into CoNLL format given a number of options.
                             Encoding of the output file. Default value is system
                             default. (default: cp1252)
       -m MODEL_OR_LANG, --model_or_lang MODEL_OR_LANG
-                            spaCy or stanfordnlp model or language to use (must be
-                            installed). (default: None)
-      -s, --disable_sbd     Disables spaCy automatic sentence boundary detection.
-                            In practice, disabling means that every line will be
-                            parsed as one sentence, regardless of its actual
-                            content. Only works when using 'spacy' as 'parser'.
-                            (default: False)
-      -t, --is_tokenized    Indicates whether your text has already been tokenized
-                            (space-seperated). When used in conjunction with
-                            spacy-stanfordnlp, it will also be assumed that the
-                            text is sentence split by newline. Does not work for
-                            'udpipe' as 'parser'. (default: False)
+                            language model to use (must be installed). Defaults to
+                            an English model (default: en)
+      -s, --disable_sbd     Whether to disable spaCy automatic sentence boundary
+                            detection. In practice, disabling means that every
+                            line will be parsed as one sentence, regardless of its
+                            actual content. Only works when using 'spacy' as
+                            'parser'. (default: False)
+      -t, --is_tokenized    Whether your text has already been tokenized (space-
+                            seperated). Setting this option has difference
+                            consequences for different parsers: SpaCy will simply
+                            not do any further tokenisation: we simply split the
+                            tokens on whitespace; Stanfordnlp and Stanza will not
+                            tokenize but in addition, will also only do sentence
+                            splitting on newlines. No additional sentence
+                            segmentation is done; For UDpipe we also simply
+                            disable tokenisation and use white-spaced tokens
+                            (works from 0.3.0 upwards). No further sentence
+                            segmentation is done. (default: False)
       -d, --include_headers
-                            To include headers before the output of every
+                            Whether to include headers before the output of every
                             sentence. These headers include the sentence text and
                             the sentence ID as per the CoNLL format. (default:
                             False)
       -e, --no_force_counting
-                            To disable force counting the 'sent_id', starting from
-                            1 and increasing for each sentence. Instead, 'sent_id'
-                            will depend on how spaCy returns the sentences. Must
-                            have 'include_headers' enabled. (default: False)
+                            Whether to disable force counting the 'sent_id',
+                            starting from 1 and increasing for each sentence.
+                            Instead, 'sent_id' will depend on how spaCy returns
+                            the sentences. Must have 'include_headers' enabled.
+                            (default: False)
       -j N_PROCESS, --n_process N_PROCESS
                             Number of processes to use in nlp.pipe(). -1 will use
                             as many cores as available. Requires spaCy v2.2.2.
@@ -244,8 +252,9 @@ string or file into CoNLL format given a number of options.
                             installed. For 'stanza' you need 'spacy-stanza', and
                             for 'udpipe' the 'spacy-udpipe' library is required.
                             (default: spacy)
-      -v, --verbose         To always print the output to stdout, regardless of
-                            'output_file'. (default: False)
+      -v, --verbose         Whether to always print the output to stdout,
+                            regardless of 'output_file'. (default: False)
+
 
 
 For example, parsing a single line, multi-sentence string:

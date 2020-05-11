@@ -49,7 +49,7 @@ def parse(
                - Stanfordnlp and Stanza will not tokenize but in addition, will also only do sentence splitting on
                  newlines. No additional sentence segmentation is done.
                - For UDpipe we also simply disable tokenisation and use white-spaced tokens (works from 0.3.0 upwards).
-                 No further sentence segmentation us done.
+                 No further sentence segmentation is done.
         :param output_file: path to output file. If not specified, the output will be printed on standard output
         :param output_encoding: encoding of the output file. Default value is system default
         :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options
@@ -206,7 +206,7 @@ def main():
         " tokenisation: we simply split the tokens on whitespace; Stanfordnlp and Stanza will not tokenize but in"
         " addition, will also only do sentence splitting on newlines. No additional sentence segmentation is done;"
         " For UDpipe we also simply disable tokenisation and use white-spaced tokens (works from 0.3.0 upwards)."
-        " No further sentence segmentation us done.",
+        " No further sentence segmentation is done.",
     )
 
     # Additional arguments
