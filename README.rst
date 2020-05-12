@@ -94,6 +94,10 @@ single line. You can find the function's signature below. Have a look at the `so
 possible arguments or try out the `examples`_.
 
 **NOTE**: :code:`is_tokenized` does not work for ``spacy-udpipe`` and :code:`disable_sbd` only works for ``spacy``.
+Recently, ``spacy-udpipe`` has made a change to allow pretokenized text but it depends on the input format and cannot
+be fixed at initialisation of the parser. See release v0.3.0 of spacy-udpipe or `this PR`_. Using
+:code:`is_tokenized` for ``spacy-stanfordnlp`` or ``spacy-stanza`` also effects sentence segmentation,  effectively
+*only* splitting on new lines.
 
 .. code:: python
 
@@ -165,17 +169,19 @@ The snippets above will output a pandas DataFrame by using :code:`._.pandas` rat
 
 .. code:: text
 
-       id     form word_lemma upostag  ... head deprel  deps misc
-    0   1        I       PRON    PRON  ...    2  nsubj     _    _
-    1   2     like       like    VERB  ...    0   ROOT     _    _
-    2   3  cookies     cookie    NOUN  ...    2   dobj     _    _
-    3   4        .          .   PUNCT  ...    2  punct     _    _
+       id     form   lemma upostag  ... head deprel  deps           misc
+    0   1        I    PRON    PRON  ...    2  nsubj     _              _
+    1   2     like    like    VERB  ...    0   ROOT     _              _
+    2   3  cookies  cookie    NOUN  ...    2   dobj     _  SpaceAfter=No
+    3   4        .       .   PUNCT  ...    2  punct     _  SpaceAfter=No
 
     [4 rows x 10 columns]
 
 
 .. _`examples`: examples/
 .. _`source code`: spacy_conll/utils.py
+.. _`this PR`: https://github.com/TakeLab/spacy-udpipe/pull/19
+
 
 Command line
 ------------
