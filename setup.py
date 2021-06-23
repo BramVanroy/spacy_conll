@@ -2,6 +2,14 @@ from pathlib import Path
 from setuptools import setup
 
 
+extras = {
+    "dev": ["pytest", "flake8", "isort", "black"],
+    "pd": ["pandas"],
+    "parsers": ["spacy-udpipe>=1.0.0", "spacy-stanza>=1.0.0"]
+}
+
+extras["all"] = extras["dev"] + extras["pd"] + extras["parsers"]
+
 setup(
     name="spacy_conll",
     version="2.1.0",
@@ -32,13 +40,9 @@ setup(
     },
     python_requires=">=3.6",
     install_requires=[
-        "spacy>=2.0,<3.0",
-        "packaging"
+        "spacy>=3.0.1"
     ],
-    extras_require={
-        "dev":  ["pytest", "flake8", "isort", "black"],
-        "pd": ["pandas"]
-    },
+    extras_require=extras,
     entry_points={
         "console_scripts": ["parse-as-conll=spacy_conll.__main__:main"]
     }
