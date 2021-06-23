@@ -2,6 +2,14 @@
 History
 #######
 
+***********************
+2.1.0 (June 23rd, 2021)
+***********************
+Preparing for v3 release
+
+* Last version to support spaCy v2. New versions will require spaCy v3
+* Last version to support ``spacy-stanfordnlp``. ``spacy-stanza`` is still supported
+
 **********************
 2.0.0 (May 11th, 2020)
 **********************
