@@ -49,12 +49,11 @@ def init_parser(
     elif parser == "stanza":
         import stanza
         import spacy_stanza
-
         stanza.download(model_or_lang)
         nlp = spacy_stanza.load_pipeline(model_or_lang, tokenize_pretokenized=is_tokenized, **parser_opts)
     elif parser == "udpipe":
         import spacy_udpipe
-
+        spacy_udpipe.download(model_or_lang)
         nlp = spacy_udpipe.load(model_or_lang)
     else:
         raise ValueError("Unexpected value for 'parser'. Options are: 'spacy', 'stanza', 'udpipe'")
