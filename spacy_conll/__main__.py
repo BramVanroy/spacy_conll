@@ -13,6 +13,7 @@ from packaging import version
 # using absolute import, assuming the package has been installed!
 from spacy_conll import init_parser
 
+
 logging.basicConfig(
     format="%(asctime)s - [%(levelname)s]: %(message)s",
     datefmt="%d-%b %H:%M",
@@ -37,36 +38,34 @@ def parse(
     n_process: int = 1,
     verbose: bool = False,
 ):
-    """ Parse an input string or input file to CoNLL-U format
+    """Parse an input string or input file to CoNLL-U format
 
-        :param input_file: path to file with sentences to parse. Has precedence over 'input_str'
-        :param input_encoding: encoding of the input file. Default value is system default
-        :param input_str: input string to parse
-        :param is_tokenized: indicates whether your text has already been tokenized (space-seperated). Setting this
-               option has difference consequences for different parsers:
-               - SpaCy will simply not do any further tokenisation: we simply split the tokens on whitespace, sentence
-                 segmentation still works as usual
-               - Stanfordnlp and Stanza will not tokenize but in addition, will also only do sentence splitting on
-                 newlines. No additional sentence segmentation is done.
-               - For UDpipe we also simply disable tokenisation and use white-spaced tokens (works from 0.3.0 upwards).
-                 No further sentence segmentation is done.
-        :param output_file: path to output file. If not specified, the output will be printed on standard output
-        :param output_encoding: encoding of the output file. Default value is system default
-        :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options
-               are 'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need
-               to be installed, e.g. spacy-stanza.
-        :param model_or_lang: language model to use (must be installed). Defaults to an English model
-        :param disable_sbd: disables spaCy automatic sentence boundary detection (works for spaCy)
-        :param include_headers: to include headers before the output of every sentence
-        :param no_force_counting: to disable force counting the 'sent_id', starting from 1 and increasing for each
-               sentence
-        :param n_process: number of processes to use in nlp.pipe(). -1 will use as many cores as available
-        :param verbose: to print the output to stdout, regardless of 'output_file'
-        """
+    :param input_file: path to file with sentences to parse. Has precedence over 'input_str'
+    :param input_encoding: encoding of the input file. Default value is system default
+    :param input_str: input string to parse
+    :param is_tokenized: indicates whether your text has already been tokenized (space-seperated). Setting this
+           option has difference consequences for different parsers:
+           - SpaCy will simply not do any further tokenisation: we simply split the tokens on whitespace, sentence
+             segmentation still works as usual
+           - Stanfordnlp and Stanza will not tokenize but in addition, will also only do sentence splitting on
+             newlines. No additional sentence segmentation is done.
+           - For UDpipe we also simply disable tokenisation and use white-spaced tokens (works from 0.3.0 upwards).
+             No further sentence segmentation is done.
+    :param output_file: path to output file. If not specified, the output will be printed on standard output
+    :param output_encoding: encoding of the output file. Default value is system default
+    :param parser: which parser to use. Parsers other than 'spacy' need to be installed separately. Valid options
+           are 'spacy', 'stanfordnlp', 'stanza', 'udpipe'. Note that the spacy-* wrappers of those libraries need
+           to be installed, e.g. spacy-stanza.
+    :param model_or_lang: language model to use (must be installed). Defaults to an English model
+    :param disable_sbd: disables spaCy automatic sentence boundary detection (works for spaCy)
+    :param include_headers: to include headers before the output of every sentence
+    :param no_force_counting: to disable force counting the 'sent_id', starting from 1 and increasing for each
+           sentence
+    :param n_process: number of processes to use in nlp.pipe(). -1 will use as many cores as available
+    :param verbose: to print the output to stdout, regardless of 'output_file'
+    """
     if not input_str and not input_file:
-        raise ValueError(
-            "'input_file' or 'input_str' must be given. Use parse-as-conll -h for help."
-        )
+        raise ValueError("'input_file' or 'input_str' must be given. Use parse-as-conll -h for help.")
 
     # disable_pandas to prevent multiprocessing issues
     nlp = init_parser(
@@ -92,9 +91,7 @@ def parse(
         if parser == "spacy":
             lines = [l.split(" ") for l in lines]
         elif parser == "udpipe":
-            if version.parse(
-                pkg_resources.get_distribution("spacy_udpipe").version
-            ) >= version.parse("0.3.0"):
+            if version.parse(pkg_resources.get_distribution("spacy_udpipe").version) >= version.parse("0.3.0"):
                 # UDPipe uses List[str] for presegmented text, and List[List[str]] for pretokenized text
                 lines = [[l.split(" ") for l in lines]]
             else:
@@ -106,11 +103,7 @@ def parse(
     # Write to output:
     # If 'output_file' given, write to that file - if, also, 'verbose' is given, also write to stdout
     # Else write to stdout
-    fhout = (
-        Path(output_file).open("w", encoding=output_encoding)
-        if output_file is not None
-        else stdout
-    )
+    fhout = Path(output_file).open("w", encoding=output_encoding) if output_file is not None else stdout
 
     # 'n_process' argument is only supported from spaCy 2.2.2 onwards
     _nlpgen = None
@@ -147,8 +140,7 @@ def parse(
 def main():
     cparser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Parse an input string or input file to CoNLL-U format using a"
-        " spaCy-wrapped parser.",
+        description="Parse an input string or input file to CoNLL-U format using a" " spaCy-wrapped parser.",
     )
 
     # Input arguments

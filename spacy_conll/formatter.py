@@ -4,6 +4,7 @@ from typing import Dict, Optional, Union
 from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
 
+
 COMPONENT_NAME = "conll_formatter"
 CONLL_FIELD_NAMES = [
     "id",
@@ -28,27 +29,27 @@ except ImportError:
 
 class ConllFormatter:
     """Pipeline component for spaCy that adds CoNLL-U properties to a Doc, its sentence `Span`s, and Tokens.
-       By default, the custom properties `conll` and `conll_str` are added. If `pandas` is installed,
-       `conll_pd` is added as well.
+    By default, the custom properties `conll` and `conll_str` are added. If `pandas` is installed,
+    `conll_pd` is added as well.
 
-       - `conll`: raw CoNLL format
-           - in `Token`: a dictionary containing all the expected CoNLL fields as keys and the parsed properties as
-             values.
-           - in sentence `Span`: a list of its tokens' `conll` dictionaries (list of dictionaries).
-           - in a `Doc`: a list of its sentences' `conll` lists (list of list of dictionaries).
-       - `conll_str`: string representation of the CoNLL format
-           - in `Token`: tab-separated representation of the contents of the CoNLL fields ending with a newline.
-           - in sentence `Span`: the expected CoNLL format where each row represents a token. When
-             `ConllFormatter(include_headers=True)` is used, two header lines are included as well, as per the
-             `CoNLL format`_.
-           - in `Doc`: all its sentences' `conll_str` combined and separated by new lines.
-       - `conll_pd`: `pandas` representation of the CoNLL format
-           - in `Token`: a `Series` representation of this token's CoNLL properties.
-           - in sentence `Span`: a `DataFrame` representation of this sentence, with the CoNLL names as column
-             headers.
-           - in `Doc`: a concatenation of its sentences' `DataFrame`'s, leading to a new a `DataFrame` whose
-             index is reset.
-       """
+    - `conll`: raw CoNLL format
+        - in `Token`: a dictionary containing all the expected CoNLL fields as keys and the parsed properties as
+          values.
+        - in sentence `Span`: a list of its tokens' `conll` dictionaries (list of dictionaries).
+        - in a `Doc`: a list of its sentences' `conll` lists (list of list of dictionaries).
+    - `conll_str`: string representation of the CoNLL format
+        - in `Token`: tab-separated representation of the contents of the CoNLL fields ending with a newline.
+        - in sentence `Span`: the expected CoNLL format where each row represents a token. When
+          `ConllFormatter(include_headers=True)` is used, two header lines are included as well, as per the
+          `CoNLL format`_.
+        - in `Doc`: all its sentences' `conll_str` combined and separated by new lines.
+    - `conll_pd`: `pandas` representation of the CoNLL format
+        - in `Token`: a `Series` representation of this token's CoNLL properties.
+        - in sentence `Span`: a `DataFrame` representation of this sentence, with the CoNLL names as column
+          headers.
+        - in `Doc`: a concatenation of its sentences' `DataFrame`'s, leading to a new a `DataFrame` whose
+          index is reset.
+    """
 
     name = COMPONENT_NAME
 
@@ -61,7 +62,7 @@ class ConllFormatter:
         include_headers: bool = False,
         disable_pandas: bool = False,
     ):
-        """ ConllFormatter constructor.
+        """ConllFormatter constructor.
         :param nlp: an initialized spaCy nlp object
         :param conversion_maps: two-level dictionary that contains a field_name (e.g. 'lemma', 'upostag')
                on the first level, and the conversion map on the second.
@@ -107,9 +108,7 @@ class ConllFormatter:
         for sent_idx, sent in enumerate(doc.sents, 1):
             self._set_span_conll(sent, sent_idx)
 
-        doc._.set(
-            self._ext_names["conll"], [s._.get(self._ext_names["conll"]) for s in doc.sents]
-        )
+        doc._.set(self._ext_names["conll"], [s._.get(self._ext_names["conll"]) for s in doc.sents])
         doc._.set(
             self._ext_names["conll_str"],
             "\n".join([s._.get(self._ext_names["conll_str"]) for s in doc.sents]),
@@ -118,9 +117,7 @@ class ConllFormatter:
         if PD_AVAILABLE and not self.disable_pandas:
             doc._.set(
                 self._ext_names["conll_pd"],
-                pd.concat(
-                    [s._.get(self._ext_names["conll_pd"]) for s in doc.sents]
-                ).reset_index(drop=True),
+                pd.concat([s._.get(self._ext_names["conll_pd"]) for s in doc.sents]).reset_index(drop=True),
             )
 
         return doc
@@ -133,11 +130,7 @@ class ConllFormatter:
         if not self._tagmap or tag not in self._tagmap:
             return "_"
         else:
-            feats = [
-                f"{prop}={val}"
-                for prop, val in self._tagmap[tag].items()
-                if not self._is_number(prop)
-            ]
+            feats = [f"{prop}={val}" for prop, val in self._tagmap[tag].items() if not self._is_number(prop)]
             if feats:
                 return "|".join(feats)
             else:
@@ -256,9 +249,7 @@ class ConllFormatter:
         """
         for k, v in d2.items():
             if k not in d1:
-                raise KeyError(
-                    f"This key does not exist in the original dict. Valid keys are {list(d1.keys())}"
-                )
+                raise KeyError(f"This key does not exist in the original dict. Valid keys are {list(d1.keys())}")
             d1[k] = v
 
         return d1

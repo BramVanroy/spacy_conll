@@ -1,5 +1,6 @@
 from spacy_conll import init_parser
 
+
 """Example showing how to use spacy_conll to easily write the ConLL representations of sentences to their own files."""
 
 

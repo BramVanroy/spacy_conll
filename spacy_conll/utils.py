@@ -29,9 +29,7 @@ class SpacyPretokenizedTokenizer:
         elif isinstance(inp, list):
             return Doc(self.vocab, words=inp)
         else:
-            raise ValueError(
-                "Unexpected input format. Expected string to be split on whitespace, or list of tokens."
-            )
+            raise ValueError("Unexpected input format. Expected string to be split on whitespace, or list of tokens.")
 
 
 def init_parser(
@@ -68,29 +66,23 @@ def init_parser(
         if disable_sbd:
             nlp.add_pipe(_prevent_sbd, name="prevent-sbd", before="parser")
     elif parser == "stanfordnlp":
-        from spacy_stanfordnlp import StanfordNLPLanguage
         import stanfordnlp
+        from spacy_stanfordnlp import StanfordNLPLanguage
 
-        snlp = stanfordnlp.Pipeline(
-            lang=model_or_lang, tokenize_pretokenized=is_tokenized, **parser_opts
-        )
+        snlp = stanfordnlp.Pipeline(lang=model_or_lang, tokenize_pretokenized=is_tokenized, **parser_opts)
         nlp = StanfordNLPLanguage(snlp)
     elif parser == "stanza":
         import stanza
         from spacy_stanza import StanzaLanguage
 
-        snlp = stanza.Pipeline(
-            lang=model_or_lang, tokenize_pretokenized=is_tokenized, **parser_opts
-        )
+        snlp = stanza.Pipeline(lang=model_or_lang, tokenize_pretokenized=is_tokenized, **parser_opts)
         nlp = StanzaLanguage(snlp)
     elif parser == "udpipe":
         import spacy_udpipe
 
         nlp = spacy_udpipe.load(model_or_lang, **parser_opts)
     else:
-        raise ValueError(
-            "Unexpected value for 'parser'. Options are: 'spacy', 'stanfordnlp', 'stanza', 'udpipe'"
-        )
+        raise ValueError("Unexpected value for 'parser'. Options are: 'spacy', 'stanfordnlp', 'stanza', 'udpipe'")
 
     conllformatter = ConllFormatter(nlp, **kwargs)
     nlp.add_pipe(conllformatter, last=True)
