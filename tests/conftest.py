@@ -31,13 +31,13 @@ def clean_underscore():
     Underscore.token_extensions = {}
 
 
-@pytest.fixture(params=["spacy", "stanfordnlp", "stanza", "udpipe"])
+@pytest.fixture(params=["spacy", "stanza", "udpipe"])
 def base_parser(request):
     yield get_parser(request.param)
 
 
 # Not testing with UDPipe, which does not support this
-@pytest.fixture(params=["spacy", "stanfordnlp", "stanza"])
+@pytest.fixture(params=["spacy", "stanza"])
 def pretokenized_parser(request):
     yield get_parser(request.param, is_tokenized=True), request.param
 
