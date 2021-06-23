@@ -10,8 +10,10 @@ PARSERS = {}
 
 
 def get_parser(name, **kwargs):
+    model_or_lang = "en_core_web_sm" if name == "spacy" else "en"
+
     if f"{name}-{kwargs}" not in PARSERS:
-        PARSERS[f"{name}-{kwargs}"] = init_parser(name, **kwargs)
+        PARSERS[f"{name}-{kwargs}"] = init_parser(name, model_or_lang, **kwargs)
 
     return PARSERS[f"{name}-{kwargs}"]
 
@@ -42,7 +44,7 @@ def pretokenized_parser(request):
 
 @pytest.fixture
 def spacy_ext_names():
-    nlp = init_parser(
+    nlp = init_parser("spacy", "en_core_web_sm",
         ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
     )
     return nlp
@@ -50,13 +52,13 @@ def spacy_ext_names():
 
 @pytest.fixture
 def spacy_conversion_map():
-    nlp = init_parser(conversion_maps={"lemma": {"-PRON-": "PRON"}})
+    nlp = init_parser("spacy", "en_core_web_sm", conversion_maps={"lemma": {"-PRON-": "PRON"}})
     return nlp
 
 
 @pytest.fixture
 def spacy_disabled_pandas():
-    nlp = init_parser(disable_pandas=True)
+    nlp = init_parser("spacy", "en_core_web_sm", disable_pandas=True)
     return nlp
 
 
