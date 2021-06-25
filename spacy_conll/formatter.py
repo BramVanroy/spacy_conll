@@ -23,7 +23,8 @@ CONLL_FIELD_NAMES = [
 ]
 
 
-@Language.factory("conll_formatter")
+@Language.factory("conll_formatter", default_config={"conversion_maps": None, "ext_names": None,
+                                                     "include_headers": False, "disable_pandas": False})
 class ConllFormatter:
     """Pipeline component for spaCy that adds CoNLL-U properties to a Doc, its sentence `Span`s, and Tokens.
     By default, the custom properties `conll` and `conll_str` are added. If `pandas` is installed,
@@ -59,6 +60,7 @@ class ConllFormatter:
     ):
         """ConllFormatter constructor.
         :param nlp: an initialized spaCy nlp object
+        :param name: a string, as reauired by spaCy
         :param conversion_maps: two-level dictionary that contains a field_name (e.g. 'lemma', 'upostag')
                on the first level, and the conversion map on the second.
                E.g. {'lemma': {'-PRON-': 'PRON'}} will map the lemma '-PRON-' to 'PRON'
@@ -71,7 +73,8 @@ class ConllFormatter:
         :param disable_pandas: whether to disable pandas integration even if it is installed. This is particularly
                useful to avoid issues when using multiprocessing.
         """
-
+        self.nlp = nlp
+        self.name = name
         # Set custom attribute names
         self._ext_names = {"conll_str": "conll_str", "conll": "conll", "conll_pd": "conll_pd"}
         if ext_names:
@@ -97,7 +100,7 @@ class ConllFormatter:
         # see: https://github.com/explosion/spaCy/issues/4903
         # fixed in: https://github.com/explosion/spaCy/pull/5006
         # Leaving this here for now, for older versions of spaCy
-        # self._set_extensions()
+        self._set_extensions()
 
         for sent_idx, sent in enumerate(doc.sents, 1):
             self._set_span_conll(sent, sent_idx)
@@ -171,7 +174,7 @@ class ConllFormatter:
             token.lemma_,
             token.pos_,
             token.tag_,
-            str(token.morph) if token.has_morph else "_",
+            str(token.morph) if token.has_morph and str(token.morph) else "_",
             head_idx,
             token.dep_,
             "_",
@@ -221,10 +224,3 @@ class ConllFormatter:
             if PD_AVAILABLE and not self.disable_pandas:
                 if not obj.has_extension(self._ext_names["conll_pd"]):
                     obj.set_extension(self._ext_names["conll_pd"], default=None)
-
-"""
-from spacy_conll import init_parser
-nlp = init_parser("spacy", "en_core_web_sm")
-doc = nlp("He wanted to elaborate more on his grandma's cookie.")
-
-"""
