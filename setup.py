@@ -3,12 +3,11 @@ from setuptools import setup
 
 
 extras = {
-    "dev": ["pytest", "flake8", "isort", "black"],
     "pd": ["pandas"],
     "parsers": ["spacy-udpipe>=1.0.0", "spacy-stanza>=1.0.0"]
 }
-
-extras["all"] = extras["dev"] + extras["pd"] + extras["parsers"]
+extras["all"] = extras["pd"] + extras["parsers"]
+extras["dev"] = extras["all"] + ["pytest", "flake8", "isort", "black"]
 
 setup(
     name="spacy_conll",
@@ -32,6 +31,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Operating System :: OS Independent"
     ],
     project_urls={
