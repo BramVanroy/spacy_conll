@@ -65,6 +65,15 @@ class ConllParser:
                        include_headers: bool = False,
                        no_force_counting: bool = False
                        ):
+        # if n_process > 1:
+        #     if self.parser != "spacy":
+        #         raise ValueError("'n_process' > 1 is not supported with 'spacy-udpipe' and 'spacy-stanza'. Set"
+        #                          " 'n_process' to 1 or choose 'spacy' as a parser")
+        #     elif not self.nlp.get_pipe("conll_formatter").disable_pandas:
+        #         raise ValueError("Due to pandas serialisation issues, 'n_process' > 1 is not supported when"
+        #                          " 'disable_pandas' is False in the ConllFormatter. Set 'n_process' to 1 or"
+        #                          " initialise the ConllFormatter with 'disable_pandas=True'")
+
         lines = Path(input_file).resolve().read_text(encoding=input_encoding).splitlines()
         lines = self.prepare_data(lines)
 
