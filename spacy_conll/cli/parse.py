@@ -25,7 +25,8 @@ def parse(args: Namespace):
     nlp = init_parser(args.model_or_lang,
                       args.parser,
                       is_tokenized=args.is_tokenized,
-                      disable_sbd=args.disable_sbd)
+                      disable_sbd=args.disable_sbd,
+                      disable_pandas=True)
 
     parser = ConllParser(nlp, is_tokenized=args.is_tokenized)
     conll_str = parser.parse_as_conll(input_f,
