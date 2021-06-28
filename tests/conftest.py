@@ -1,3 +1,7 @@
+import os
+from distutils import dir_util
+from pathlib import Path
+
 import pytest
 from spacy.tokens.underscore import Underscore
 
@@ -17,7 +21,6 @@ def get_parser(name, **kwargs):
         PARSERS[f"{name}-{kwargs}"] = init_parser(model_or_lang, name, **kwargs)
 
     return PARSERS[f"{name}-{kwargs}"]
-
 
 @pytest.fixture(scope="function", autouse=True)
 def clean_underscore():
@@ -117,9 +120,9 @@ def spacy_disabled_pandas_doc(spacy_disabled_pandas):
 
 @pytest.fixture
 def conllparser_conllstr(conllparser):
-    return conllparser.parse_as_conll(input_str=multi_sent(), input_encoding="utf-8")
+    return conllparser.parse_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")
 
 
 @pytest.fixture
 def pretokenized_conllparser_conllstr(pretokenized_conllparser):
-    return pretokenized_conllparser.parse_as_conll(input_str=multi_sent(), input_encoding="utf-8")
+    return pretokenized_conllparser.parse_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")
