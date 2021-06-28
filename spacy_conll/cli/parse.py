@@ -26,14 +26,15 @@ def parse(args: Namespace):
                       args.parser,
                       is_tokenized=args.is_tokenized,
                       disable_sbd=args.disable_sbd,
-                      disable_pandas=True)
+                      disable_pandas=True,
+                      include_headers=args.include_headers)
 
     parser = ConllParser(nlp, is_tokenized=args.is_tokenized)
     conll_str = parser.parse_as_conll(input_f,
                                       args.input_encoding,
                                       args.n_process,
-                                      args.include_headers,
-                                      args.no_force_counting)
+                                      args.no_force_counting,
+                                      args.ignore_pipe_errors)
 
     fhout = Path(args.output_file).open("w", encoding=args.output_encoding) if args.output_file is not None else stdout
     fhout.write(conll_str)
@@ -149,6 +150,15 @@ def main():
         default=False,
         action="store_true",
         help="Whether to always print the output to stdout, regardless of 'output_file'.",
+    )
+    cparser.add_argument(
+        "--ignore_pipe_errors",
+        default=False,
+        action="store_true",
+        help="Whether to ignore a priori errors concerning 'n_process' By default we try to determine whether"
+             " processing works on your system and stop execution if we think it doesn't. If you know what you"
+             " are doing, you can ignore such pre-emptive errors, though, and run the code as-is, which will"
+             " then throw the default Python errors when applicable.",
     )
 
     cargs = cparser.parse_args()

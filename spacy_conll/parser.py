@@ -1,3 +1,4 @@
+import os
 import re
 from dataclasses import dataclass, field
 from locale import getpreferredencoding
@@ -63,43 +64,51 @@ class ConllParser:
                        input_file: Union[PathLike, Path, str],
                        input_encoding: str = getpreferredencoding(),
                        n_process: int = 1,
-                       include_headers: bool = False,
-                       no_force_counting: bool = False
+                       no_force_counting: bool = False,
+                       ignore_pipe_errors: bool = False
                        ):
-        if n_process > 1 and not self.nlp.get_pipe("conll_formatter").disable_pandas:
-            raise ValueError("Due to pandas serialisation issues, 'n_process' > 1 is not supported when"
-                             " 'disable_pandas' is False in the ConllFormatter. Set 'n_process' to 1 or"
-                             " initialise the ConllFormatter with 'disable_pandas=True'")
+        if n_process > 1 and not ignore_pipe_errors:
+            if not self.nlp.get_pipe("conll_formatter").disable_pandas:
+                raise ValueError("Due to pandas serialisation, 'n_process' > 1 is not supported when"
+                                 " 'disable_pandas' is False in the ConllFormatter. Set 'n_process' to 1 or"
+                                 " initialise the ConllFormatter with 'disable_pandas=True'")
+
+            # Cross-platform multiprocessing is hell.
+            # Not tested on MacOS however...
+            try:
+                # Seems that Windows only supports it on spaCy
+                if os.name == "nt":
+                    if self.parser in ["udpipe", "stanza"]:
+                        raise ValueError
+                # On Linux, UDPipe supports it too but stanza throws a torch error
+                elif os.name == "posix":
+                    if self.parser == "stanza":
+                        raise ValueError
+            except ValueError:
+                raise ValueError("'n_process' > 1 is not supported on all platforms/all parsers. Please try again with"
+                                 " the default value 'n_process' = 1")
 
         lines = Path(input_file).resolve().read_text(encoding=input_encoding).splitlines()
         lines = self.prepare_data(lines)
 
         conll_idx = 0
         output = ""
-        try:
-            for doc_idx, doc in enumerate(self.nlp.pipe(lines, n_process=n_process)):
-                for sent in doc.sents:
-                    conll_idx += 1
+        for doc_idx, doc in enumerate(self.nlp.pipe(lines, n_process=n_process)):
+            for sent in doc.sents:
+                conll_idx += 1
 
-                    sent_as_conll = sent._.conll_str
-                    if include_headers and not no_force_counting:
-                        # nlp.pipe returns different docs, meaning that the generated sentence indices
-                        # by ConllFormatter are not consecutive (they reset for each new doc)
-                        # We can do a regex replace to fix that, though.
-                        sent_as_conll = re.sub(SENT_ID_RE, str(conll_idx), sent_as_conll, 1)
+                sent_as_conll = sent._.conll_str
+                if self.nlp.get_pipe("conll_formatter").include_headers and not no_force_counting:
+                    # nlp.pipe returns different docs, meaning that the generated sentence indices
+                    # by ConllFormatter are not consecutive (they reset for each new doc)
+                    # We can do a regex replace to fix that, though.
+                    sent_as_conll = re.sub(SENT_ID_RE, str(conll_idx), sent_as_conll, 1)
 
-                    # Newline madness dealing with writing to file and printing to stdout at the same time:
-                    # Prepend additional newline for all except the very first string.
-                    if not (doc_idx == 0 and sent.start == 0):
-                        sent_as_conll = "\n" + sent_as_conll
+                # Newline madness dealing with writing to file and printing to stdout at the same time:
+                # Prepend additional newline for all except the very first string.
+                if not (doc_idx == 0 and sent.start == 0):
+                    sent_as_conll = "\n" + sent_as_conll
 
-                    output += sent_as_conll
-        except (EOFError, TypeError, PickleError) as exc:
-            if n_process > 1:
-                raise ValueError("It seems that something went wrong when processing with 'n_process' > 1. This is not"
-                                 " supported on all platforms/all parsers. Please try again with the default value"
-                                 " 'n_process' = 1.") from exc
-            else:
-                raise exc
+                output += sent_as_conll
 
         return output
