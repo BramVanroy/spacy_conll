@@ -42,6 +42,8 @@ class ConllParser:
         # Figure out what kind of parser was provided (needed during data preparation)
         if isinstance(self.nlp.tokenizer, StanzaTokenizer):
             self.parser = "stanza"
+            import torch
+            torch.set_num_threads(1)
         elif isinstance(self.nlp.tokenizer, UDPipeTokenizer):
             self.parser = "udpipe"
         else:
@@ -108,18 +110,9 @@ class ConllParser:
                     " initialise the ConllFormatter with 'disable_pandas=True'"
                 )
 
-            # Cross-platform multiprocessing is hell.
-            # Not tested on MacOS however...
-            try:
-                # Seems that Windows only supports it on spaCy
-                if os.name == "nt":
-                    if self.parser in ["udpipe", "stanza"]:
-                        raise ValueError
-                # On Linux and MacOS, UDPipe supports it too but stanza throws a torch error
-                else:
-                    if self.parser == "stanza":
-                        raise ValueError
-            except ValueError:
+            # Seems that Windows only supports mp on spaCy. Both for UDPipe and Stanza the issue is
+            # pickling of the models
+            if os.name == "nt" and self.parser in ["udpipe", "stanza"]:
                 raise ValueError(
                     "'n_process' > 1 is not supported on all platforms/all parsers. Please try again with"
                     " the default value 'n_process' = 1. You can also try to run the code without this pre-emptive"
