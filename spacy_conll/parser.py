@@ -104,7 +104,7 @@ class ConllParser:
         """
         if n_process > 1 and not ignore_pipe_errors:
             if not self.nlp.get_pipe("conll_formatter").disable_pandas:
-                raise ValueError(
+                raise OSError(
                     "Due to pandas serialisation, 'n_process' > 1 is not supported when"
                     " 'disable_pandas' is False in the ConllFormatter. Set 'n_process' to 1 or"
                     " initialise the ConllFormatter with 'disable_pandas=True'"
@@ -113,7 +113,7 @@ class ConllParser:
             # Seems that Windows only supports mp on spaCy. Both for UDPipe and Stanza the issue is
             # pickling of the models
             if os.name == "nt" and self.parser in ["udpipe", "stanza"]:
-                raise ValueError(
+                raise OSError(
                     "'n_process' > 1 is not supported on all platforms/all parsers. Please try again with"
                     " the default value 'n_process' = 1. You can also try to run the code without this pre-emptive"
                     " error message by using the 'ignore_pipe_errors' option"
