@@ -120,9 +120,9 @@ def spacy_disabled_pandas_doc(spacy_disabled_pandas):
 
 @pytest.fixture
 def conllparser_conllstr(conllparser):
-    return conllparser.parse_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")
+    return conllparser.parse_file_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")
 
 
 @pytest.fixture
 def pretokenized_conllparser_conllstr(pretokenized_conllparser):
-    return pretokenized_conllparser.parse_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")
+    return pretokenized_conllparser.parse_file_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")

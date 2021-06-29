@@ -20,5 +20,5 @@ def test_pretokenized_conllparser(pretokenized_conllparser_conllstr):
 def test_conllparser_n_process(conllparser):
     if conllparser.parser != "spacy":
         with pytest.raises(Exception) as e_info:
-            conllparser.parse_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8", n_process=2)
+            conllparser.parse_file_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8", n_process=2)
 
