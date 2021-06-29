@@ -1,5 +1,5 @@
 from pathlib import Path
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 extras = {
@@ -17,7 +17,7 @@ setup(
     long_description=Path("README.rst").read_text(encoding="utf-8"),
     long_description_content_type="text/x-rst",
     keywords="nlp spacy spacy-extension conll conllu tagging parsing stanza spacy_stanza udpipe spacy_udpipe",
-    packages=["spacy_conll"],
+    packages=find_packages(include=["spacy_conll", "spacy_conll.*"]),
     url="https://github.com/BramVanroy/spacy_conll",
     author="Bram Vanroy",
     author_email="bramvanroy@hotmail.com",
