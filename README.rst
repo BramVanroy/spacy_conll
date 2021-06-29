@@ -2,21 +2,20 @@
 Parsing to CoNLL with spaCy, spacy-stanza, and spacy-udpipe
 ===========================================================
 
-**This version (2.1.0) is the last version to support spaCy v2 and** ``spacy-stanfordnlp`` **. New versions will
-require spaCy v3.** ``spacy-stanza`` **will still be supported.**
+**This is a pre-release vor the upcoming v3 of the library. If you experience any issue with it, please
+open a new issue.**
 
 This module allows you to parse text into `CoNLL-U format`_. You can use it as a command line tool, or embed it in your
-own scripts by adding it as a custom pipeline component to a spaCy, ``spacy-stanfordnlp``, ``spacy-stanza``, or ``spacy-udpipe``
-pipeline. It also provides an easy-to-use function to quickly initialize a parser.
+own scripts by adding it as a custom pipeline component to a spaCy, ``spacy-stanza``, or ``spacy-udpipe``
+pipeline. It also provides an easy-to-use function to quickly initialize a parser as well as a ConllParser class
+with built-in functionality to parse files or text.
 
 Note that the module simply takes a parser's output and puts it in a formatted string adhering to the linked ConLL-U
 format. The output tags depend on the spaCy model used. If you want Universal Depencies tags as output, I advise you to
 use this library in combination with `spacy-stanza`_, which is a spaCy interface using ``stanza`` and its
 models behind the scenes. Those models use the Universal Dependencies formalism and yield state-of-the-art performance.
-``stanza`` is a new and improved version of ``stanfordnlp``. The spaCy wrapper for ``stanfordnlp``,
-``spacy-stanfordnlp`` is also supported in this library but its development has been superseded by the ``stanza``
-wrapper. Its use is not recommended. As an alternative to the Stanford models, you can use the spaCy
-wrapper for ``UDPipe``, `spacy-udpipe`_, which is slightly less accurate than ``stanza`` but much faster.
+``stanza`` is a new and improved version of ``stanfordnlp``. As an alternative to the Stanford models, you can use the
+spaCy wrapper for ``UDPipe``, `spacy-udpipe`_, which is slightly less accurate than ``stanza`` but much faster.
 
 
 .. _`CoNLL-U format`: https://universaldependencies.org/format.html
@@ -25,24 +24,38 @@ wrapper for ``UDPipe``, `spacy-udpipe`_, which is slightly less accurate than ``
 
 Installation
 ============
-By default, this package automatically installs only `spaCy`_  and the ``packaging`` package as dependencies.
+By default, this package automatically installs only `spaCy`_ as dependency.
 
 Because `spaCy's models`_ are not necessarily trained on Universal Dependencies conventions, their output labels are
 not UD either. By using ``spacy-stanza`` or ``spacy-udpipe``, we get the easy-to-use interface of spaCy as a wrapper
 around ``stanza`` and ``UDPipe`` respectively, including their models that *are* trained on UD data.
 
-**NOTE**: ``spacy-stanfordnlp``, ``spacy-stanza`` and ``spacy-udpipe`` are not installed automatically as a dependency
+**NOTE**: ``spacy-stanza`` and ``spacy-udpipe`` are not installed automatically as a dependency
 for this library, because it might be too much overhead for those who don't need UD. If you wish to use their
-functionality (e.g. better performance, real UD output), you have to install them manually.
+functionality (e.g. better performance, real UD output), you have to install them manually or use one of the available
+options as described below.
 
-If you want to retrieve CoNLL info as a ``pandas`` DataFrame, this library will automatically export it if it detects that
-``pandas`` is installed. See the Usage section for more.
+If you want to retrieve CoNLL info as a ``pandas`` DataFrame, this library will automatically export it if it detects
+that ``pandas`` is installed. See the Usage section for more.
 
 To install the library, simply use pip.
 
 .. code:: bash
 
-  pip install spacy_conll
+  pip install spacy_conll --pre
+
+A number of options are available to make installation of additional dependencies easier:
+
+.. code:: bash
+
+  # include spacy-stanza and spacy-udpipe
+  pip install spacy_conll[parsers] --pre
+  # include pandas
+  pip install spacy_conll[pd] --pre
+  # include pandas, spacy-stanza and spacy-udpipe
+  pip install spacy_conll[all] --pre
+  # include pandas, spacy-stanza and spacy-udpipe and additional libaries for testing and formatting
+  pip install spacy_conll[dev] --pre
 
 .. _spaCy: https://spacy.io/usage/models#section-quickstart
 .. _spaCy's models: https://spacy.io/usage/models
@@ -84,15 +97,15 @@ command-line script which offers typically needed functionality. See the followi
 In Python
 ---------
 This library offers the :code:`ConllFormatter` class which serves as a custom spaCy pipeline component. It can be
-instantiated as follows.
+instantiated as follows. It is important that you import ``spacy_conll`` before adding the pipe!
 
 .. code:: python
 
+    import spacy_conll
     nlp = <initialise parser>
-    conllformatter = ConllFormatter(nlp)
-    nlp.add_pipe(conllformatter, last=True)
+    nlp.add_pipe("conll_formatter", last=True)
 
-Because this library supports different spaCy wrappers (``spacy``, ``stanfordnlp``, ``stanza``, and ``udpipe``), a
+Because this library supports different spaCy wrappers (``spacy``, ``stanza``, and ``udpipe``), a
 convenience function is available as well. With :code:`utils.init_parser` you can easily instantiate a parser with a
 single line. You can find the function's signature below. Have a look at the `source code`_ to read more about all the
 possible arguments or try out the `examples`_.
@@ -100,18 +113,20 @@ possible arguments or try out the `examples`_.
 **NOTE**: :code:`is_tokenized` does not work for ``spacy-udpipe`` and :code:`disable_sbd` only works for ``spacy``.
 Recently, ``spacy-udpipe`` has made a change to allow pretokenized text but it depends on the input format and cannot
 be fixed at initialisation of the parser. See release v0.3.0 of spacy-udpipe or `this PR`_. Using
-:code:`is_tokenized` for ``spacy-stanfordnlp`` or ``spacy-stanza`` also effects sentence segmentation,  effectively
+:code:`is_tokenized` for ``spacy-stanza`` also effects sentence segmentation,  effectively
 *only* splitting on new lines.
 
 .. code:: python
 
-    def init_parser(parser: str = 'spacy',
-                    model_or_lang: str = 'en',
-                    *,
-                    is_tokenized: bool = False,
-                    disable_sbd: bool = False,
-                    parser_opts: Optional[Dict] = None,
-                    **kwargs) -> Language:
+    def init_parser(
+        model_or_lang: str,
+        parser: str,
+        *,
+        is_tokenized: bool = False,
+        disable_sbd: bool = False,
+        parser_opts: Optional[Dict] = None,
+        **kwargs,
+    ) -> Language:
 
 For instance, if you want to load a Dutch ``stanza`` model in silent mode with the CoNLL formatter already attached,
 you can simply use the following snippet. :code:`parser_opts` is passed to the ``stanza`` pipeline initialisation
@@ -122,7 +137,7 @@ initialisation.
 
     from spacy_conll import init_parser
 
-    nlp = init_parser('stanza', 'nl', parser_opts={'verbose': False})
+    nlp = init_parser("nl", "stanza", parser_opts={"verbose": False})
 
 
 The :code:`ConllFormatter` allows you to customize the extension names and you can also specify conversion maps for
@@ -140,21 +155,21 @@ The example below
 * shows how to manually add the component;
 * changes the custom attribute :code:`conll_pd` to :code:`pandas` (:code:`conll_pd` only availabe if ``pandas`` is
   installed);
-* converts any :code:`-PRON-` lemma to :code:`PRON`.
+* converts any :code:`nsubj` deprel to :code:`subj`.
 
 .. code:: python
 
     import spacy
-    from spacy_conll import ConllFormatter
+    import spacy_conll
 
 
-    nlp = spacy.load('en')
-    conllformatter = ConllFormatter(nlp,
-                                    ext_names={'conll_pd': 'pandas'},
-                                    conversion_maps={'lemma': {'-PRON-': 'PRON'}})
-    nlp.add_pipe(conllformatter, after='parser')
-    doc = nlp('I like cookies.')
+    nlp = spacy.load("en_core_web_sm")
+    config = {"ext_names": {"conll_pd": "pandas"},
+              "conversion_maps": {"deprel": {"nsubj": "subj"}}}
+    nlp.add_pipe("conll_formatter", config=config, last=True)
+    doc = nlp("I like cookies.")
     print(doc._.pandas)
+
 
 This is the same as:
 
@@ -162,24 +177,25 @@ This is the same as:
 
     from spacy_conll import init_parser
 
-
-    nlp = init_parser(ext_names={'conll_pd': 'pandas'},
-                      conversion_maps={'lemma': {'-PRON-': 'PRON'}})
-    doc = nlp('I like cookies.')
+    nlp = init_parser("en_core_web_sm",
+                      "spacy",
+                      ext_names={"conll_pd": "pandas"},
+                      conversion_maps={"deprel": {"nsubj": "subj"}})
+    doc = nlp("I like cookies.")
     print(doc._.pandas)
 
+
+
 The snippets above will output a pandas DataFrame by using :code:`._.pandas` rather than the standard
-:code:`._.conll_pd`, and all occurrences of "-PRON-" in the lemma field are replaced by "PRON".
+:code:`._.conll_pd`, and all occurrences of "nsubj" in the deprel field are replaced by "subj".
 
 .. code:: text
 
-       id     form   lemma upostag  ... head deprel  deps           misc
-    0   1        I    PRON    PRON  ...    2  nsubj     _              _
-    1   2     like    like    VERB  ...    0   ROOT     _              _
-    2   3  cookies  cookie    NOUN  ...    2   dobj     _  SpaceAfter=No
-    3   4        .       .   PUNCT  ...    2  punct     _  SpaceAfter=No
-
-    [4 rows x 10 columns]
+       id     form   lemma upostag xpostag                                       feats  head deprel deps           misc
+    0   1        I       I    PRON     PRP  Case=Nom|Number=Sing|Person=1|PronType=Prs     2   subj    _              _
+    1   2     like    like    VERB     VBP                     Tense=Pres|VerbForm=Fin     0   ROOT    _              _
+    2   3  cookies  cookie    NOUN     NNS                                 Number=Plur     2   dobj    _  SpaceAfter=No
+    3   4        .       .   PUNCT       .                              PunctType=Peri     2  punct    _  SpaceAfter=No
 
 
 .. _`examples`: examples/
@@ -195,103 +211,100 @@ string or file into CoNLL format given a number of options.
 
 .. code:: bash
 
-    > parse-as-conll  -h
-    usage: parse-as-conll [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR]
-                          [-o OUTPUT_FILE] [-c OUTPUT_ENCODING] [-m MODEL_OR_LANG]
-                          [-s] [-t] [-d] [-e] [-j N_PROCESS]
-                          [-p {spacy,stanfordnlp,stanza,udpipe}] [-v]
+    > parse-as-conll -h
+    usage: parse-as-conll [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR] [-o OUTPUT_FILE]
+                      [-c OUTPUT_ENCODING] [-s] [-t] [-d] [-e] [-j N_PROCESS] [-v]
+                      [--ignore_pipe_errors] [--no_split_on_newline]
+                      model_or_lang {spacy,stanza,udpipe}
 
-    Parse an input string or input file to CoNLL-U format using a spaCy-wrapped
-    parser.
+    Parse an input string or input file to CoNLL-U format using a spaCy-wrapped parser. The output
+    can be written to stdout or a file, or both.
+
+    positional arguments:
+      model_or_lang         Model or language to use. SpaCy models must be pre-installed, stanza
+                            and udpipe models will be downloaded automatically
+      {spacy,stanza,udpipe}
+                            Which parser to use. Parsers other than 'spacy' need to be installed
+                            separately. For 'stanza' you need 'spacy-stanza', and for 'udpipe' the
+                            'spacy-udpipe' library is required.
 
     optional arguments:
       -h, --help            show this help message and exit
       -f INPUT_FILE, --input_file INPUT_FILE
-                            Path to file with sentences to parse. Has precedence
-                            over 'input_str'. (default: None)
+                            Path to file with sentences to parse. Has precedence over 'input_str'.
+                            (default: None)
       -a INPUT_ENCODING, --input_encoding INPUT_ENCODING
-                            Encoding of the input file. Default value is system
-                            default. (default: cp1252)
+                            Encoding of the input file. Default value is system default. (default:
+                            cp1252)
       -b INPUT_STR, --input_str INPUT_STR
                             Input string to parse. (default: None)
       -o OUTPUT_FILE, --output_file OUTPUT_FILE
-                            Path to output file. If not specified, the output will
-                            be printed on standard output. (default: None)
+                            Path to output file. If not specified, the output will be printed on
+                            standard output. (default: None)
       -c OUTPUT_ENCODING, --output_encoding OUTPUT_ENCODING
-                            Encoding of the output file. Default value is system
-                            default. (default: cp1252)
-      -m MODEL_OR_LANG, --model_or_lang MODEL_OR_LANG
-                            language model to use (must be installed). Defaults to
-                            an English model (default: en)
-      -s, --disable_sbd     Whether to disable spaCy automatic sentence boundary
-                            detection. In practice, disabling means that every
-                            line will be parsed as one sentence, regardless of its
-                            actual content. Only works when using 'spacy' as
-                            'parser'. (default: False)
-      -t, --is_tokenized    Whether your text has already been tokenized (space-
-                            seperated). Setting this option has difference
-                            consequences for different parsers: SpaCy will simply
-                            not do any further tokenisation: we simply split the
-                            tokens on whitespace; Stanfordnlp and Stanza will not
-                            tokenize but in addition, will also only do sentence
-                            splitting on newlines. No additional sentence
-                            segmentation is done; For UDpipe we also simply
-                            disable tokenisation and use white-spaced tokens
-                            (works from 0.3.0 upwards). No further sentence
-                            segmentation is done. (default: False)
+                            Encoding of the output file. Default value is system default. (default:
+                            cp1252)
+      -s, --disable_sbd     Whether to disable spaCy automatic sentence boundary detection. In
+                            practice, disabling means that every line will be parsed as one
+                            sentence, regardless of its actual content. When 'is_tokenized' is
+                            enabled, 'disable_sbd' is enabled automatically (see 'is_tokenized').
+                            Only works when using 'spacy' as 'parser'. (default: False)
+      -t, --is_tokenized    Whether your text has already been tokenized (space-seperated). Setting
+                            this option has as an important consequence that no sentence splitting
+                            at all will be done except splitting on new lines. So if your input is
+                            a file, and you want to use pretokenised text, make sure that each line
+                            contains exactly one sentence. (default: False)
       -d, --include_headers
-                            Whether to include headers before the output of every
-                            sentence. These headers include the sentence text and
-                            the sentence ID as per the CoNLL format. (default:
-                            False)
+                            Whether to include headers before the output of every sentence. These
+                            headers include the sentence text and the sentence ID as per the CoNLL
+                            format. (default: False)
       -e, --no_force_counting
-                            Whether to disable force counting the 'sent_id',
-                            starting from 1 and increasing for each sentence.
-                            Instead, 'sent_id' will depend on how spaCy returns
-                            the sentences. Must have 'include_headers' enabled.
+                            Whether to disable force counting the 'sent_id', starting from 1 and
+                            increasing for each sentence. Instead, 'sent_id' will depend on how
+                            spaCy returns the sentences. Must have 'include_headers' enabled.
                             (default: False)
       -j N_PROCESS, --n_process N_PROCESS
-                            Number of processes to use in nlp.pipe(). -1 will use
-                            as many cores as available. Requires spaCy v2.2.2.
-                            Might not work for a 'parser' other than 'spacy'.
-                            (default: 1)
-      -p {spacy,stanfordnlp,stanza,udpipe}, --parser {spacy,stanfordnlp,stanza,udpipe}
-                            Which parser to use. Parsers other than 'spacy' need
-                            to be installed separately. So if you wish to use
-                            'stanfordnlp' models, 'spacy-stanfordnlp' needs to be
-                            installed. For 'stanza' you need 'spacy-stanza', and
-                            for 'udpipe' the 'spacy-udpipe' library is required.
-                            (default: spacy)
-      -v, --verbose         Whether to always print the output to stdout,
-                            regardless of 'output_file'. (default: False)
-
-
+                            Number of processes to use in nlp.pipe(). -1 will use as many cores as
+                            available. Might not work for a 'parser' other than 'spacy' depending
+                            on your environment. (default: 1)
+      -v, --verbose         Whether to always print the output to stdout, regardless of
+                            'output_file'. (default: False)
+      --ignore_pipe_errors  Whether to ignore a priori errors concerning 'n_process' By default we
+                            try to determine whether processing works on your system and stop
+                            execution if we think it doesn't. If you know what you are doing, you
+                            can ignore such pre-emptive errors, though, and run the code as-is,
+                            which will then throw the default Python errors when applicable.
+                            (default: False)
+      --no_split_on_newline
+                            By default, the input file or string is split on newlines for faster
+                            processing of the split up parts. If you want to disable that behavior,
+                            you can use this flag. (default: False)
 
 For example, parsing a single line, multi-sentence string:
 
 .. code:: bash
 
-    >  parse-as-conll --input_str "I like cookies . What about you ?" --is_tokenized --include_headers
+    >  parse-as-conll en_core_web_sm spacy --input_str "I like cookies. What about you?" --include_headers
     # sent_id = 1
-    # text = I like cookies .
-    1       I       -PRON-  PRON    PRP     PronType=prs    2       nsubj   _       _
-    2       like    like    VERB    VBP     VerbForm=fin|Tense=pres 0       ROOT    _       _
-    3       cookies cookie  NOUN    NNS     Number=plur     2       dobj    _       _
-    4       .       .       PUNCT   .       PunctType=peri  2       punct   _       _
+    # text = I like cookies.
+    1       I       I       PRON    PRP     Case=Nom|Number=Sing|Person=1|PronType=Prs      2       nsubj   _       _
+    2       like    like    VERB    VBP     Tense=Pres|VerbForm=Fin 0       ROOT    _       _
+    3       cookies cookie  NOUN    NNS     Number=Plur     2       dobj    _       SpaceAfter=No
+    4       .       .       PUNCT   .       PunctType=Peri  2       punct   _       _
 
     # sent_id = 2
-    # text = What about you ?
+    # text = What about you?
     1       What    what    PRON    WP      _       2       dep     _       _
     2       about   about   ADP     IN      _       0       ROOT    _       _
-    3       you     -PRON-  PRON    PRP     PronType=prs    2       pobj    _       _
-    4       ?       ?       PUNCT   .       PunctType=peri  2       punct   _       _
+    3       you     you     PRON    PRP     Case=Acc|Person=2|PronType=Prs  2       pobj    _       SpaceAfter=No
+    4       ?       ?       PUNCT   .       PunctType=Peri  2       punct   _       SpaceAfter=No
 
 For example, parsing a large input file and writing output to a given output file, using four processes (multiprocessing
 might be only supported in ``spacy``):
 
 .. code:: bash
 
-    > parse-as-conll --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
+    > parse-as-conll en_core_web_sm spacy --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
 
 
 =======

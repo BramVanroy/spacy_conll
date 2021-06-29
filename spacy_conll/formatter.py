@@ -3,9 +3,12 @@ from typing import Dict, Optional, Union
 
 from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
+from spacy_conll.utils import PD_AVAILABLE
 
 
-COMPONENT_NAME = "conll_formatter"
+if PD_AVAILABLE:
+    import pandas as pd
+
 CONLL_FIELD_NAMES = [
     "id",
     "form",
@@ -19,16 +22,13 @@ CONLL_FIELD_NAMES = [
     "misc",
 ]
 
-try:
-    import pandas as pd
 
-    PD_AVAILABLE = True
-except ImportError:
-    PD_AVAILABLE = False
-
-
+@Language.factory(
+    "conll_formatter",
+    default_config={"conversion_maps": None, "ext_names": None, "include_headers": False, "disable_pandas": False},
+)
 class ConllFormatter:
-    """Pipeline component for spaCy that adds CoNLL-U properties to a Doc, its sentence `Span`s, and Tokens.
+    """Pipeline component for spaCy that adds CoNLL-U-style properties to a Doc, its sentence `Span`s, and Tokens.
     By default, the custom properties `conll` and `conll_str` are added. If `pandas` is installed,
     `conll_pd` is added as well.
 
@@ -51,11 +51,10 @@ class ConllFormatter:
           index is reset.
     """
 
-    name = COMPONENT_NAME
-
     def __init__(
         self,
         nlp: Language,
+        name: str,
         *,
         conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
         ext_names: Optional[Dict[str, str]] = None,
@@ -63,7 +62,8 @@ class ConllFormatter:
         disable_pandas: bool = False,
     ):
         """ConllFormatter constructor.
-        :param nlp: an initialized spaCy nlp object
+        :param nlp: an initialized spaCy-like nlp object
+        :param name: a string, as reauired by spaCy
         :param conversion_maps: two-level dictionary that contains a field_name (e.g. 'lemma', 'upostag')
                on the first level, and the conversion map on the second.
                E.g. {'lemma': {'-PRON-': 'PRON'}} will map the lemma '-PRON-' to 'PRON'
@@ -76,9 +76,8 @@ class ConllFormatter:
         :param disable_pandas: whether to disable pandas integration even if it is installed. This is particularly
                useful to avoid issues when using multiprocessing.
         """
-        # To get the morphological info, we need a tag map
-        self._tagmap = nlp.Defaults.tag_map
-
+        self.nlp = nlp
+        self.name = name
         # Set custom attribute names
         self._ext_names = {"conll_str": "conll_str", "conll": "conll", "conll_pd": "conll_pd"}
         if ext_names:
@@ -88,21 +87,20 @@ class ConllFormatter:
 
         self.include_headers = include_headers
         self.disable_pandas = disable_pandas
+
         # Initialize extensions
         self._set_extensions()
 
-    def __call__(self, doc: Doc):
+    def __call__(self, doc: Doc) -> Doc:
         """Runs the pipeline component, adding the extensions to Underscore ._.. Adds a string representation,
-           string representation containing a header, and a tuple representation of the CoNLL format to the
-           given Doc and its sentences.
+        string representation containing a header, and a tuple representation of the CoNLL format to the
+        given Doc and its sentences.
         :param doc: the input Doc
         :return: the modified Doc containing the newly added extensions
         """
         # We need to hook the extensions again when using
         # multiprocessing in Windows
         # see: https://github.com/explosion/spaCy/issues/4903
-        # fixed in: https://github.com/explosion/spaCy/pull/5006
-        # Leaving this here for now, for older versions of spaCy
         self._set_extensions()
 
         for sent_idx, sent in enumerate(doc.sents, 1):
@@ -122,24 +120,10 @@ class ConllFormatter:
 
         return doc
 
-    def _get_morphology(self, tag: str):
-        """Expands a tag into its morphological features by using a tagmap.
-        :param tag: the tag to expand
-        :return: a string entailing the tag's morphological features
-        """
-        if not self._tagmap or tag not in self._tagmap:
-            return "_"
-        else:
-            feats = [f"{prop}={val}" for prop, val in self._tagmap[tag].items() if not self._is_number(prop)]
-            if feats:
-                return "|".join(feats)
-            else:
-                return "_"
-
-    def _map_conll(self, token_conll_d: Dict[str, Union[str, int]]):
+    def _map_conll(self, token_conll_d: Dict[str, Union[str, int]]) -> Dict[str, Union[str, int]]:
         """Maps labels according to a given `self._conversion_maps`.
-            This can be useful when users want to change the output labels of a
-            model to their own tagset.
+        This can be useful when users want to change the output labels of a
+        model to their own tagset.
 
         :param token_conll_d: a token's conll representation as dict (field_name: value)
         :return: the modified dict where the labels have been replaced according to the converison maps
@@ -151,18 +135,6 @@ class ConllFormatter:
                 continue
 
         return token_conll_d
-
-    def _set_extensions(self):
-        """Sets the default extensions if they do not exist yet."""
-        for obj in Doc, Span, Token:
-            if not obj.has_extension(self._ext_names["conll_str"]):
-                obj.set_extension(self._ext_names["conll_str"], default=None)
-            if not obj.has_extension(self._ext_names["conll"]):
-                obj.set_extension(self._ext_names["conll"], default=None)
-
-            if PD_AVAILABLE and not self.disable_pandas:
-                if not obj.has_extension(self._ext_names["conll_pd"]):
-                    obj.set_extension(self._ext_names["conll_pd"], default=None)
 
     def _set_span_conll(self, span: Span, span_idx: int = 1):
         """Sets a span's properties according to the CoNLL-U format.
@@ -187,7 +159,7 @@ class ConllFormatter:
                 pd.DataFrame([t._.get(self._ext_names["conll"]) for t in span]),
             )
 
-    def _set_token_conll(self, token: Token, token_idx: int = 1):
+    def _set_token_conll(self, token: Token, token_idx: int = 1) -> Token:
         """Sets a token's properties according to the CoNLL-U format.
         :param token: a spaCy Token
         :param token_idx: optional index, corresponding to the n-th token in the sentence Span
@@ -203,7 +175,7 @@ class ConllFormatter:
             token.lemma_,
             token.pos_,
             token.tag_,
-            self._get_morphology(token.tag_),
+            str(token.morph) if token.has_morph and str(token.morph) else "_",
             head_idx,
             token.dep_,
             "_",
@@ -227,22 +199,10 @@ class ConllFormatter:
         return token
 
     @staticmethod
-    def _is_number(s: str):
-        """Checks whether a string is actually a number.
-        :param s: string to test
-        :return: whether or not 's' is a number
-        """
-        try:
-            float(s)
-            return True
-        except ValueError:
-            return False
-
-    @staticmethod
-    def _merge_dicts_strict(d1: Dict, d2: Dict):
+    def _merge_dicts_strict(d1: Dict, d2: Dict) -> Dict:
         """Merge two dicts in a strict manner, i.e. the second dict overwrites keys
-           of the first dict but all keys in the second dict have to be present in
-           the first dict.
+        of the first dict but all keys in the second dict have to be present in
+        the first dict.
         :param d1: base dict which will be overwritten
         :param d2: dict with new values that will overwrite d1
         :return: the merged dict (but d1 will be modified in-place anyway!)
@@ -253,3 +213,15 @@ class ConllFormatter:
             d1[k] = v
 
         return d1
+
+    def _set_extensions(self):
+        """Sets the default extensions if they do not exist yet."""
+        for obj in Doc, Span, Token:
+            if not obj.has_extension(self._ext_names["conll_str"]):
+                obj.set_extension(self._ext_names["conll_str"], default=None)
+            if not obj.has_extension(self._ext_names["conll"]):
+                obj.set_extension(self._ext_names["conll"], default=None)
+
+            if PD_AVAILABLE and not self.disable_pandas:
+                if not obj.has_extension(self._ext_names["conll_pd"]):
+                    obj.set_extension(self._ext_names["conll_pd"], default=None)

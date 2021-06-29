@@ -2,6 +2,25 @@
 History
 #######
 
+*********
+3.0.0 TBD
+*********
+* **[general]** Breaking change: spaCy v3 required (closes `#8`_)
+* **[init_parser]** Breaking change: in all cases, :code:`--is_tokenized` now disables sentence segmentation
+* **[init_parser]** Breaking change: no more default values for parser or model anywhere. Important to note here that
+  spaCy does not work with short-hand codes such as ``en`` any more. You have to provide the full model name, e.g.
+  ``en_core_web_sm``
+* **[cli]** Reworked the position of the CLI script in the directory structure as well as the arguments. Run
+  :code:`parse-as-conll -h` for more information.
+* **[conllparser]** Made the `ConllParser`_ class available as a utility to easily create a wrapper for a spaCy-like
+  parser which can return the parsed CoNLL output of a given file or text
+* **[conllparser,cli]** Improvements to usability of :code:`n_process`. Will try to figure out whether multiprocessing
+  is available for your platform and if not, tell you so. Such a priori error messages can be disabled, with
+  :code:`ignore_pipe_errors`, both on the command line as in ConllParser's parse methods
+
+.. _`#8`: https://github.com/BramVanroy/spacy_conll/issues/8
+.. _`ConllParser`: spacy_conll/parser.py
+
 ***********************
 2.1.0 (June 23rd, 2021)
 ***********************

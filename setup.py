@@ -2,9 +2,16 @@ from pathlib import Path
 from setuptools import setup
 
 
+extras = {
+    "pd": ["pandas"],
+    "parsers": ["spacy-udpipe>=1.0.0", "spacy-stanza>=1.0.0"]
+}
+extras["all"] = extras["pd"] + extras["parsers"]
+extras["dev"] = extras["all"] + ["pytest", "flake8", "isort", "black", "pygments"]
+
 setup(
     name="spacy_conll",
-    version="2.1.0",
+    version="3.0.0-rc1",
     description="A custom pipeline component for spaCy that can convert any parsed Doc"
                 " and its sentences into CoNLL-U format. Also provides a command line entry point.",
     long_description=Path("README.rst").read_text(encoding="utf-8"),
@@ -24,6 +31,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Operating System :: OS Independent"
     ],
     project_urls={
@@ -32,14 +40,10 @@ setup(
     },
     python_requires=">=3.6",
     install_requires=[
-        "spacy>=2.0,<3.0",
-        "packaging"
+        "spacy>=3.0.1"
     ],
-    extras_require={
-        "dev":  ["pytest", "flake8", "isort", "black"],
-        "pd": ["pandas"]
-    },
+    extras_require=extras,
     entry_points={
-        "console_scripts": ["parse-as-conll=spacy_conll.__main__:main"]
+        "console_scripts": ["parse-as-conll=spacy_conll.cli.parse:main"]
     }
 )

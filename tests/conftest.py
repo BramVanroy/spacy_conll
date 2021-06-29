@@ -1,3 +1,7 @@
+import os
+from distutils import dir_util
+from pathlib import Path
+
 import pytest
 from spacy.tokens.underscore import Underscore
 
@@ -5,6 +9,7 @@ from spacy_conll import init_parser
 
 # flow inspired by https://stackoverflow.com/a/61486898/1150683
 # pass (uninvoked) function as a parameter to fixtures
+from spacy_conll.parser import ConllParser
 
 PARSERS = {}
 
@@ -13,10 +18,9 @@ def get_parser(name, **kwargs):
     model_or_lang = "en_core_web_sm" if name == "spacy" else "en"
 
     if f"{name}-{kwargs}" not in PARSERS:
-        PARSERS[f"{name}-{kwargs}"] = init_parser(name, model_or_lang, **kwargs)
+        PARSERS[f"{name}-{kwargs}"] = init_parser(model_or_lang, name, **kwargs)
 
     return PARSERS[f"{name}-{kwargs}"]
-
 
 @pytest.fixture(scope="function", autouse=True)
 def clean_underscore():
@@ -31,20 +35,30 @@ def clean_underscore():
     Underscore.token_extensions = {}
 
 
-@pytest.fixture(params=["spacy", "stanfordnlp", "stanza", "udpipe"])
+@pytest.fixture(params=["spacy", "stanza", "udpipe"])
 def base_parser(request):
     yield get_parser(request.param)
 
 
 # Not testing with UDPipe, which does not support this
-@pytest.fixture(params=["spacy", "stanfordnlp", "stanza"])
+@pytest.fixture(params=["spacy", "stanza"])
 def pretokenized_parser(request):
     yield get_parser(request.param, is_tokenized=True), request.param
 
 
+@pytest.fixture(params=["spacy", "stanza", "udpipe"])
+def conllparser(request):
+    yield ConllParser(get_parser(request.param, include_headers=True))
+
+
+@pytest.fixture(params=["spacy", "stanza", "udpipe"])
+def pretokenized_conllparser(request):
+    yield ConllParser(get_parser(request.param, is_tokenized=True, include_headers=True), is_tokenized=True)
+
+
 @pytest.fixture
 def spacy_ext_names():
-    nlp = init_parser("spacy", "en_core_web_sm",
+    nlp = init_parser("en_core_web_sm", "spacy",
         ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
     )
     return nlp
@@ -52,13 +66,13 @@ def spacy_ext_names():
 
 @pytest.fixture
 def spacy_conversion_map():
-    nlp = init_parser("spacy", "en_core_web_sm", conversion_maps={"lemma": {"-PRON-": "PRON"}})
+    nlp = init_parser("en_core_web_sm", "spacy", conversion_maps={"lemma": {"-PRON-": "PRON"}})
     return nlp
 
 
 @pytest.fixture
 def spacy_disabled_pandas():
-    nlp = init_parser("spacy", "en_core_web_sm", disable_pandas=True)
+    nlp = init_parser("en_core_web_sm", "spacy", disable_pandas=True)
     return nlp
 
 
@@ -102,3 +116,13 @@ def spacy_conversion_map_doc(spacy_conversion_map):
 @pytest.fixture
 def spacy_disabled_pandas_doc(spacy_disabled_pandas):
     return spacy_disabled_pandas(single_sent())
+
+
+@pytest.fixture
+def conllparser_conllstr(conllparser):
+    return conllparser.parse_file_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")
+
+
+@pytest.fixture
+def pretokenized_conllparser_conllstr(pretokenized_conllparser):
+    return pretokenized_conllparser.parse_file_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")

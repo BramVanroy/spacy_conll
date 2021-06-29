@@ -6,7 +6,7 @@ from spacy_conll import init_parser
 
 def main():
     # Initialise English parser, already including the ConllFormatter as a pipeline component
-    nlp = init_parser("spacy", "en")
+    nlp = init_parser("spacy", "en_core_web_sm")
     # Parse a given string
     doc = nlp(
         "A cookie is a baked or cooked food that is typically small, flat and sweet. It usually contains flour,"
