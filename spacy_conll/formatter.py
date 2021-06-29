@@ -3,8 +3,8 @@ from typing import Dict, Optional, Union
 
 from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
-
 from spacy_conll.utils import PD_AVAILABLE
+
 
 if PD_AVAILABLE:
     import pandas as pd
@@ -23,10 +23,12 @@ CONLL_FIELD_NAMES = [
 ]
 
 
-@Language.factory("conll_formatter", default_config={"conversion_maps": None, "ext_names": None,
-                                                     "include_headers": False, "disable_pandas": False})
+@Language.factory(
+    "conll_formatter",
+    default_config={"conversion_maps": None, "ext_names": None, "include_headers": False, "disable_pandas": False},
+)
 class ConllFormatter:
-    """Pipeline component for spaCy that adds CoNLL-U properties to a Doc, its sentence `Span`s, and Tokens.
+    """Pipeline component for spaCy that adds CoNLL-U-style properties to a Doc, its sentence `Span`s, and Tokens.
     By default, the custom properties `conll` and `conll_str` are added. If `pandas` is installed,
     `conll_pd` is added as well.
 
@@ -48,6 +50,7 @@ class ConllFormatter:
         - in `Doc`: a concatenation of its sentences' `DataFrame`'s, leading to a new a `DataFrame` whose
           index is reset.
     """
+
     def __init__(
         self,
         nlp: Language,
@@ -59,7 +62,7 @@ class ConllFormatter:
         disable_pandas: bool = False,
     ):
         """ConllFormatter constructor.
-        :param nlp: an initialized spaCy nlp object
+        :param nlp: an initialized spaCy-like nlp object
         :param name: a string, as reauired by spaCy
         :param conversion_maps: two-level dictionary that contains a field_name (e.g. 'lemma', 'upostag')
                on the first level, and the conversion map on the second.
@@ -90,16 +93,14 @@ class ConllFormatter:
 
     def __call__(self, doc: Doc) -> Doc:
         """Runs the pipeline component, adding the extensions to Underscore ._.. Adds a string representation,
-           string representation containing a header, and a tuple representation of the CoNLL format to the
-           given Doc and its sentences.
+        string representation containing a header, and a tuple representation of the CoNLL format to the
+        given Doc and its sentences.
         :param doc: the input Doc
         :return: the modified Doc containing the newly added extensions
         """
         # We need to hook the extensions again when using
         # multiprocessing in Windows
         # see: https://github.com/explosion/spaCy/issues/4903
-        # fixed in: https://github.com/explosion/spaCy/pull/5006
-        # Leaving this here for now, for older versions of spaCy
         self._set_extensions()
 
         for sent_idx, sent in enumerate(doc.sents, 1):
@@ -121,8 +122,8 @@ class ConllFormatter:
 
     def _map_conll(self, token_conll_d: Dict[str, Union[str, int]]) -> Dict[str, Union[str, int]]:
         """Maps labels according to a given `self._conversion_maps`.
-            This can be useful when users want to change the output labels of a
-            model to their own tagset.
+        This can be useful when users want to change the output labels of a
+        model to their own tagset.
 
         :param token_conll_d: a token's conll representation as dict (field_name: value)
         :return: the modified dict where the labels have been replaced according to the converison maps
@@ -200,8 +201,8 @@ class ConllFormatter:
     @staticmethod
     def _merge_dicts_strict(d1: Dict, d2: Dict) -> Dict:
         """Merge two dicts in a strict manner, i.e. the second dict overwrites keys
-           of the first dict but all keys in the second dict have to be present in
-           the first dict.
+        of the first dict but all keys in the second dict have to be present in
+        the first dict.
         :param d1: base dict which will be overwritten
         :param d2: dict with new values that will overwrite d1
         :return: the merged dict (but d1 will be modified in-place anyway!)
