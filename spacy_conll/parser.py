@@ -115,8 +115,8 @@ class ConllParser:
                 if os.name == "nt":
                     if self.parser in ["udpipe", "stanza"]:
                         raise ValueError
-                # On Linux, UDPipe supports it too but stanza throws a torch error
-                elif os.name == "posix":
+                # On Linux and MacOS, UDPipe supports it too but stanza throws a torch error
+                else:
                     if self.parser == "stanza":
                         raise ValueError
             except ValueError:
