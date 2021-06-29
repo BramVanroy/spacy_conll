@@ -2,6 +2,9 @@
 Parsing to CoNLL with spaCy, spacy-stanza, and spacy-udpipe
 ===========================================================
 
+**This is a pre-release vor the upcoming v3 of the library. If you experience any issue with it, please
+open a new issue.**
+
 This module allows you to parse text into `CoNLL-U format`_. You can use it as a command line tool, or embed it in your
 own scripts by adding it as a custom pipeline component to a spaCy, ``spacy-stanza``, or ``spacy-udpipe``
 pipeline. It also provides an easy-to-use function to quickly initialize a parser as well as a ConllParser class
@@ -39,22 +42,20 @@ To install the library, simply use pip.
 
 .. code:: bash
 
-  pip install spacy_conll
+  pip install spacy_conll --pre
 
 A number of options are available to make installation of additional dependencies easier:
 
 .. code:: bash
 
   # include spacy-stanza and spacy-udpipe
-  pip install spacy_conll[parsers]
+  pip install spacy_conll[parsers] --pre
   # include pandas
-  pip install spacy_conll[pd]
+  pip install spacy_conll[pd] --pre
   # include pandas, spacy-stanza and spacy-udpipe
-  pip install spacy_conll[all]
-  # include pandas, spacy-stanza and spacy-udpipe
-  pip install spacy_conll[all]
+  pip install spacy_conll[all] --pre
   # include pandas, spacy-stanza and spacy-udpipe and additional libaries for testing and formatting
-  pip install spacy_conll[dev]
+  pip install spacy_conll[dev] --pre
 
 .. _spaCy: https://spacy.io/usage/models#section-quickstart
 .. _spaCy's models: https://spacy.io/usage/models
