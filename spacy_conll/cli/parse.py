@@ -12,29 +12,35 @@ from spacy_conll.parser import ConllParser
 def parse(args: Namespace):
     if not args.input_str and not args.input_file:
         raise ValueError("'input_str' or 'input_file' must be given")
-    elif args.input_file:
-        input_f = args.input_file
-        delete_inp = False
-    else:
-        input_fh = NamedTemporaryFile(encoding=args.input_encoding, mode="w", delete=False)
-        input_f = input_fh.name
-        input_fh.write(args.input_str+"\n")
-        input_fh.close()
-        delete_inp = True
 
-    nlp = init_parser(args.model_or_lang,
-                      args.parser,
-                      is_tokenized=args.is_tokenized,
-                      disable_sbd=args.disable_sbd,
-                      disable_pandas=True,
-                      include_headers=args.include_headers)
+    nlp = init_parser(
+        args.model_or_lang,
+        args.parser,
+        is_tokenized=args.is_tokenized,
+        disable_sbd=args.disable_sbd,
+        disable_pandas=True,
+        include_headers=args.include_headers,
+    )
 
     parser = ConllParser(nlp, is_tokenized=args.is_tokenized)
-    conll_str = parser.parse_as_conll(input_f,
-                                      args.input_encoding,
-                                      args.n_process,
-                                      args.no_force_counting,
-                                      args.ignore_pipe_errors)
+
+    if args.input_file:
+        conll_str = parser.parse_file_as_conll(
+            args.input_file,
+            args.input_encoding,
+            n_process=args.n_process,
+            no_force_counting=args.no_force_counting,
+            ignore_pipe_errors=args.ignore_pipe_errors,
+            no_split_on_newline=args.no_split_on_newline
+        )
+    else:
+        conll_str = parser.parse_text_as_conll(
+            args.input_str,
+            n_process=args.n_process,
+            no_force_counting=args.no_force_counting,
+            ignore_pipe_errors=args.ignore_pipe_errors,
+            no_split_on_newline=args.no_split_on_newline
+        )
 
     fhout = Path(args.output_file).open("w", encoding=args.output_encoding) if args.output_file is not None else stdout
     fhout.write(conll_str)
@@ -43,16 +49,14 @@ def parse(args: Namespace):
         # end='' to avoid adding yet another newline
         print(conll_str, end="")
 
-    # Clean-up
-    if delete_inp:
-        os.unlink(input_f)
-
 
 def main():
     import argparse
+
     cparser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Parse an input string or input file to CoNLL-U format using a spaCy-wrapped parser.",
+        description="Parse an input string or input file to CoNLL-U format using a spaCy-wrapped parser. "
+                    " The output can be written to stdout or a file, or both.",
     )
 
     # Input arguments
@@ -88,7 +92,7 @@ def main():
     cparser.add_argument(
         "model_or_lang",
         help="Model or language to use. SpaCy models must be pre-installed, stanza and udpipe models will be"
-             " downloaded automatically",
+        " downloaded automatically",
     )
     cparser.add_argument(
         "parser",
@@ -142,7 +146,7 @@ def main():
         type=int,
         default=1,
         help="Number of processes to use in nlp.pipe(). -1 will use as many cores as available. Might not work for a"
-             " 'parser' other than 'spacy'.",
+        " 'parser' other than 'spacy' depending on your environment.",
     )
     cparser.add_argument(
         "-v",
@@ -156,9 +160,16 @@ def main():
         default=False,
         action="store_true",
         help="Whether to ignore a priori errors concerning 'n_process' By default we try to determine whether"
-             " processing works on your system and stop execution if we think it doesn't. If you know what you"
-             " are doing, you can ignore such pre-emptive errors, though, and run the code as-is, which will"
-             " then throw the default Python errors when applicable.",
+        " processing works on your system and stop execution if we think it doesn't. If you know what you"
+        " are doing, you can ignore such pre-emptive errors, though, and run the code as-is, which will"
+        " then throw the default Python errors when applicable.",
+    )
+    cparser.add_argument(
+        "--no_split_on_newline",
+        default=False,
+        action="store_true",
+        help="By default, the input file or string is split on newlines for faster processing of the split up parts."
+             " If you want to disable that behavior, you can use this flag.",
     )
 
     cargs = cparser.parse_args()
