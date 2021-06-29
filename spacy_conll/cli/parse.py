@@ -31,7 +31,7 @@ def parse(args: Namespace):
             n_process=args.n_process,
             no_force_counting=args.no_force_counting,
             ignore_pipe_errors=args.ignore_pipe_errors,
-            no_split_on_newline=args.no_split_on_newline
+            no_split_on_newline=args.no_split_on_newline,
         )
     else:
         conll_str = parser.parse_text_as_conll(
@@ -39,7 +39,7 @@ def parse(args: Namespace):
             n_process=args.n_process,
             no_force_counting=args.no_force_counting,
             ignore_pipe_errors=args.ignore_pipe_errors,
-            no_split_on_newline=args.no_split_on_newline
+            no_split_on_newline=args.no_split_on_newline,
         )
 
     fhout = Path(args.output_file).open("w", encoding=args.output_encoding) if args.output_file is not None else stdout
@@ -56,7 +56,7 @@ def main():
     cparser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Parse an input string or input file to CoNLL-U format using a spaCy-wrapped parser. "
-                    " The output can be written to stdout or a file, or both.",
+        " The output can be written to stdout or a file, or both.",
     )
 
     # Input arguments
@@ -169,7 +169,7 @@ def main():
         default=False,
         action="store_true",
         help="By default, the input file or string is split on newlines for faster processing of the split up parts."
-             " If you want to disable that behavior, you can use this flag.",
+        " If you want to disable that behavior, you can use this flag.",
     )
 
     cargs = cparser.parse_args()

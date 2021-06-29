@@ -31,6 +31,7 @@ class ConllParser:
     'nlp' was initialized! If you initialized the 'nlp' object with 'init_parser', make sure you used 'is_tokenized'
     in the same way
     """
+
     nlp: Language
     is_tokenized: bool = False
     parser: str = field(init=False, default=None)
@@ -43,6 +44,7 @@ class ConllParser:
         if isinstance(self.nlp.tokenizer, StanzaTokenizer):
             self.parser = "stanza"
             import torch
+
             torch.set_num_threads(1)
         elif isinstance(self.nlp.tokenizer, UDPipeTokenizer):
             self.parser = "udpipe"
@@ -67,10 +69,7 @@ class ConllParser:
         return lines
 
     def parse_file_as_conll(
-        self,
-        input_file: Union[PathLike, Path, str],
-        input_encoding: str = getpreferredencoding(),
-        **kwargs
+        self, input_file: Union[PathLike, Path, str], input_encoding: str = getpreferredencoding(), **kwargs
     ) -> str:
         """Parses a given input file with self.parser and returns its CoNLL output.
         :param input_file: path to the input file to process
@@ -82,12 +81,14 @@ class ConllParser:
 
         return self.parse_text_as_conll(text, **kwargs)
 
-    def parse_text_as_conll(self,
-                            text: str,
-                            n_process: int = 1,
-                            no_force_counting: bool = False,
-                            ignore_pipe_errors: bool = False,
-                            no_split_on_newline: bool = False) -> str:
+    def parse_text_as_conll(
+        self,
+        text: str,
+        n_process: int = 1,
+        no_force_counting: bool = False,
+        ignore_pipe_errors: bool = False,
+        no_split_on_newline: bool = False,
+    ) -> str:
         """Parses a given text (string) with self.parser and returns its CoNLL output.
         :param text: input text (string) to process
         :param n_process: number of processes to use in nlp.pipe(). -1 will use as many cores as available. Might not
