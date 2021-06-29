@@ -67,7 +67,7 @@ def init_parser(
         import spacy_stanza
         import stanza
 
-        verbose = parser_opts.get("verbose", False)
+        verbose = parser_opts.pop("verbose", False)
         stanza.download(model_or_lang, verbose=verbose)
         nlp = spacy_stanza.load_pipeline(
             model_or_lang, verbose=verbose, tokenize_pretokenized=is_tokenized, **parser_opts
