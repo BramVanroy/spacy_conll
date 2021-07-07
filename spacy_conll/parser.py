@@ -44,7 +44,8 @@ class ConllParser:
         if isinstance(self.nlp.tokenizer, StanzaTokenizer):
             self.parser = "stanza"
             import torch
-
+            # Fixes some pickling issues
+            # See https://github.com/explosion/spacy-stanza/issues/34
             torch.set_num_threads(1)
         elif isinstance(self.nlp.tokenizer, UDPipeTokenizer):
             self.parser = "udpipe"
