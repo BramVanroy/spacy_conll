@@ -38,7 +38,7 @@ setup(
         "Bug Reports": "https://github.com/BramVanroy/spacy_conll/issues",
         "Source": "https://github.com/BramVanroy/spacy_conll",
     },
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=[
         "spacy>=3.0.1"
     ],
