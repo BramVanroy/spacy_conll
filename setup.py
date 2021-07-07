@@ -11,7 +11,7 @@ extras["dev"] = extras["all"] + ["pytest", "flake8", "isort", "black", "pygments
 
 setup(
     name="spacy_conll",
-    version="3.0.0-rc1",
+    version="3.0.0-rc2",
     description="A custom pipeline component for spaCy that can convert any parsed Doc"
                 " and its sentences into CoNLL-U format. Also provides a command line entry point.",
     long_description=Path("README.rst").read_text(encoding="utf-8"),
