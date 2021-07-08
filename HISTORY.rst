@@ -6,7 +6,6 @@ History
 3.0.0 TBD
 *********
 * **[general]** Breaking change: spaCy v3 required (closes `#8`_)
-* **[general]** Now requires at least Python 3.7 or higher
 * **[init_parser]** Breaking change: in all cases, :code:`is_tokenized` now disables sentence segmentation
 * **[init_parser]** Breaking change: no more default values for parser or model anywhere. Important to note here that
   spaCy does not work with short-hand codes such as ``en`` any more. You have to provide the full model name, e.g.

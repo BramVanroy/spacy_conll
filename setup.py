@@ -11,7 +11,7 @@ extras["dev"] = extras["all"] + ["pytest", "flake8", "isort", "black", "pygments
 
 setup(
     name="spacy_conll",
-    version="3.0.0-rc2",
+    version="3.0.0-rc3",
     description="A custom pipeline component for spaCy that can convert any parsed Doc"
                 " and its sentences into CoNLL-U format. Also provides a command line entry point.",
     long_description=Path("README.rst").read_text(encoding="utf-8"),
@@ -38,9 +38,10 @@ setup(
         "Bug Reports": "https://github.com/BramVanroy/spacy_conll/issues",
         "Source": "https://github.com/BramVanroy/spacy_conll",
     },
-    python_requires=">=3.7",
+    python_requires=">=3.6",
     install_requires=[
-        "spacy>=3.0.1"
+        "spacy>=3.0.1",
+        "dataclasses;python_version<'3.7'"
     ],
     extras_require=extras,
     entry_points={
