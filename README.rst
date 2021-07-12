@@ -42,20 +42,20 @@ To install the library, simply use pip.
 
 .. code:: bash
 
-  pip install spacy_conll --pre
+  pip install spacy_conll
 
 A number of options are available to make installation of additional dependencies easier:
 
 .. code:: bash
 
   # include spacy-stanza and spacy-udpipe
-  pip install spacy_conll[parsers] --pre
+  pip install spacy_conll[parsers]
   # include pandas
-  pip install spacy_conll[pd] --pre
+  pip install spacy_conll[pd]
   # include pandas, spacy-stanza and spacy-udpipe
-  pip install spacy_conll[all] --pre
+  pip install spacy_conll[all]
   # include pandas, spacy-stanza and spacy-udpipe and additional libaries for testing and formatting
-  pip install spacy_conll[dev] --pre
+  pip install spacy_conll[dev]
 
 .. _spaCy: https://spacy.io/usage/models#section-quickstart
 .. _spaCy's models: https://spacy.io/usage/models
