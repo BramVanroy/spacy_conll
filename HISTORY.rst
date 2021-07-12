@@ -2,14 +2,15 @@
 History
 #######
 
-*********
-3.0.0 TBD
-*********
+***********************
+3.0.0 (July 12th, 2021)
+***********************
 * **[general]** Breaking change: spaCy v3 required (closes `#8`_)
 * **[init_parser]** Breaking change: in all cases, :code:`is_tokenized` now disables sentence segmentation
 * **[init_parser]** Breaking change: no more default values for parser or model anywhere. Important to note here that
   spaCy does not work with short-hand codes such as ``en`` any more. You have to provide the full model name, e.g.
   ``en_core_web_sm``
+* **[init_parser]** Improvement: models are automatically downloaded for Stanza and UDPipe
 * **[cli]** Reworked the position of the CLI script in the directory structure as well as the arguments. Run
   :code:`parse-as-conll -h` for more information.
 * **[conllparser]** Made the `ConllParser`_ class available as a utility to easily create a wrapper for a spaCy-like
