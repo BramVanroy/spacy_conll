@@ -3,6 +3,11 @@ History
 #######
 
 ***********************
+3.0.2 (July 14th, 2021)
+***********************
+* **[conllparser]** Fix: fixed an issue with no_split_on_newline in combination with nlp.pipe
+
+***********************
 3.0.1 (July 14th, 2021)
 ***********************
 * **[conllparser]** Fix: make sure the parser also runs if stanza and UDPipe are not installed
