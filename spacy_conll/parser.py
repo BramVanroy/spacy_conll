@@ -44,6 +44,7 @@ class ConllParser:
         if STANZA_AVAILABLE and isinstance(self.nlp.tokenizer, StanzaTokenizer):
             self.parser = "stanza"
             import torch
+
             # Fixes some pickling issues
             # See https://github.com/explosion/spacy-stanza/issues/34
             torch.set_num_threads(1)

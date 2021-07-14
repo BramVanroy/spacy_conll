@@ -1,9 +1,7 @@
-import os
 from argparse import Namespace
 from locale import getpreferredencoding
 from pathlib import Path
 from sys import stdout
-from tempfile import NamedTemporaryFile
 
 from spacy_conll import init_parser
 from spacy_conll.parser import ConllParser
