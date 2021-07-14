@@ -122,7 +122,9 @@ class ConllParser:
                     " error message by using the 'ignore_pipe_errors' option"
                 )
 
-        if not no_split_on_newline:
+        if no_split_on_newline:
+            text = [text]
+        else:
             text = text.splitlines()
 
         text = self.prepare_data(text)
