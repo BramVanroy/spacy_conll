@@ -3,6 +3,11 @@ History
 #######
 
 ***********************
+3.0.1 (July 14th, 2021)
+***********************
+* **[conllparser]** Fix: make sure the parser also runs if stanza and UDPipe are not installed
+
+***********************
 3.0.0 (July 12th, 2021)
 ***********************
 * **[general]** Breaking change: spaCy v3 required (closes `#8`_)
