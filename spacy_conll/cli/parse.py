@@ -139,6 +139,14 @@ def main():
         " Must have 'include_headers' enabled.",
     )
     cparser.add_argument(
+        "-pcf",
+        "--parse_conllu_file",
+        default=False,
+        action="store_true",
+        help="When passing this argument, the program would parse a conllu format file to a spacy object.",
+    )
+
+    cparser.add_argument(
         "-j",
         "--n_process",
         type=int,
