@@ -118,6 +118,9 @@ def spacy_ext_names_doc(spacy_ext_names):
 def spacy_conversion_map_doc(spacy_conversion_map):
     return spacy_conversion_map(single_sent())
 
+@pytest.fixture
+def conllparser_conllstr(conllparser):
+    return conllparser.parse_file_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")
 
 @pytest.fixture
 def spacy_disabled_pandas_doc(spacy_disabled_pandas):

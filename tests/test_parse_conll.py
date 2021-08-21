@@ -9,7 +9,4 @@ def test_a_spacy_doc(conllparser_parse_conllfile):
     for doc in  conllparser_parse_conllfile:
         assert type(doc) == Doc
 
-def test_a_spacy_doc(conllparser_parse_conllfile):
-    #  There is 2 sents in doc
-    for doc in  conllparser_parse_conllfile:
-        assert type(doc) == Doc
+
