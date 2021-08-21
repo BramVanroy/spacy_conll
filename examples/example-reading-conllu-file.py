@@ -10,7 +10,7 @@ def main():
     nlp = init_parser("en_core_web_sm", "spacy")
     parser = ConllParser(nlp)
     # Path to a conllu file
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tests", "data_file",
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tests",
                         "en_ewt-ud-dev.conllu-sample.txt")
     docs = parser.parse_conll_as_spacy(path, "utf-8", merge_subtoken=False)
     for d in docs:
