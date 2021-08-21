@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from locale import getpreferredencoding
 from os import PathLike
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Generator
 
 from spacy import Errors, Language
 from spacy.tokens import Doc, Token
@@ -156,13 +156,13 @@ class ConllParser:
     def parse_conll_as_spacy(self, input_file: Union[PathLike, Path, str],
                              input_encoding: str = getpreferredencoding(),
                              merge_subtoken: bool = False,
-                             ) -> str:
+                             ) -> Generator[Doc]:
         """
-
-        :param input_file:
-        :param input_encoding:
-        :param merge_subtoken:
-        :return:
+        Parses a given file in a conll format and return it as a list of spacy documents
+        :param input_file: path to the input file to process
+        :param input_encoding: encoding of 'input_file'
+        :param merge_subtoken:  whether or not merge subtokens into a single one.
+        :return: a generator of spacy docs
         """
         text = Path(input_file).resolve().read_text(encoding=input_encoding)
 
@@ -170,33 +170,39 @@ class ConllParser:
 
     def read_conllx(
             self,
-            input_data,
-            merge_subtoken,
+            input_data: List[str],
+            merge_subtoken: bool,
 
-    ):
-        """ Yield examples, one for each sentence """
+    )-> Generator[Doc]:
+        """
+         Yield examples, one for each sentence
+        :param input_file: path to the input file to process
+        :param merge_subtoken:  whether or not merge subtokens into a single one.
+        :return:  a generator of spacy docs
+        """
         for sent in input_data.strip().split("\n\n"):
             lines = sent.strip().split("\n")
             if lines:
                 while lines[0].startswith("#"):
                     lines.pop(0)
-                example = self.example_from_conllu_sentence(
+                example = self._example_from_conllu_sentence(
                     lines,
                     merge_subtoken=merge_subtoken,
                 )
                 yield example
 
 
-    def example_from_conllu_sentence(
+    def _example_from_conllu_sentence(
             self,
-            lines,
-            merge_subtoken=False,
-    ):
-        """Create an Example from the lines for one CoNLL-U sentence, merging
+            lines: List[str],
+            merge_subtoken: bool =False,
+    )-> Doc:
+        """
+        Create an Example from the lines for one CoNLL-U sentence, merging
         subtokens and appending morphology to tags if required.
-        lines (str): The non-comment lines for a CoNLL-U sentence
-        ner_tag_pattern (str): The regex pattern for matching NER in MISC col
-        RETURNS (Example): An example containing the annotation
+        :param lines:  The non-comment lines for a CoNLL-U sentence
+        :param merge_subtoken:  whether or not merge subtokens into a single one.
+        :return: a spacy doc rpresenting a conll sentence
         """
         # create a Doc with each subtoken as its own token
         # if merging subtokens, each subtoken orth is the merged subtoken form
@@ -266,10 +272,16 @@ class ConllParser:
             doc[i]._.merged_lemma = lemmas[i]
             doc[i]._.merged_spaceafter = spaces[i]
         if merge_subtoken:
-            doc = self.merge_conllu_subtokens(lines, doc)
+            doc = self._merge_conllu_subtokens(lines, doc)
         return doc
 
-    def merge_conllu_subtokens(self, lines, doc):
+    def _merge_conllu_subtokens(self, lines: List[str], doc: Doc)-> Doc:
+        """
+        merging conllu subtokens to a single one
+        :param lines: the lines in conllu file
+        :param doc: the spacy document with unmerged tokens
+        :return: the spacy document with merged tokens
+        """
         # identify and process all subtoken spans to prepare attrs for merging
         subtok_spans = []
         for line in lines:
