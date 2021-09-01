@@ -57,16 +57,15 @@ def pretokenized_conllparser(request):
 
 
 @pytest.fixture
-def spacy_vanila():
-    nlp = init_parser("en_core_web_sm", "spacy")
-    return nlp
+def spacy_conllparser():
+    return ConllParser(get_parser("spacy", include_headers=True))
 
 
 @pytest.fixture
 def spacy_ext_names():
     nlp = init_parser("en_core_web_sm", "spacy",
-        ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
-    )
+                        ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
+                      )
     return nlp
 
 
@@ -117,6 +116,10 @@ def spacy_ext_names_doc(spacy_ext_names):
 @pytest.fixture
 def spacy_conversion_map_doc(spacy_conversion_map):
     return spacy_conversion_map(single_sent())
+
+@pytest.fixture
+def conll_testfile(conllparser):
+    return Path(__file__).parent.joinpath("en_ewt-ud-dev.conllu-sample.txt")
 
 @pytest.fixture
 def conllparser_conllstr(conllparser):
