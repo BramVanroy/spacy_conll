@@ -14,8 +14,8 @@ setup(
     version="3.0.2",
     description="A custom pipeline component for spaCy that can convert any parsed Doc"
                 " and its sentences into CoNLL-U format. Also provides a command line entry point.",
-    long_description=Path("README.rst").read_text(encoding="utf-8"),
-    long_description_content_type="text/x-rst",
+    long_description=Path("README.md").read_text(encoding="utf-8"),
+    long_description_content_type="text/markdown",
     keywords="nlp spacy spacy-extension conll conllu tagging parsing stanza spacy_stanza udpipe spacy_udpipe",
     packages=find_packages(include=["spacy_conll", "spacy_conll.*"]),
     url="https://github.com/BramVanroy/spacy_conll",
