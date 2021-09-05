@@ -7,21 +7,21 @@ from spacy.vocab import Vocab
 
 
 try:
-    import pandas as pd
+    import pandas as pd  # noqa: F401
 
     PD_AVAILABLE = True
 except ImportError:
     PD_AVAILABLE = False
 
 try:
-    import spacy_stanza
+    import spacy_stanza  # noqa: F401
 
     STANZA_AVAILABLE = True
 except ImportError:
     STANZA_AVAILABLE = False
 
 try:
-    import spacy_udpipe
+    import spacy_udpipe  # noqa: F401
 
     UDPIPE_AVAILABLE = True
 except ImportError:
@@ -64,7 +64,7 @@ def init_parser(
         if disable_sbd or is_tokenized:
             nlp.add_pipe("disable_sbd", before="parser")
     elif parser == "stanza":
-        import spacy_stanza
+        import spacy_stanza  # noqa: F811
         import stanza
 
         verbose = parser_opts.pop("verbose", False)
@@ -73,7 +73,7 @@ def init_parser(
             model_or_lang, verbose=verbose, tokenize_pretokenized=is_tokenized, **parser_opts
         )
     elif parser == "udpipe":
-        import spacy_udpipe
+        import spacy_udpipe  # noqa: F811
 
         spacy_udpipe.download(model_or_lang)
         nlp = spacy_udpipe.load(model_or_lang)
