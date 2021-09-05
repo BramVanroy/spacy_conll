@@ -49,6 +49,8 @@ class ConllFormatter:
           headers.
         - in `Doc`: a concatenation of its sentences' `DataFrame`'s, leading to a new a `DataFrame` whose
           index is reset.
+
+    Multi-word tokens and empty nodes are not supported. See: https://universaldependencies.org/format.html#words-tokens-and-empty-nodes
     """
 
     def __init__(
@@ -144,7 +146,11 @@ class ConllFormatter:
         """
         span_conll_str = ""
         if self.include_headers:
-            span_conll_str += f"# sent_id = {span_idx}\n# text = {span.text}\n"
+            # Get metadata from custom extension or create it ourselves
+            if not (span.has_extension("conll_metadata") and span._.conll_metadata):
+                span._.conll_metadata = f"# sent_id = {span_idx}\n# text = {span.text}\n"
+
+            span_conll_str += span._.conll_metadata
 
         for token_idx, token in enumerate(span, 1):
             self._set_token_conll(token, token_idx)
@@ -169,6 +175,9 @@ class ConllFormatter:
         else:
             head_idx = token.head.i + 1 - token.sent[0].i
 
+        if not token.has_extension("conll_misc_field"):
+            token._.conll_misc_field = "_" if token.whitespace_ else "SpaceAfter=No"
+
         token_conll = (
             token_idx,
             token.text,
@@ -178,8 +187,8 @@ class ConllFormatter:
             str(token.morph) if token.has_morph and str(token.morph) else "_",
             head_idx,
             token.dep_,
-            "_",
-            "_" if token.whitespace_ else "SpaceAfter=No",
+            token._.conll_deps_graphs_field,
+            token._.conll_misc_field,
         )
 
         # turn field name values (keys) and token values (values) into dict
@@ -225,3 +234,12 @@ class ConllFormatter:
             if PD_AVAILABLE and not self.disable_pandas:
                 if not obj.has_extension(self._ext_names["conll_pd"]):
                     obj.set_extension(self._ext_names["conll_pd"], default=None)
+
+        # Adds fields from the CoNLL-U format that are not available in spaCy
+        # However, ConllParser might set these fields when it has read CoNLL_str->spaCy
+        if not Token.has_extension("conll_deps_graphs_field"):
+            Token.set_extension("conll_deps_graphs_field", default="_")
+        if not Token.has_extension("conll_misc_field"):
+            Token.set_extension("conll_misc_field", default="_")
+        if not Span.has_extension("conll_metadata"):
+            Span.set_extension("conll_metadata", default=None)
