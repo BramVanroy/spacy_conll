@@ -59,23 +59,23 @@ pip install spacy_conll[dev]
 When the ConllFormatter is added to a spaCy pipeline, it adds CoNLL properties for `Token`, sentence `Span` and `Doc`.
  Note that arbitrary Span's are not included and do not receive these properties.
 
-On all three of these levels, two custom properties are exposed by default, `._.conll`{:.python} and its string 
- representation `._.conll_str`{:.python}. However, if you have `pandas` installed, then `._.conll_pd`{:.python} will
+On all three of these levels, two custom properties are exposed by default, `._.conll` and its string 
+ representation `._.conll_str`. However, if you have `pandas` installed, then `._.conll_pd` will
  be added automatically, too!
 
--   `._.conll`{:.python}: raw CoNLL format  
+-   `._.conll`: raw CoNLL format  
     -   in Token: a dictionary containing all the expected CoNLL fields as keys and the parsed properties as values.
-    -   in sentence Span: a list of its tokens' `._.conll`{:.python} dictionaries (list of dictionaries).
-    -   in a Doc: a list of its sentences' `._.conll`{:.python} lists (list of list of dictionaries).
+    -   in sentence Span: a list of its tokens' `._.conll` dictionaries (list of dictionaries).
+    -   in a Doc: a list of its sentences' `._.conll` lists (list of list of dictionaries).
 
--   `._.conll_str`{:.python}: string representation of the CoNLL format  
+-   `._.conll_str`: string representation of the CoNLL format  
     -   in Token: tab-separated representation of the contents of the CoNLL fields ending with a newline.
     -   in sentence Span: the expected CoNLL format where each row represents a token. When 
-        `ConllFormatter(include_headers=True)`{:.python} is used, two header lines are included as well, as per the
+        `ConllFormatter(include_headers=True)` is used, two header lines are included as well, as per the
         [CoNLL format](https://universaldependencies.org/format.html#sentence-boundaries-and-comments).
-    -   in Doc: all its sentences' `._.conll_str`{:.python} combined and separated by new lines.
+    -   in Doc: all its sentences' `._.conll_str` combined and separated by new lines.
 
--   `._.conll_pd`{:.python}: `pandas` representation of the CoNLL format  
+-   `._.conll_pd`: `pandas` representation of the CoNLL format  
     -   in Token: a Series representation of this token's CoNLL properties.
     -   in sentence Span: a DataFrame representation of this sentence, with the CoNLL names as column headers.
     -   in Doc: a concatenation of its sentences' DataFrame's, leading to a new a DataFrame whose index is reset.
@@ -96,7 +96,7 @@ nlp.add_pipe("conll_formatter", last=True)
 ```
 
 Because this library supports different spaCy wrappers (`spacy`, `stanza`, and `udpipe`), a convenience function is
- available as well. With `utils.init_parser`{:.python} you can easily instantiate a parser with a single line. You can
+ available as well. With `utils.init_parser` you can easily instantiate a parser with a single line. You can
  find the function's signature below. Have a look at the [source code](spacy_conll/utils.py) to read more about all the
  possible arguments or try out the [examples](examples/).
 
@@ -134,7 +134,7 @@ output properties.
 To illustrate, here is an advanced example, showing the more complex options:
 
 - `ext_names`: changes the attribute names to a custom key by using a dictionary.
--  `conversion_maps`: a two-level dictionary that looks like `{field_name: {tag_name: replacement}}`{:.python}. In 
+-  `conversion_maps`: a two-level dictionary that looks like `{field_name: {tag_name: replacement}}`. In 
    other words, you can specify in which field a certain value should be replaced by another. This is especially useful
    when you are not satisfied with the tagset of a model and wish to change some tags to an alternative0. 
 
@@ -171,8 +171,8 @@ print(doc._.pandas)
 ```
 
 
-The snippets above will output a pandas DataFrame by using `._.pandas`{:.python} rather than the standard
-`._.conll_pd`{:.python}, and all occurrences of `nsubj` in the deprel field are replaced by `subj`.
+The snippets above will output a pandas DataFrame by using `._.pandas` rather than the standard
+`._.conll_pd`, and all occurrences of `nsubj` in the deprel field are replaced by `subj`.
 
 ```
    id     form   lemma upostag xpostag                                       feats  head deprel deps           misc

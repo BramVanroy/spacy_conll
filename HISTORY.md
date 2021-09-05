@@ -2,7 +2,7 @@
 
 ## 3.0.2 (July 14th, 2021)
 
-- **[conllparser]** Fix: fixed an issue with no_split_on_newline in combination with `nlp.pipe`{:.python}
+- **[conllparser]** Fix: fixed an issue with no_split_on_newline in combination with `nlp.pipe`
 
 
 ## 3.0.1 (July 14th, 2021)
@@ -48,18 +48,18 @@ Preparing for v3 release
   attribute even when pandas is installed.
 - Added custom properties for Tokens as well. So now a Doc, its sentence Spans as well as Tokens have custom attributes
 - Reworked datatypes of output. In version 2.0.0 the data types are as follows:
-    - `._.conll`{:.python}: raw CoNLL format
+    - `._.conll`: raw CoNLL format
         - in `Token`: a dictionary containing all the expected CoNLL fields as keys and the parsed properties as
           values.
-        - in sentence `Span`: a list of its tokens' `._.conll`{:.python} dictionaries (list of dictionaries).
-        - in a `Doc`: a list of its sentences' `._.conll`{:.python} lists (list of list of dictionaries).
-    - `._.conll_str`{:.python}: string representation of the CoNLL format
+        - in sentence `Span`: a list of its tokens' `._.conll` dictionaries (list of dictionaries).
+        - in a `Doc`: a list of its sentences' `._.conll` lists (list of list of dictionaries).
+    - `._.conll_str`: string representation of the CoNLL format
         - in `Token`: tab-separated representation of the contents of the CoNLL fields ending with a newline.
         - in sentence `Span`: the expected CoNLL format where each row represents a token. When
           `ConllFormatter(include_headers=True)` is used, two header lines are included as well, as per the
           [`CoNLL format`](https://universaldependencies.org/format.html#sentence-boundaries-and-comments).
         - in `Doc`: all its sentences' `._.conll_str` combined and separated by new lines.
-    - `._.conll_pd`{:.python}: ``pandas`` representation of the CoNLL format
+    - `._.conll_pd`: ``pandas`` representation of the CoNLL format
         - in `Token`: a `Series` representation of this token's CoNLL properties.
         - in sentence `Span`: a `DataFrame` representation of this sentence, with the CoNLL names as column
           headers.
@@ -79,7 +79,7 @@ Preparing for v3 release
 
 ## 1.2.0 (February 2nd, 2020)
 
-- **BREAKING**: `._.conll`{:.python} now outputs a dictionary for sentences `fieldname: [value1, value2...]`, and
+- **BREAKING**: `._.conll` now outputs a dictionary for sentences `fieldname: [value1, value2...]`, and
   a list of such dictionaries for a `Doc`
 - Added a `conversion_maps` argument where one can define a mapping to have better control over the model's tagset
   (see the advanced example in README.md)
