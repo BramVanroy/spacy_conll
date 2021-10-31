@@ -183,6 +183,39 @@ The snippets above will output a pandas DataFrame by using `._.pandas` rather th
 ```
 
 
+#### Reading CoNLL into a spaCy object
+
+It is possible to read a CoNLL string or text file and parse it as a spaCy object. This can be useful if you have raw
+CoNLL data that you wish to process in different ways. The process is straightforward.
+
+```python
+from spacy_conll import init_parser
+from spacy_conll.parser import ConllParser
+
+
+nlp = ConllParser(init_parser("en_core_web_sm", "spacy"))
+
+doc = nlp.parse_conll_file_as_spacy("path/to/your/conll-sample.txt")
+'''
+or straight from raw text:
+conllstr = """
+# text = From the AP comes this story :
+1	From	from	ADP	IN	_	3	case	3:case	_
+2	the	the	DET	DT	Definite=Def|PronType=Art	3	det	3:det	_
+3	AP	AP	PROPN	NNP	Number=Sing	4	obl	4:obl:from	_
+4	comes	come	VERB	VBZ	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	0	root	0:root	_
+5	this	this	DET	DT	Number=Sing|PronType=Dem	6	det	6:det	_
+6	story	story	NOUN	NN	Number=Sing	4	nsubj	4:nsubj	_
+"""
+doc = nlp.parse_conll_text_as_spacy(conllstr)
+'''
+
+# Multiple CoNLL entries (separated by two newlines) will be included as different sentences in the resulting Doc
+for sent in doc.sents:
+    for token in sent:
+        print(token.text, token.dep_, token.pos_)
+```
+
 ### Command line
 
 Upon installation, a command-line script is added under tha alias `parse-as-conll`. You can use it to parse a

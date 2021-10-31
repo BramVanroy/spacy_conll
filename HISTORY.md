@@ -1,5 +1,12 @@
 # History
 
+## 3.1.0 (October 31st, 2021)
+
+- **[conllparser]** The CoNLLParser can now parse a given CoNLL string or text file into a spaCy Doc.
+  ([#14](https://github.com/BramVanroy/spacy_conll/pull/14) Parse conllu 2 spacy object, contributed by
+  [shaked571](https://github.com/shaked571))
+
+
 ## 3.0.2 (July 14th, 2021)
 
 - **[conllparser]** Fix: fixed an issue with no_split_on_newline in combination with `nlp.pipe`
