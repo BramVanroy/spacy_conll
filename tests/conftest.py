@@ -1,5 +1,3 @@
-import os
-from distutils import dir_util
 from pathlib import Path
 
 import pytest
@@ -21,6 +19,7 @@ def get_parser(name, **kwargs):
         PARSERS[f"{name}-{kwargs}"] = init_parser(model_or_lang, name, **kwargs)
 
     return PARSERS[f"{name}-{kwargs}"]
+
 
 @pytest.fixture(scope="function", autouse=True)
 def clean_underscore():
@@ -57,23 +56,25 @@ def pretokenized_conllparser(request):
 
 
 @pytest.fixture
+def spacy_conllparser():
+    return ConllParser(get_parser("spacy", include_headers=True))
+
+
+@pytest.fixture
 def spacy_ext_names():
-    nlp = init_parser("en_core_web_sm", "spacy",
-        ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
-    )
-    return nlp
+    return init_parser("en_core_web_sm", "spacy",
+                        ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
+                      )
 
 
 @pytest.fixture
 def spacy_conversion_map():
-    nlp = init_parser("en_core_web_sm", "spacy", conversion_maps={"lemma": {"-PRON-": "PRON"}})
-    return nlp
+    return init_parser("en_core_web_sm", "spacy", conversion_maps={"lemma": {"-PRON-": "PRON"}})
 
 
 @pytest.fixture
 def spacy_disabled_pandas():
-    nlp = init_parser("en_core_web_sm", "spacy", disable_pandas=True)
-    return nlp
+    return init_parser("en_core_web_sm", "spacy", disable_pandas=True)
 
 
 def single_sent():
@@ -114,8 +115,8 @@ def spacy_conversion_map_doc(spacy_conversion_map):
 
 
 @pytest.fixture
-def spacy_disabled_pandas_doc(spacy_disabled_pandas):
-    return spacy_disabled_pandas(single_sent())
+def conll_testfile(conllparser):
+    return Path(__file__).parent.joinpath("en_ewt-ud-dev.conllu-sample.txt")
 
 
 @pytest.fixture
@@ -124,5 +125,16 @@ def conllparser_conllstr(conllparser):
 
 
 @pytest.fixture
+def spacy_disabled_pandas_doc(spacy_disabled_pandas):
+    return spacy_disabled_pandas(single_sent())
+
+
+@pytest.fixture
 def pretokenized_conllparser_conllstr(pretokenized_conllparser):
     return pretokenized_conllparser.parse_file_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")
+
+
+@pytest.fixture
+def conllparser_parse_conllfile(spacy_vanila):
+    return ConllParser(spacy_vanila).parse_conll_as_spacy(
+                Path(__file__).parent.joinpath("en_ewt-ud-dev.conllu-sample.txt"), input_encoding="utf-8")
