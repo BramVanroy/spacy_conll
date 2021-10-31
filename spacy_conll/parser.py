@@ -223,9 +223,7 @@ class ConllParser:
                     )
 
                 if "." in id_ or "-" in id_:
-                    raise NotImplementedError(
-                        "Multi-word tokens and empty nodes are not supported in spacy_conll"
-                    )
+                    raise NotImplementedError("Multi-word tokens and empty nodes are not supported in spacy_conll")
 
                 words.append(word)
 
