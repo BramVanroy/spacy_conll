@@ -46,6 +46,7 @@ setup(
     ],
     extras_require=extras,
     entry_points={
-        "console_scripts": ["parse-as-conll=spacy_conll.cli.parse:main"]
+        "console_scripts": ["parse-as-conll=spacy_conll.cli.parse:main"],
+        "spacy_factories": ["conll_formatter = spacy_conll.formatter:ConllFormatter"]
     }
 )
