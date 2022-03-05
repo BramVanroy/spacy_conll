@@ -34,6 +34,7 @@ def init_parser(
     *,
     is_tokenized: bool = False,
     disable_sbd: bool = False,
+    exclude_spacy_components: Optional[List[str]] = None,
     parser_opts: Optional[Dict] = None,
     **kwargs,
 ) -> Language:
@@ -48,6 +49,8 @@ def init_parser(
            to be done by splitting on new lines. See the documentation:
            https://stanfordnlp.github.io/stanza/tokenize.html. This optioon does not affect UDPipe.
     :param disable_sbd: disables spaCy automatic sentence boundary detection (only works for spaCy)
+    :param exclude_spacy_components: spaCy components to exclude from the pipeline, which can greatly improve
+           processing speed. Only works when using spaCy as a parser.
     :param parser_opts: will be passed to the core pipeline. For spacy, it will be passed to its
            `.load()` initialisations, for stanza `pipeline_opts` is passed to its `.load_pipeline()`
            initialisations. UDPipe does not have any keyword arguments
@@ -58,11 +61,15 @@ def init_parser(
 
     if parser == "spacy":
         exclude = ["senter", "sentencizer"] if disable_sbd or is_tokenized else []
+        exclude = exclude + exclude_spacy_components if exclude_spacy_components is not None else exclude
         nlp = spacy.load(model_or_lang, exclude=exclude, **parser_opts)
         if is_tokenized:
             nlp.tokenizer = SpacyPretokenizedTokenizer(nlp.vocab)
         if disable_sbd or is_tokenized:
-            nlp.add_pipe("disable_sbd", before="parser")
+            try:
+                nlp.add_pipe("disable_sbd", before="parser")
+            except ValueError:
+                nlp.add_pipe("disable_sbd", first=True)
     elif parser == "stanza":
         import spacy_stanza  # noqa: F811
         import stanza
