@@ -46,9 +46,21 @@ def init_parser(
            installed, e.g. spacy-stanza
     :param is_tokenized: indicates whether your text has already been tokenized (space-seperated). When using 'spacy',
            this option also disabled sentence segmentation completely. For stanza, sentence segmentation will *only*
-           to be done by splitting on new lines. See the documentation:
-           https://stanfordnlp.github.io/stanza/tokenize.html. This optioon does not affect UDPipe.
-    :param disable_sbd: disables spaCy automatic sentence boundary detection (only works for spaCy)
+           be done by splitting on new lines.
+
+           See the stanza documentation for more:
+           https://stanfordnlp.github.io/stanza/tokenize.html#start-with-pretokenized-text
+
+           This option does not affect UDPipe.
+    :param disable_sbd: disables automatic sentence boundary detection in spaCy and stanza. For stanza, make sure that
+           your input is in the correct format, that is: sentences must be separated by two new lines. If you want to
+           disable both tokenization and sentence segmentation in stanza, do not enable this option but instead only
+           use `is_tokenized` and make sure your sentences are separated by only one new line.
+
+           See the stanza documentation for more:
+           https://stanfordnlp.github.io/stanza/tokenize.html#tokenization-without-sentence-segmentation
+
+           This option does not affect UDPipe.
     :param exclude_spacy_components: spaCy components to exclude from the pipeline, which can greatly improve
            processing speed. Only works when using spaCy as a parser.
     :param parser_opts: will be passed to the core pipeline. For spacy, it will be passed to its
@@ -77,7 +89,9 @@ def init_parser(
         verbose = parser_opts.pop("verbose", False)
         stanza.download(model_or_lang, verbose=verbose)
         nlp = spacy_stanza.load_pipeline(
-            model_or_lang, verbose=verbose, tokenize_pretokenized=is_tokenized, **parser_opts
+            model_or_lang, verbose=verbose,
+            tokenize_no_ssplit=disable_sbd,
+            tokenize_pretokenized=is_tokenized, **parser_opts
         )
     elif parser == "udpipe":
         import spacy_udpipe  # noqa: F811
