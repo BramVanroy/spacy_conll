@@ -175,8 +175,7 @@ class ConllFormatter:
         else:
             head_idx = token.head.i + 1 - token.sent[0].i
 
-        if not token.has_extension("conll_misc_field"):
-            token._.conll_misc_field = "_" if token.whitespace_ else "SpaceAfter=No"
+        token._.conll_misc_field = "_" if token.whitespace_ else "SpaceAfter=No"
 
         token_conll = (
             token_idx,
