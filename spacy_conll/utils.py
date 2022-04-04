@@ -147,14 +147,13 @@ class SpacyPretokenizedTokenizer:
 
 
 @Language.factory("disable_sbd")
+def create_spacy_disable_sentence_segmentation(nlp: Language, name: str):
+    return SpacyDisableSentenceSegmentation()
+
+
 class SpacyDisableSentenceSegmentation:
     """Disables spaCy's dependency-based sentence boundary detection. In addition, senter and sentencizer components
     need to be disabled as well."""
-
-    def __init__(self, nlp: Language, name: str):
-        self.nlp = nlp
-        self.name = name
-
     def __call__(self, doc: Doc) -> Doc:
         for token in doc:
             token.is_sent_start = False
