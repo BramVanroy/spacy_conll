@@ -24,7 +24,7 @@ def get_parser(name, **kwargs):
 @pytest.fixture(scope="function", autouse=True)
 def clean_underscore():
     # reset the Underscore object after the test, to avoid having state copied across tests
-    # this irequired if we want to test things such as disable_pandas: if we don't do this
+    # this is required if we want to test things such as disable_pandas: if we don't do this
     # conll_pd will be set in one test and cannot be unset in another so `has_extension` will
     # always return true.
     # see https://github.com/explosion/spaCy/issues/5424#issuecomment-626773933
@@ -63,8 +63,8 @@ def spacy_conllparser():
 @pytest.fixture
 def spacy_ext_names():
     return init_parser("en_core_web_sm", "spacy",
-                        ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
-                      )
+                       ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
+                       )
 
 
 @pytest.fixture
@@ -82,7 +82,9 @@ def single_sent():
 
 
 def multi_sent():
-    return "A cookie is a baked or cooked food that is typically small, flat and sweet. It usually contains flour, sugar and some type of oil or fat. It may include other ingredients such as raisins, oats, chocolate chips, nuts, etc."
+    return ("A cookie is a baked or cooked food that is typically small, flat and sweet. It usually contains flour,"
+            " sugar and some type of oil or fat. It may include other ingredients such as raisins, oats, chocolate"
+            " chips, nuts, etc.")
 
 
 @pytest.fixture(params=[single_sent, multi_sent])
@@ -131,10 +133,11 @@ def spacy_disabled_pandas_doc(spacy_disabled_pandas):
 
 @pytest.fixture
 def pretokenized_conllparser_conllstr(pretokenized_conllparser):
-    return pretokenized_conllparser.parse_file_as_conll(Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8")
+    return pretokenized_conllparser.parse_file_as_conll(Path(__file__).parent.joinpath("test.txt"),
+                                                        input_encoding="utf-8")
 
 
 @pytest.fixture
 def conllparser_parse_conllfile(spacy_vanila):
     return ConllParser(spacy_vanila).parse_conll_as_spacy(
-                Path(__file__).parent.joinpath("en_ewt-ud-dev.conllu-sample.txt"), input_encoding="utf-8")
+        Path(__file__).parent.joinpath("en_ewt-ud-dev.conllu-sample.txt"), input_encoding="utf-8")
