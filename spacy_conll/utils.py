@@ -106,6 +106,22 @@ def init_parser(
     return nlp
 
 
+def merge_dicts_strict(d1: Dict, d2: Dict) -> Dict:
+    """Merge two dicts in a strict manner, i.e. the second dict overwrites keys
+    of the first dict but all keys in the second dict have to be present in
+    the first dict.
+    :param d1: base dict which will be overwritten
+    :param d2: dict with new values that will overwrite d1
+    :return: the merged dict (but d1 will be modified in-place anyway!)
+    """
+    for k, v in d2.items():
+        if k not in d1:
+            raise KeyError(f"This key does not exist in the original dict. Valid keys are {list(d1.keys())}")
+        d1[k] = v
+
+    return d1
+
+
 class SpacyPretokenizedTokenizer:
     """Custom tokenizer to be used in spaCy when the text is already pretokenized."""
 
