@@ -1,10 +1,11 @@
 from collections import OrderedDict
+from dataclasses import dataclass, field
 from typing import Dict, Optional, Union
 
-from dataclasses import dataclass, field
 from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
 from spacy_conll.utils import PD_AVAILABLE, merge_dicts_strict
+
 
 if PD_AVAILABLE:
     import pandas as pd
@@ -27,16 +28,20 @@ CONLL_FIELD_NAMES = [
     "conll_formatter",
     default_config={"conversion_maps": None, "ext_names": None, "include_headers": False, "disable_pandas": False},
 )
-def create_conll_formatter(nlp: Language,
-                           name: str,
-                           conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
-                           ext_names: Optional[Dict[str, str]] = None,
-                           include_headers: bool = False,
-                           disable_pandas: bool = False):
-    return ConllFormatter(conversion_maps=conversion_maps,
-                          ext_names=ext_names if ext_names else {},
-                          include_headers=include_headers,
-                          disable_pandas=disable_pandas)
+def create_conll_formatter(
+    nlp: Language,
+    name: str,
+    conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
+    ext_names: Optional[Dict[str, str]] = None,
+    include_headers: bool = False,
+    disable_pandas: bool = False,
+):
+    return ConllFormatter(
+        conversion_maps=conversion_maps,
+        ext_names=ext_names if ext_names else {},
+        include_headers=include_headers,
+        disable_pandas=disable_pandas,
+    )
 
 
 @dataclass
@@ -80,6 +85,7 @@ class ConllFormatter:
     :param disable_pandas: whether to disable pandas integration even if it is installed. This is particularly
     useful to avoid issues when using multiprocessing.
     """
+
     conversion_maps: Optional[Dict[str, Dict[str, str]]] = None
     ext_names: Dict[str, str] = field(default_factory=dict)
     include_headers: bool = False

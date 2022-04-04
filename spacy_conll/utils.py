@@ -89,9 +89,11 @@ def init_parser(
         verbose = parser_opts.pop("verbose", False)
         stanza.download(model_or_lang, verbose=verbose)
         nlp = spacy_stanza.load_pipeline(
-            model_or_lang, verbose=verbose,
+            model_or_lang,
+            verbose=verbose,
             tokenize_no_ssplit=disable_sbd,
-            tokenize_pretokenized=is_tokenized, **parser_opts
+            tokenize_pretokenized=is_tokenized,
+            **parser_opts,
         )
     elif parser == "udpipe":
         import spacy_udpipe  # noqa: F811
@@ -154,6 +156,7 @@ def create_spacy_disable_sentence_segmentation(nlp: Language, name: str):
 class SpacyDisableSentenceSegmentation:
     """Disables spaCy's dependency-based sentence boundary detection. In addition, senter and sentencizer components
     need to be disabled as well."""
+
     def __call__(self, doc: Doc) -> Doc:
         for token in doc:
             token.is_sent_start = False
