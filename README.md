@@ -90,8 +90,8 @@ This library offers the ConllFormatter class which serves as a custom spaCy pipe
  as follows. It is important that you import `spacy_conll` before adding the pipe!
 
 ```python
-import spacy_conll
-nlp = <initialise parser>
+import spacy
+nlp = spacy.load("en_core_web_sm")
 nlp.add_pipe("conll_formatter", last=True)
 ```
 
@@ -103,7 +103,7 @@ Because this library supports different spaCy wrappers (`spacy`, `stanza`, and `
 **NOTE**: `is_tokenized` does not work for `spacy-udpipe` and `disable_sbd` only works for `spacy`. `spacy-udpipe` has
  made a change to allow pretokenized text, but it depends on the input format and cannot be fixed at initialisation of
  the parser. See release v0.3.0 of spacy-udpipe or [this PR](https://github.com/TakeLab/spacy-udpipe/pull/19). Using
- `is_tokenized` for `spacy-stanza` also effects sentence segmentation, effectively *only* splitting on new
+ `is_tokenized` for `spacy-stanza` also affects sentence segmentation, effectively *only* splitting on new
  lines. With `spacy`, `is_tokenized` disables sentence splitting completely.
 
 ```python
@@ -113,9 +113,10 @@ def init_parser(
     *,
     is_tokenized: bool = False,
     disable_sbd: bool = False,
+    exclude_spacy_components: Optional[List[str]] = None,
     parser_opts: Optional[Dict] = None,
     **kwargs,
-) -> Language:
+)
 ```
 
 For instance, if you want to load a Dutch `stanza` model in silent mode with the CoNLL formatter already attached, you
@@ -146,7 +147,6 @@ The example below
 
 ```python
 import spacy
-import spacy_conll
 
 
 nlp = spacy.load("en_core_web_sm")
