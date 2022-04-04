@@ -1,5 +1,26 @@
 # History
 
+## 3.2.0 (April 4th, 2022)
+
+- **[conllformatter]** Fixed an issue where `SpaceAfter=No` was not added correctly to tokens
+- **[conllformatter]** Added `ConllFormatter` as an entry point, which means that you do not have to import 
+  `spacy_conll` anymore when you want to add the pipe to a parser! spaCy will know where to look for the CoNLL 
+  formatter when you use `nlp.add_pipe("conll_formatter")` without you having to import the component manually
+- **[conllformatter]** Now adds the component constructor on a construction function rather than directly on the class
+  as recommended by spacy. The formatter has also been re-written as a dataclass
+- **[conllformatter/utils]** Moved `merge_dicts_strict` to utils, outside the formatter class
+- **[conllparser]** Make ConllParser directly importable from the root of the library, i.e.,
+  `from spacy_conll import ConllParser`
+- **[init_parser]** Allow users to exclude pipeline components when using the spaCy parser with the 
+  `exclude_spacy_components` argument
+- **[init_parser]** Fixed an issue where disabling sentence segmentation would not work if your model does
+  not have a parser
+- **[init_parser]** Enable more options when using stanza in terms of pre-segmented text. Now you can also disable
+  sentence segmentation for stanza (but still do tokenization) with the `disable_sbd` option
+- **[utils]** Added SpacyDisableSentenceSegmentation as an entry-point custom component so that you can use it in your
+  own code, by calling `nlp.add_pipe("disable_sbd", before="parser")`
+
+
 ## 3.1.0 (October 31st, 2021)
 
 - **[conllparser]** The CoNLLParser can now parse a given CoNLL string or text file into a spaCy Doc.
