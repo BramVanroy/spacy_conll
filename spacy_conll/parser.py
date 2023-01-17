@@ -29,13 +29,9 @@ class ConllParser:
 
     Constructor arguments:
     :param nlp: instantiated spaCy-like parser
-    :param is_tokenized: whether or not the expected input format is pre-tokenized. This must correspond with how
-    'nlp' was initialized! If you initialized the 'nlp' object with 'init_parser', make sure you used 'is_tokenized'
-    in the same way
     """
 
     nlp: Language
-    is_tokenized: bool = False
     parser: str = field(init=False, default=None)
 
     def __post_init__(self):
@@ -56,21 +52,7 @@ class ConllParser:
             self.parser = "spacy"
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(is_tokenized={self.is_tokenized}, parser={self.parser})"
-
-    def prepare_data(self, lines: List[str]) -> List[str]:
-        """Prepares data according to whether or not is_tokenized was given and depending on the parser.
-        Each parser requires a different type of input when the data is pre_tokenized.
-        :param lines: a list of lines to process
-        :return: the lines in the correct format for the parser
-        """
-        if self.is_tokenized:
-            if self.parser == "spacy":
-                lines = [l.split() for l in lines]
-            elif self.parser == "udpipe":
-                lines = [[l.split()] for l in lines]
-
-        return lines
+        return f"{self.__class__.__name__}(parser={self.parser})"
 
     def parse_file_as_conll(
         self, input_file: Union[PathLike, Path, str], input_encoding: str = getpreferredencoding(), **kwargs
@@ -127,8 +109,6 @@ class ConllParser:
             text = [text]
         else:
             text = text.splitlines()
-
-        text = self.prepare_data(text)
 
         conll_idx = 0
         output = ""

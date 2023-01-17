@@ -1,5 +1,19 @@
 # History
 
+## 3.3.0 (January 17th, 2023)
+
+Since spaCy 3.2.0, the data that is passed to a spaCy pipeline has become more strict. This means that passing 
+a list of pretokenized tokens (`["This", "is", "a", "pretokenized", "sentence"]`) is not accepted anymore. Therefore,
+the `is_tokenized` option needed to be adapted to reflect this. It is still possible to pass a string where tokens
+are separated by whitespaces, e.g. `"This is a pretokenized sentence"`, which will continue to work for spaCy and
+stanza. Support for pretokenized data has been dropped for UDPipe.
+
+Specific changes:
+
+- **[conllparser]** Breaking change: `is_tokenized` is not a valid argument to `ConllParser` any more.
+- **[utils/conllparser]** Breaking change: when using UDPipe, pretokenized data is not supported any more.
+- **[utils]** Breaking change: `SpacyPretokenizedTokenizer.__call__` does not support a list of tokens any more.
+
 ## 3.2.0 (April 4th, 2022)
 
 - **[conllformatter]** Fixed an issue where `SpaceAfter=No` was not added correctly to tokens

@@ -1,9 +1,6 @@
 # Parsing to CoNLL with spaCy, spacy-stanza, and spacy-udpipe
 
-**The last version to support spaCy v2 can be found** [here](<https://github.com/BramVanroy/spacy_conll/tree/v2.1.0>).
- The current version only supports v3.
-
-This module allows you to parse text into CoNLL-U format\_. You can use it as a command line tool, or embed it in your
+This module allows you to parse text into CoNLL-U format. You can use it as a command line tool, or embed it in your
  own scripts by adding it as a custom pipeline component to a spaCy, `spacy-stanza`, or `spacy-udpipe` pipeline. It 
  also provides an easy-to-use function to quickly initialize a parser as well as a ConllParser class with built-in 
  functionality to parse files or text.
@@ -26,23 +23,22 @@ By default, this package automatically installs only [spaCy](https://spacy.io/us
  *are* trained on UD data.
 
 **NOTE**: `spacy-stanza` and `spacy-udpipe` are not installed automatically as a dependency for this library, because 
- it might be too much overhead for those who don't need UD. If you wish to use their functionality (e.g. better 
- performance, real UD output), you have to install them manually or use one of the available options as described 
- below.
+ it might be too much overhead for those who don't need UD. If you wish to use their functionality, you have to install
+them manually or use one of the available options as described  below.
 
 If you want to retrieve CoNLL info as a `pandas` DataFrame, this library will automatically export it if it detects 
  that `pandas` is installed. See the Usage section for more.
 
 To install the library, simply use pip.
 
-```bash
+```shell
 # only includes spacy by default
 pip install spacy_conll
 ```
 
 A number of options are available to make installation of additional dependencies easier:
 
-```bash
+```shell
 # include spacy-stanza and spacy-udpipe
 pip install spacy_conll[parsers]
 # include pandas
@@ -100,11 +96,8 @@ Because this library supports different spaCy wrappers (`spacy`, `stanza`, and `
  find the function's signature below. Have a look at the [source code](spacy_conll/utils.py) to read more about all the
  possible arguments or try out the [examples](examples/).
 
-**NOTE**: `is_tokenized` does not work for `spacy-udpipe` and `disable_sbd` only works for `spacy`. `spacy-udpipe` has
- made a change to allow pretokenized text, but it depends on the input format and cannot be fixed at initialisation of
- the parser. See release v0.3.0 of spacy-udpipe or [this PR](https://github.com/TakeLab/spacy-udpipe/pull/19). Using
- `is_tokenized` for `spacy-stanza` also affects sentence segmentation, effectively *only* splitting on new
- lines. With `spacy`, `is_tokenized` disables sentence splitting completely.
+**NOTE**: `is_tokenized` does not work for `spacy-udpipe`. Using `is_tokenized` for `spacy-stanza` also affects sentence
+ segmentation, effectively *only* splitting on new lines. With `spacy`, `is_tokenized` disables sentence splitting completely.
 
 ```python
 def init_parser(
@@ -221,8 +214,8 @@ for sent in doc.sents:
 Upon installation, a command-line script is added under tha alias `parse-as-conll`. You can use it to parse a
 string or file into CoNLL format given a number of options.
 
-```bash
-> parse-as-conll -h
+```shell
+parse-as-conll -h
 usage: parse-as-conll [-h] [-f INPUT_FILE] [-a INPUT_ENCODING] [-b INPUT_STR] [-o OUTPUT_FILE]
                   [-c OUTPUT_ENCODING] [-s] [-t] [-d] [-e] [-j N_PROCESS] [-v]
                   [--ignore_pipe_errors] [--no_split_on_newline]
@@ -295,8 +288,8 @@ optional arguments:
 
 For example, parsing a single line, multi-sentence string:
 
-```bash
->  parse-as-conll en_core_web_sm spacy --input_str "I like cookies. What about you?" --include_headers
+```shell
+parse-as-conll en_core_web_sm spacy --input_str "I like cookies. What about you?" --include_headers
 
 # sent_id = 1
 # text = I like cookies.
@@ -315,8 +308,8 @@ For example, parsing a single line, multi-sentence string:
 
 For example, parsing a large input file and writing output to a given output file, using four processes:
 
-```bash
-> parse-as-conll en_core_web_sm spacy --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
+```shell
+parse-as-conll en_core_web_sm spacy --input_file large-input.txt --output_file large-conll-output.txt --include_headers --disable_sbd -j 4
 ```
 
 

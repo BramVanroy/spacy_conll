@@ -51,7 +51,7 @@ def init_parser(
            See the stanza documentation for more:
            https://stanfordnlp.github.io/stanza/tokenize.html#start-with-pretokenized-text
 
-           This option does not affect UDPipe.
+           This option is not supported in UDPipe.
     :param disable_sbd: disables automatic sentence boundary detection in spaCy and stanza. For stanza, make sure that
            your input is in the correct format, that is: sentences must be separated by two new lines. If you want to
            disable both tokenization and sentence segmentation in stanza, do not enable this option but instead only
@@ -60,7 +60,7 @@ def init_parser(
            See the stanza documentation for more:
            https://stanfordnlp.github.io/stanza/tokenize.html#tokenization-without-sentence-segmentation
 
-           This option does not affect UDPipe.
+           This option is not supported in UDPipe.
     :param exclude_spacy_components: spaCy components to exclude from the pipeline, which can greatly improve
            processing speed. Only works when using spaCy as a parser.
     :param parser_opts: will be passed to the core pipeline. For spacy, it will be passed to its
@@ -133,19 +133,17 @@ class SpacyPretokenizedTokenizer:
         """
         self.vocab = vocab
 
-    def __call__(self, inp: Union[List[str], str]) -> Doc:
+    def __call__(self, inp: str) -> Doc:
         """Call the tokenizer on input `inp`.
-        :param inp: either a string to be split on whitespace, or a list of tokens
+        :param inp: a string to be split on whitespaces
         :return: the created Doc object
         """
         if isinstance(inp, str):
             words = inp.split()
             spaces = [True] * (len(words) - 1) + ([True] if inp[-1].isspace() else [False])
             return Doc(self.vocab, words=words, spaces=spaces)
-        elif isinstance(inp, list):
-            return Doc(self.vocab, words=inp)
         else:
-            raise ValueError("Unexpected input format. Expected string to be split on whitespace, or list of tokens.")
+            raise ValueError("Unexpected input format. Expected string to be split on whitespace.")
 
 
 @Language.factory("disable_sbd")

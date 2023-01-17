@@ -50,9 +50,10 @@ def conllparser(request):
     yield ConllParser(get_parser(request.param, include_headers=True))
 
 
-@pytest.fixture(params=["spacy", "stanza", "udpipe"])
+# Not testing with UDPipe, which does not support this
+@pytest.fixture(params=["spacy", "stanza"])
 def pretokenized_conllparser(request):
-    yield ConllParser(get_parser(request.param, is_tokenized=True, include_headers=True), is_tokenized=True)
+    yield ConllParser(get_parser(request.param, is_tokenized=True, include_headers=True))
 
 
 @pytest.fixture
@@ -101,7 +102,7 @@ def base_doc(base_parser, text):
 def pretokenized_doc(pretokenized_parser):
     name = pretokenized_parser[1]
     if name == "spacy":
-        yield pretokenized_parser[0](single_sent().split())
+        yield pretokenized_parser[0](single_sent())
     else:
         yield pretokenized_parser[0](single_sent())
 
