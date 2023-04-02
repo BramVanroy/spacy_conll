@@ -6,39 +6,46 @@ from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
 from spacy_conll.utils import PD_AVAILABLE, merge_dicts_strict
 
-
 if PD_AVAILABLE:
     import pandas as pd
 
 CONLL_FIELD_NAMES = [
-    "id",
-    "form",
-    "lemma",
-    "upostag",
-    "xpostag",
-    "feats",
-    "head",
-    "deprel",
-    "deps",
-    "misc",
+    "ID",
+    "FORM",
+    "LEMMA",
+    "UPOS",
+    "XPOS",
+    "FEATS",
+    "HEAD",
+    "DEPREL",
+    "DEPS",
+    "MISC",
 ]
 
 
 @Language.factory(
     "conll_formatter",
-    default_config={"conversion_maps": None, "ext_names": None, "include_headers": False, "disable_pandas": False},
+    default_config={
+        "conversion_maps": None,
+        "ext_names": None,
+        "field_names": None,
+        "include_headers": False,
+        "disable_pandas": False
+    },
 )
 def create_conll_formatter(
-    nlp: Language,
-    name: str,
-    conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
-    ext_names: Optional[Dict[str, str]] = None,
-    include_headers: bool = False,
-    disable_pandas: bool = False,
+        nlp: Language,
+        name: str,
+        conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
+        ext_names: Optional[Dict[str, str]] = None,
+        field_names: Dict[str, str] = None,
+        include_headers: bool = False,
+        disable_pandas: bool = False,
 ):
     return ConllFormatter(
         conversion_maps=conversion_maps,
         ext_names=ext_names if ext_names else {},
+        field_names=field_names if field_names else {},
         include_headers=include_headers,
         disable_pandas=disable_pandas,
     )
@@ -77,8 +84,11 @@ class ConllFormatter:
     on the first level, and the conversion map on the second.
     E.g. {'lemma': {'-PRON-': 'PRON'}} will map the lemma '-PRON-' to 'PRON'
     :param ext_names: dictionary containing names for the custom spaCy extensions. You can rename the following
-    extensions: conll, conll_pd, conll_str.
-    E.g. {'conll': 'conll_dict', 'conll_pd': 'conll_pandas'} will rename the properties accordingly
+    extensions (use as keys): 'conll', 'conll_pd', 'conll_str'. E.g. {'conll': 'conll_dict', 'conll_pd': 'conll_pandas'}
+     will rename the properties accordingly
+    :param field_names: dictionary containing names for custom field names in case you do not want to use default
+     CoNLL-U field names. You can rename the following fields (use as keys): 'ID', 'FORM', 'LEMMA', 'UPOS', 'XPOS',
+     'FEATS', 'HEAD', 'DEPREL', 'DEPS', 'MISC'. E.g. {'UPOS': 'upostag'} will rename the field name UPOS accordingly.
     :param include_headers: whether to include the CoNLL headers in the conll_str string output. These consist
     of two lines containing the sentence id and the text as per the CoNLL format
     https://universaldependencies.org/format.html#sentence-boundaries-and-comments.
@@ -88,6 +98,7 @@ class ConllFormatter:
 
     conversion_maps: Optional[Dict[str, Dict[str, str]]] = None
     ext_names: Dict[str, str] = field(default_factory=dict)
+    field_names: Dict[str, str] = field(default_factory=dict)
     include_headers: bool = False
     disable_pandas: bool = False
 
@@ -95,6 +106,8 @@ class ConllFormatter:
         # Set custom attribute names so that users can access them with their own preference
         default_ext_names = {"conll_str": "conll_str", "conll": "conll", "conll_pd": "conll_pd"}
         self.ext_names = merge_dicts_strict(default_ext_names, self.ext_names)
+        default_field_names = {fname: fname for fname in CONLL_FIELD_NAMES}
+        self.field_names = merge_dicts_strict(default_field_names, self.field_names)
 
         # Initialize extensions
         self._set_extensions()
@@ -197,7 +210,7 @@ class ConllFormatter:
         )
 
         # turn field name values (keys) and token values (values) into dict
-        token_conll_d = OrderedDict(zip(CONLL_FIELD_NAMES, token_conll))
+        token_conll_d = OrderedDict(zip(list(self.field_names.values()), token_conll))
 
         # convert properties if needed
         if self.conversion_maps:

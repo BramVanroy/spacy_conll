@@ -1,5 +1,16 @@
 # History
 
+## 3.4.0 (April 2nd, 2023)
+
+User @matgrioni rightfully pointed out that the default fields in the library are not the real CoNLL-U fields. They
+should be in all caps, and for xpostag it should be XPOS and for upostag UPOS. Additionally, the user asked for more
+control over these fields. This release accommodates that request.
+
+- **[formatter]** Breaking change: `CONLL_FIELD_NAMES` now is in line with the CoNLL-U descriptor field names: 
+"ID", "FORM", "LEMMA", "UPOS", "XPOS", "FEATS", "HEAD", "DEPREL", "DEPS", "MISC". These are the new default fields.
+- **[formatter]** New parameter: `field_names` that allows you to override the fields that were described above. 
+Simply add a dictionary of `{"default field name": "new field name"}`, e.g. `{"UPOS": "upostag"}
+
 ## 3.3.0 (January 17th, 2023)
 
 Since spaCy 3.2.0, the data that is passed to a spaCy pipeline has become more strict. This means that passing 
