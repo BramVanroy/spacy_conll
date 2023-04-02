@@ -63,14 +63,20 @@ def spacy_conllparser():
 
 @pytest.fixture
 def spacy_ext_names():
-    return init_parser("en_core_web_sm", "spacy",
-                       ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
-                       )
+    return init_parser(
+        "en_core_web_sm", "spacy",
+        ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
+    )
 
 
 @pytest.fixture
 def spacy_conversion_map():
     return init_parser("en_core_web_sm", "spacy", conversion_maps={"lemma": {"-PRON-": "PRON"}})
+
+
+@pytest.fixture
+def spacy_field_names():
+    return init_parser("en_core_web_sm", "spacy", field_names={"UPOS": "upostag"})
 
 
 @pytest.fixture
@@ -110,6 +116,11 @@ def pretokenized_doc(pretokenized_parser):
 @pytest.fixture
 def spacy_ext_names_doc(spacy_ext_names):
     return spacy_ext_names(single_sent())
+
+
+@pytest.fixture
+def spacy_fields_names_doc(spacy_field_names):
+    return spacy_field_names(single_sent())
 
 
 @pytest.fixture

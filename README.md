@@ -131,6 +131,9 @@ To illustrate, here is an advanced example, showing the more complex options:
 -  `conversion_maps`: a two-level dictionary that looks like `{field_name: {tag_name: replacement}}`. In 
    other words, you can specify in which field a certain value should be replaced by another. This is especially useful
    when you are not satisfied with the tagset of a model and wish to change some tags to an alternative0. 
+- `field_names`: allows you to change the default CoNLL-U field names to your own custom names. Similar to the 
+   conversion map above, you should use any of the default field names as keys and add your own key as value. 
+   Possible keys are : "ID", "FORM", "LEMMA", "UPOS", "XPOS", "FEATS", "HEAD", "DEPREL", "DEPS", "MISC".
 
 The example below
 
@@ -168,13 +171,23 @@ The snippets above will output a pandas DataFrame by using `._.pandas` rather th
 `._.conll_pd`, and all occurrences of `nsubj` in the deprel field are replaced by `subj`.
 
 ```
-   id     form   lemma upostag xpostag                                       feats  head deprel deps           misc
+   ID     FORM   LEMMA    UPOS    XPOS                                       FEATS  HEAD DEPREL DEPS           MISC
 0   1        I       I    PRON     PRP  Case=Nom|Number=Sing|Person=1|PronType=Prs     2   subj    _              _
 1   2     like    like    VERB     VBP                     Tense=Pres|VerbForm=Fin     0   ROOT    _              _
 2   3  cookies  cookie    NOUN     NNS                                 Number=Plur     2   dobj    _  SpaceAfter=No
 3   4        .       .   PUNCT       .                              PunctType=Peri     2  punct    _  SpaceAfter=No
 ```
 
+Another initialization example that would replace the column names "UPOS" with "upostag" amd "XPOS" with "xpostag":
+
+```python
+import spacy
+
+
+nlp = spacy.load("en_core_web_sm")
+config = {"field_names": {"UPOS": "upostag", "XPOS": "xpostag"}}
+nlp.add_pipe("conll_formatter", config=config, last=True)
+```
 
 #### Reading CoNLL into a spaCy object
 
