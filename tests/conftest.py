@@ -1,7 +1,9 @@
 from pathlib import Path
 
 import pytest
+from spacy.tokens import Doc, Token
 from spacy.tokens.underscore import Underscore
+from spacy.vocab import Vocab
 
 from spacy_conll import init_parser
 
@@ -153,3 +155,26 @@ def pretokenized_conllparser_conllstr(pretokenized_conllparser):
 def conllparser_parse_conllfile(spacy_vanila):
     return ConllParser(spacy_vanila).parse_conll_as_spacy(
         Path(__file__).parent.joinpath("en_ewt-ud-dev.conllu-sample.txt"), input_encoding="utf-8")
+
+
+@pytest.fixture
+def spacy_vocab():
+    return Vocab(strings=["hello", "world"])
+
+
+@pytest.fixture
+def spacy_doc(spacy_vocab):
+    words = ["hello", "world", "!"]
+    spaces = [True, False, False]
+    sent_starts = [True, False, False]
+    return Doc(
+        spacy_vocab,
+        words=words,
+        spaces=spaces,
+        sent_starts=sent_starts,
+    )
+
+
+@pytest.fixture
+def spacy_token(spacy_vocab, spacy_doc):
+    return Token(spacy_vocab, spacy_doc, 1)
