@@ -6,6 +6,7 @@ from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
 from spacy_conll.utils import PD_AVAILABLE, merge_dicts_strict
 
+
 if PD_AVAILABLE:
     import pandas as pd
 
@@ -30,17 +31,17 @@ CONLL_FIELD_NAMES = [
         "ext_names": None,
         "field_names": None,
         "include_headers": False,
-        "disable_pandas": False
+        "disable_pandas": False,
     },
 )
 def create_conll_formatter(
-        nlp: Language,
-        name: str,
-        conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
-        ext_names: Optional[Dict[str, str]] = None,
-        field_names: Dict[str, str] = None,
-        include_headers: bool = False,
-        disable_pandas: bool = False,
+    nlp: Language,
+    name: str,
+    conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
+    ext_names: Optional[Dict[str, str]] = None,
+    field_names: Dict[str, str] = None,
+    include_headers: bool = False,
+    disable_pandas: bool = False,
 ):
     return ConllFormatter(
         conversion_maps=conversion_maps,
