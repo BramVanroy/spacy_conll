@@ -1,14 +1,11 @@
-# Format source code automatically
 style:
-	black --line-length 119 --target-version py38 --exclude src\/spacy_conll\/version.py src/spacy_conll examples
-	isort src/spacy_conll examples
+	black src/spacy_conll tests
+	isort src/spacy_conll tests
 
-# Control quality
 quality:
-	black --check --line-length 119 --target-version py38 --exclude src\/spacy_conll\/version.py src/spacy_conll examples
-	isort --check-only src/spacy_conll examples
-	flake8 src/spacy_conll examples --exclude __pycache__,__init__.py
+	black --check --diff src/spacy_conll tests
+	isort --check-only src/spacy_conll tests
+	flake8 src/spacy_conll tests
 
-# Run tests
 test:
 	pytest tests
