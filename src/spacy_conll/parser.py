@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from locale import getpreferredencoding
 from os import PathLike
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, Union
 
 from spacy import Errors, Language
 from spacy.tokens import Doc, Span, Token

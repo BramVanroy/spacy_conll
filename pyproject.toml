@@ -1,0 +1,103 @@
+[build-system]
+requires = ["setuptools >= 64", "setuptools_scm>=8", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spacy-conll"
+dynamic = ["version"]
+description = "A custom pipeline component for spaCy that can convert any parsed Doc and its sentences into CoNLL-U format. Also provides a command line entry point."
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+authors = [
+    { name = "Bram Vanroy", email = "bramvanroy@hotmail.com" },
+]
+maintainers = [
+    { name = "Bram Vanroy", email = "bramvanroy@hotmail.com" },
+]
+keywords = [
+    "conll",
+    "conllu",
+    "nlp",
+    "parsing",
+    "spacy",
+    "spacy-extension",
+    "spacy_stanza",
+    "spacy_udpipe",
+    "stanza",
+    "tagging",
+    "udpipe",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Text Processing",
+]
+dependencies = [
+    "spacy>=3.0.1",
+]
+
+[project.optional-dependencies]
+parsers = [
+    "spacy-stanza>=1.0.0",
+    "spacy-udpipe>=1.0.0",
+]
+pd = [
+    "pandas",
+]
+all = ["spacy_conll[parsers,pd]"]
+dev = [
+    "black",
+    "flake8",
+    "isort",
+    "pygments",
+    "pytest",
+    "spacy_conll[all]",
+]
+
+[project.scripts]
+parse-as-conll = "spacy_conll.cli.parse:main"
+
+[project.entry-points.spacy_factories]
+conll_formatter = "spacy_conll.formatter:create_conll_formatter"
+disable_sbd = "spacy_conll.utils:create_spacy_disable_sentence_segmentation"
+
+[project.urls]
+homepage = "https://github.com/BramVanroy/spacy_conll"
+documentation = "https://github.com/BramVanroy/spacy_conll"
+issues = "https://github.com/BramVanroy/spacy_conll/issues"
+repository = "https://github.com/BramVanroy/spacy_conll.git"
+
+# TOOLS
+[tool.setuptools]
+include-package-data = true
+license-files = ['LICEN[CS]E*']
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+version_file = "src/spacy_conll/version.py"
+
+[tool.black]
+line-length = 119
+target-version = ["py38", "py39", "py310", "py311"]
+
+[tool.isort]
+profile = "black"
+ensure_newline_before_comments = true
+line_length = 119
+default_section = "FIRSTPARTY"
+known_first_party = "spacy_conll"
+lines_after_imports = 2
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

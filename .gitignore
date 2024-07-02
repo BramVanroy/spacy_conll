@@ -1,3 +1,4 @@
+src/spacy_conll/version.py
 Pipfile*
 TODO.rst
 dummy.*

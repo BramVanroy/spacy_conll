@@ -7,9 +7,11 @@ from spacy_conll import init_parser
  output of spacy-conll for the string representation."""
 
 
-row = ("008\tA cookie is a baked or cooked food that is typically small, flat and sweet.\n009\tIt usually contains"
-       " flour, sugar and some type of oil or fat.\n010\tIt may include other ingredients such as raisins, oats,"
-       " chocolate chips, nuts, etc.")
+row = (
+    "008\tA cookie is a baked or cooked food that is typically small, flat and sweet.\n009\tIt usually contains"
+    " flour, sugar and some type of oil or fat.\n010\tIt may include other ingredients such as raisins, oats,"
+    " chocolate chips, nuts, etc."
+)
 
 
 def main():

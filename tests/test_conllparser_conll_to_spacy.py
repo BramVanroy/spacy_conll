@@ -11,6 +11,7 @@ def test_conllf_to_spacy(spacy_conllparser: ConllParser, conll_testfile: Path):
     assert doc.has_annotation("TAG")
     assert doc.has_annotation("MORPH")
 
+
 def test_conllstr_to_spacy(spacy_conllparser: ConllParser, conll_testfile: Path):
     text = conll_testfile.read_text(encoding="utf-8")
     doc = spacy_conllparser.parse_conll_text_as_spacy(text)
@@ -19,4 +20,3 @@ def test_conllstr_to_spacy(spacy_conllparser: ConllParser, conll_testfile: Path)
     assert doc.has_annotation("DEP")
     assert doc.has_annotation("TAG")
     assert doc.has_annotation("MORPH")
-

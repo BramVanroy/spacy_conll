@@ -2,12 +2,12 @@ from pathlib import Path
 
 import pytest
 from spacy.tokens.underscore import Underscore
-
 from spacy_conll import init_parser
 
 # flow inspired by https://stackoverflow.com/a/61486898/1150683
 # pass (uninvoked) function as a parameter to fixtures
 from spacy_conll.parser import ConllParser
+
 
 PARSERS = {}
 
@@ -64,8 +64,7 @@ def spacy_conllparser():
 @pytest.fixture
 def spacy_ext_names():
     return init_parser(
-        "en_core_web_sm", "spacy",
-        ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
+        "en_core_web_sm", "spacy", ext_names={"conll": "conllu", "conll_str": "conll_text", "conll_pd": "pandas"}
     )
 
 
@@ -89,9 +88,11 @@ def single_sent():
 
 
 def multi_sent():
-    return ("A cookie is a baked or cooked food that is typically small, flat and sweet. It usually contains flour,"
-            " sugar and some type of oil or fat. It may include other ingredients such as raisins, oats, chocolate"
-            " chips, nuts, etc.")
+    return (
+        "A cookie is a baked or cooked food that is typically small, flat and sweet. It usually contains flour,"
+        " sugar and some type of oil or fat. It may include other ingredients such as raisins, oats, chocolate"
+        " chips, nuts, etc."
+    )
 
 
 @pytest.fixture(params=[single_sent, multi_sent])
@@ -145,11 +146,13 @@ def spacy_disabled_pandas_doc(spacy_disabled_pandas):
 
 @pytest.fixture
 def pretokenized_conllparser_conllstr(pretokenized_conllparser):
-    return pretokenized_conllparser.parse_file_as_conll(Path(__file__).parent.joinpath("test.txt"),
-                                                        input_encoding="utf-8")
+    return pretokenized_conllparser.parse_file_as_conll(
+        Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8"
+    )
 
 
 @pytest.fixture
 def conllparser_parse_conllfile(spacy_vanila):
     return ConllParser(spacy_vanila).parse_conll_as_spacy(
-        Path(__file__).parent.joinpath("en_ewt-ud-dev.conllu-sample.txt"), input_encoding="utf-8")
+        Path(__file__).parent.joinpath("en_ewt-ud-dev.conllu-sample.txt"), input_encoding="utf-8"
+    )

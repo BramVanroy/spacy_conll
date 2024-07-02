@@ -1,5 +1,4 @@
 from pandas import DataFrame, Series
-
 from spacy_conll.formatter import CONLL_FIELD_NAMES
 
 
