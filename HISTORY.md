@@ -1,5 +1,13 @@
 # History
 
+## 4.0.0 (July 2nd, 2024)
+
+Two new changes thanks to user @rominf:
+
+1. Repackaged the library to bring it up to modern standards, notably relying on a pyproject.toml file and
+removing support for Python <3.8.
+2. When dep, pos, tag, or lemma fields are empty, the underscore `_` will be used
+
 ## 3.4.0 (April 2nd, 2023)
 
 User @matgrioni rightfully pointed out that the default fields in the library are not the real CoNLL-U fields. They
