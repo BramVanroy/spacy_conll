@@ -35,8 +35,8 @@ CONLL_FIELD_NAMES = [
     },
 )
 def create_conll_formatter(
-    nlp: Language,
-    name: str,
+    nlp: Language,  # qa: ignore
+    name: str,  # qa: ignore
     conversion_maps: Optional[Dict[str, Dict[str, str]]] = None,
     ext_names: Optional[Dict[str, str]] = None,
     field_names: Dict[str, str] = None,
@@ -200,12 +200,12 @@ class ConllFormatter:
         token_conll = (
             token_idx,
             token.text,
-            token.lemma_,
-            token.pos_,
-            token.tag_,
+            token.lemma_ if token.lemma_ else "_",
+            token.pos_ if token.pos_ else "_",
+            token.tag_ if token.tag_ else "_",
             str(token.morph) if token.has_morph and str(token.morph) else "_",
             head_idx,
-            token.dep_,
+            token.dep_ if token.dep_ else "_",
             token._.conll_deps_graphs_field,
             token._.conll_misc_field,
         )
