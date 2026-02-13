@@ -1,3 +1,4 @@
+import re
 from collections import OrderedDict
 from typing import Dict, Optional, Union
 
@@ -22,10 +23,26 @@ CONLL_FIELD_NAMES = [
     "misc",
 ]
 
+NON_PRINTABLE_RE = re.compile(r"[\x00-\x1f\x7f]")
+
+
+def escape_non_printable(text: str) -> str:
+    """
+    Escape non printable characters.
+    Non printable characters break the conll_str.
+    """
+    cleaned = NON_PRINTABLE_RE.sub(lambda m: f"\\x{ord(m.group()):02x}", text)
+    return cleaned
+
 
 @Language.factory(
     "conll_formatter",
-    default_config={"conversion_maps": None, "ext_names": None, "include_headers": False, "disable_pandas": False},
+    default_config={
+        "conversion_maps": None,
+        "ext_names": None,
+        "include_headers": False,
+        "disable_pandas": False,
+    },
 )
 class ConllFormatter:
     """Pipeline component for spaCy that adds CoNLL-U-style properties to a Doc, its sentence `Span`s, and Tokens.
@@ -81,7 +98,11 @@ class ConllFormatter:
         self.nlp = nlp
         self.name = name
         # Set custom attribute names
-        self._ext_names = {"conll_str": "conll_str", "conll": "conll", "conll_pd": "conll_pd"}
+        self._ext_names = {
+            "conll_str": "conll_str",
+            "conll": "conll",
+            "conll_pd": "conll_pd",
+        }
         if ext_names:
             self._ext_names = self._merge_dicts_strict(self._ext_names, ext_names)
 
@@ -108,7 +129,10 @@ class ConllFormatter:
         for sent_idx, sent in enumerate(doc.sents, 1):
             self._set_span_conll(sent, sent_idx)
 
-        doc._.set(self._ext_names["conll"], [s._.get(self._ext_names["conll"]) for s in doc.sents])
+        doc._.set(
+            self._ext_names["conll"],
+            [s._.get(self._ext_names["conll"]) for s in doc.sents],
+        )
         doc._.set(
             self._ext_names["conll_str"],
             "\n".join([s._.get(self._ext_names["conll_str"]) for s in doc.sents]),
@@ -117,12 +141,16 @@ class ConllFormatter:
         if PD_AVAILABLE and not self.disable_pandas:
             doc._.set(
                 self._ext_names["conll_pd"],
-                pd.concat([s._.get(self._ext_names["conll_pd"]) for s in doc.sents]).reset_index(drop=True),
+                pd.concat(
+                    [s._.get(self._ext_names["conll_pd"]) for s in doc.sents]
+                ).reset_index(drop=True),
             )
 
         return doc
 
-    def _map_conll(self, token_conll_d: Dict[str, Union[str, int]]) -> Dict[str, Union[str, int]]:
+    def _map_conll(
+        self, token_conll_d: Dict[str, Union[str, int]]
+    ) -> Dict[str, Union[str, int]]:
         """Maps labels according to a given `self._conversion_maps`.
         This can be useful when users want to change the output labels of a
         model to their own tagset.
@@ -148,14 +176,16 @@ class ConllFormatter:
         if self.include_headers:
             # Get metadata from custom extension or create it ourselves
             if not (span.has_extension("conll_metadata") and span._.conll_metadata):
-                span._.conll_metadata = f"# sent_id = {span_idx}\n# text = {span.text}\n"
+                span._.conll_metadata = f"# sent_id = {span_idx}\n# text = {escape_non_printable(span.text)}\n"
 
             span_conll_str += span._.conll_metadata
 
         for token_idx, token in enumerate(span, 1):
             self._set_token_conll(token, token_idx)
 
-        span._.set(self._ext_names["conll"], [t._.get(self._ext_names["conll"]) for t in span])
+        span._.set(
+            self._ext_names["conll"], [t._.get(self._ext_names["conll"]) for t in span]
+        )
         span_conll_str += "".join([t._.get(self._ext_names["conll_str"]) for t in span])
         span._.set(self._ext_names["conll_str"], span_conll_str)
 
@@ -180,8 +210,8 @@ class ConllFormatter:
 
         token_conll = (
             token_idx,
-            token.text,
-            token.lemma_,
+            escape_non_printable(token.text),
+            escape_non_printable(token.lemma_) if token.lemma_ else "_",
             token.pos_,
             token.tag_,
             str(token.morph) if token.has_morph and str(token.morph) else "_",
@@ -218,7 +248,9 @@ class ConllFormatter:
         """
         for k, v in d2.items():
             if k not in d1:
-                raise KeyError(f"This key does not exist in the original dict. Valid keys are {list(d1.keys())}")
+                raise KeyError(
+                    f"This key does not exist in the original dict. Valid keys are {list(d1.keys())}"
+                )
             d1[k] = v
 
         return d1
