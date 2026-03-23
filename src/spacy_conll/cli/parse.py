@@ -20,7 +20,7 @@ def parse(args: Namespace):
         include_headers=args.include_headers,
     )
 
-    parser = ConllParser(nlp, is_tokenized=args.is_tokenized)
+    parser = ConllParser(nlp)
 
     if args.input_file:
         conll_str = parser.parse_file_as_conll(
