@@ -42,12 +42,12 @@ print(doc._.conll_str)
 
 ```text
 1	I	I	PRON	PRP	Case=Nom|Number=Sing|Person=1|PronType=Prs	2	nsubj	_	_
-2	like	like	VERB	VBP	Tense=Pres|VerbForm=Fin	0	ROOT	_	_
+2	like	like	VERB	VBP	Tense=Pres|VerbForm=Fin	0	root	_	_
 3	cookies	cooky	NOUN	NNS	Number=Plur	2	dobj	_	SpaceAfter=No
 4	.	.	PUNCT	.	PunctType=Peri	2	punct	_	_
 
 1	What	what	PRON	WP	_	2	dep	_	_
-2	about	about	ADP	IN	_	0	ROOT	_	_
+2	about	about	ADP	IN	_	0	root	_	_
 3	you	you	PRON	PRP	Case=Acc|Person=2|PronType=Prs	2	pobj	_	SpaceAfter=No
 4	?	?	PUNCT	.	PunctType=Peri	2	punct	_	SpaceAfter=No
 ```

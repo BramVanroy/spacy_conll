@@ -245,7 +245,7 @@ class ConllParser:
             [('Hi', 'ROOT', 'Hi'), ('there', 'advmod', 'Hi')]
             >>> print(doc._.conll_str.replace("\t", " "))
             # sent_id = a1
-            1 Hi hi INTJ UH _ 0 ROOT 0:root _
+            1 Hi hi INTJ UH _ 0 root 0:root _
             2 there there ADV RB _ 1 advmod 1:advmod SpaceAfter=No
             <BLANKLINE>
         """

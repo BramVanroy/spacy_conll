@@ -81,11 +81,6 @@ def test_trailing_blank_lines_are_accepted(spacy_conllparser: ConllParser):
     assert len(list(doc.sents)) == 1
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="The converter maps DEPREL 'root' to spaCy's 'ROOT' and the"
-    " formatter writes it back as 'ROOT'",
-)
 def test_sample_file_round_trip(spacy_conllparser: ConllParser):
     path = Path(__file__).parent / "en_ewt-ud-dev.conllu-sample.txt"
     doc = spacy_conllparser.parse_conll_file_as_spacy(path)

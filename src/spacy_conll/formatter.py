@@ -199,8 +199,10 @@ class ConllFormatter:
         """
         if token.dep_.lower().strip() == "root":
             head_idx = 0
+            deprel = "root"
         else:
             head_idx = token.head.i + 1 - token.sent[0].i
+            deprel = token.dep_ or "_"
 
         token._.conll_misc_field = (
             "_" if token.whitespace_ else "SpaceAfter=No"
@@ -214,7 +216,7 @@ class ConllFormatter:
             token.tag_ or "_",
             str(token.morph) if token.has_morph and str(token.morph) else "_",
             head_idx,
-            token.dep_ or "_",
+            deprel,
             token._.conll_deps_graphs_field,
             token._.conll_misc_field,
         )

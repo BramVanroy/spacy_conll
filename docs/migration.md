@@ -83,6 +83,20 @@ doc = parser.parse_conll_file_as_spacy("in.conllu", input_encoding="utf-8")
 
 `Token._.conll` is a plain `dict` instead of an `OrderedDict`. Dicts keep the insertion order, so the order of the fields is the same.
 
+## DEPREL of the root token
+
+The root token has the DEPREL `root` for every backend, as the CoNLL-U format requires. spaCy models gave `ROOT` before.
+
+```python
+# v4
+"0\tROOT"
+
+# v5
+"0\troot"
+```
+
+To keep the old label, map it with `conversion_maps={"DEPREL": {"root": "ROOT"}}`.
+
 ## Command line
 
 All multi-word options use hyphens instead of underscores, the single-letter flags `-a`, `-b`, `-c`, `-s`, `-t`, `-d`, `-e` and `-j` are removed, and the encoding defaults are `utf-8`. One of `-f/--input-file` and `--input-str` is required.
