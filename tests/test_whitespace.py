@@ -124,21 +124,31 @@ def test_whitespace_only_sentence_skipped():
     assert doc[1]._.conll["MISC"] == "SpacesAfter=\\s\\n\\n\\s"
 
 
-def test_head_on_space_token():
+@pytest.mark.parametrize(
+    ("heads", "deps", "expected"),
+    [
+        (
+            [1, 1, 1],
+            ["dep", "ROOT", "dep"],
+            [(1, 0, "root"), (2, 0, "root")],
+        ),
+        (
+            [0, 0, 1],
+            ["ROOT", "dep", "dep"],
+            [(1, 0, "root"), (2, 1, "dep")],
+        ),
+    ],
+)
+def test_head_on_space_token(heads, deps, expected):
     nlp = spacy.blank("en")
     nlp.add_pipe("conll_formatter")
     doc = nlp.make_doc("a \n b")
-    for token, head, dep in zip(
-        doc, [1, 1, 1], ["dep", "ROOT", "dep"], strict=True
-    ):
+    for token, head, dep in zip(doc, heads, deps, strict=True):
         token.head = doc[head]
         token.dep_ = dep
     doc = nlp.get_pipe("conll_formatter")(doc)
     rows = [t._.conll for t in doc if not t.is_space]
-    assert [(r["ID"], r["HEAD"], r["DEPREL"]) for r in rows] == [
-        (1, 0, "root"),
-        (2, 0, "root"),
-    ]
+    assert [(r["ID"], r["HEAD"], r["DEPREL"]) for r in rows] == expected
 
 
 def test_parse_text_as_conll_skips_blank_lines(header_nlp):

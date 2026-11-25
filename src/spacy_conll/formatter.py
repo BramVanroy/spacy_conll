@@ -104,6 +104,8 @@ def merge_misc(misc: str, whitespace_misc: str) -> str:
         'SpacesAfter=\\n|Translit=a'
         >>> merge_misc("SpacesAfter=\\n|Translit=a", "SpaceAfter=No")
         'Translit=a|SpaceAfter=No'
+        >>> merge_misc("SpacesBefore=\\n|Translit=a", "_")
+        'SpacesBefore=\\n|Translit=a'
     """
     whitespace = dict(
         entry.split("=", 1)
