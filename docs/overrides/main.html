@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block outdated %}
+  <span id="version-warning">
+    You are not viewing the documentation of the latest released version.
+    <a href="{{ '../' ~ base_url }}"><strong>Go to the latest release docs.</strong></a>
+  </span>
+{% endblock %}

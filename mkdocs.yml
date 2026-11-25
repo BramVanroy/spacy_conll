@@ -1,0 +1,155 @@
+site_name: spacy-conll
+site_description: Convert spaCy and UDPipe parses to CoNLL-U and back
+site_url: https://bramvanroy.github.io/spacy_conll/
+
+repo_url: https://github.com/BramVanroy/spacy_conll
+repo_name: BramVanroy/spacy_conll
+edit_uri: edit/main/docs/
+
+# Fail the build on broken internal links and other warnings.
+strict: true
+
+# Build tooling that lives in docs/ but must not be published as pages.
+exclude_docs: |
+  hooks.py
+  __pycache__/
+  overrides/
+  templates/
+
+# Material for MkDocs theme configuration. See https://squidfunk.github.io/mkdocs-material/
+theme:
+  name: material
+  custom_dir: docs/overrides
+  features:
+    # Adds a copy button to code blocks
+    - content.code.copy
+    # Enables inline code annotations in fenced code blocks
+    - content.code.annotate
+    # Shows the top-level nav as tabs
+    - navigation.tabs
+    # Keeps the top tabs visible while scrolling
+    - navigation.tabs.sticky
+    # Expands the sidebar into named sections
+    - navigation.sections
+    # Treats index pages as section landing pages
+    - navigation.indexes
+    # Adds a back-to-top button
+    - navigation.top
+    # Highlights matching terms in search results/pages
+    - search.highlight
+    # Shows live search suggestions while typing
+    - search.suggest
+    # Keeps the table of contents synced while scrolling
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      # The default Material light theme
+      scheme: default
+      # Main brand color used for the header and active elements
+      primary: indigo
+      # Accent color for links, buttons, and highlights
+      accent: indigo
+      # Icon/text shown in the theme switcher
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      # The default Material dark theme
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+# Build hook for custom MkDocs behavior during site generation
+hooks:
+  - docs/hooks.py
+
+# Plugins extend MkDocs with search and API-doc generation
+plugins:
+  # Full-text search index used by the site search UI
+  - search
+  # Versioned documentation deployment and metadata for Material selector + canonical URLs
+  - mike:
+      # Keep canonical URLs pointing at the current stable alias
+      canonical_version: latest
+  # Cross-reference resolver used by mkdocstrings and markdown links
+  - autorefs:
+      # If an exact target is missing, resolve to the closest matching identifier
+      resolve_closest: true
+  # Generates API reference pages from Python objects and docstrings
+  - mkdocstrings:
+      # Custom mkdocstrings templates: link API objects to their source on GitHub.
+      # Kept outside the theme's custom_dir so they aren't published as static files.
+      custom_templates: docs/templates
+      handlers:
+        python:
+          # Source roots used to import project modules
+          paths: [src]
+          options:
+            # Parse docstrings using Google-style sections
+            docstring_style: google
+            # Show a link to the source code for each documented object
+            show_source: true
+            # Render the object name as the page heading
+            show_root_heading: true
+            # Include the object type (class/function/module) in headings
+            show_symbol_type_heading: true
+            # Include symbol types in the generated table of contents
+            show_symbol_type_toc: true
+            # Keep members in source-code order instead of alphabetical order
+            members_order: source
+            # Put signatures on a separate line for readability
+            separate_signature: true
+            # Show type annotations in signatures
+            show_signature_annotations: true
+            # Display Annotated types as their underlying type where possible
+            unwrap_annotated: true
+            # Fold __init__ docs into the class documentation block
+            merge_init_into_class: true
+
+# Extra metadata consumed by Material features like version selector and warnings
+extra:
+  version:
+    # Render version selector entries from mike's versions.json
+    provider: mike
+    # Treat this alias as the latest/stable channel for warning logic
+    default: latest
+
+# Markdown extensions used by docs pages
+markdown_extensions:
+  # Enables !!! note/warning/etc. blocks
+  # See https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown/#admonition
+  - admonition
+  # Lets Markdown files include snippets from other files
+  # See https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown-extensions/#snippets
+  - pymdownx.snippets:
+      # Resolve snippet paths from the repository root
+      base_path: .
+  # Better code highlighting with optional line anchors and CSS classes
+  # See https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown-extensions/#highlight
+  - pymdownx.highlight:
+      # Add anchor links for individual code lines
+      anchor_linenums: true
+      # Wrap highlighted lines in spans for styling and linking
+      line_spans: __span
+      # Add language-specific CSS classes for fenced code blocks
+      pygments_lang_class: true
+  # Inline code highlighting using special syntax
+  - pymdownx.inlinehilite
+  # Allows nested fenced blocks, tabs, Mermaid, etc. inside Markdown
+  - pymdownx.superfences
+  # Lets admonitions be collapsible
+  - pymdownx.details
+  # Builds the on-page table of contents from headings
+  - toc:
+      # Appends a permalink icon to each heading for easy linking
+      permalink: true
+
+# Navigation structure for the generated docs site
+nav:
+  - Home: index.md
+  - Usage: usage.md
+  - Migration to v5: migration.md
+  - API reference: api.md
