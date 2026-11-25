@@ -13,12 +13,12 @@ def test_set_token_conll(spacy_token: Token):
         "UPOS": "_",
         "XPOS": "_",
         "FEATS": "_",
-        "HEAD": 2,
+        "HEAD": "_",
         "DEPREL": "_",
         "DEPS": "_",
         "MISC": "SpaceAfter=No",
     }
     assert (
         formatter._set_token_conll(spacy_token)._.get("conll_str")
-        == "1\tworld\t_\t_\t_\t_\t2\t_\t_\tSpaceAfter=No\n"
+        == "1\tworld\t_\t_\t_\t_\t_\t_\t_\tSpaceAfter=No\n"
     )

@@ -71,7 +71,10 @@ def test_chunk_that_is_not_one_sentence_raises(spacy_conllparser: ConllParser):
         [ROW, "2\tthere\tthere\tADV\tRB\t_\t0\troot\t0:root\t_"]
     )
 
-    with pytest.raises(ValueError, match="unexpected format"):
+    with pytest.raises(
+        ValueError,
+        match="Line 1: the HEAD values of this sentence do not form one tree",
+    ):
         spacy_conllparser.parse_conll_text_as_spacy(two_roots)
 
 

@@ -167,14 +167,14 @@ class ConllFormatter:
         >>> doc = nlp("Hello world.")
         >>> doc[1]._.conll  # doctest: +NORMALIZE_WHITESPACE
         {'ID': 2, 'FORM': 'world', 'LEMMA': '_', 'UPOS': '_', 'XPOS': '_',
-         'FEATS': '_', 'HEAD': 2, 'DEPREL': '_', 'DEPS': '_',
+         'FEATS': '_', 'HEAD': '_', 'DEPREL': '_', 'DEPS': '_',
          'MISC': 'SpaceAfter=No'}
         >>> print(doc._.conll_str.replace("\t", " "))
         # sent_id = 1
         # text = Hello world.
-        1 Hello _ _ _ _ 1 _ _ _
-        2 world _ _ _ _ 2 _ _ SpaceAfter=No
-        3 . _ _ _ _ 3 _ _ SpaceAfter=No
+        1 Hello _ _ _ _ _ _ _ _
+        2 world _ _ _ _ _ _ _ SpaceAfter=No
+        3 . _ _ _ _ _ _ _ SpaceAfter=No
         <BLANKLINE>
     """
 
@@ -340,7 +340,10 @@ class ConllFormatter:
         while head.is_space and head.head.i != head.i:
             head = head.head
 
-        if token.dep_.lower().strip() == "root" or head.is_space:
+        if not token.has_head():
+            head_idx = "_"
+            deprel = "_"
+        elif token.dep_.lower().strip() == "root" or head.is_space:
             head_idx = 0
             deprel = "root"
         elif token_ids is None:

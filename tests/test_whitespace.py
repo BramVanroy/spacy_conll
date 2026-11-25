@@ -34,7 +34,8 @@ def assert_valid_conllu(conll_str: str):
                 assert "\n" not in value
                 assert "\r" not in value
             ids.append(int(fields[0]))
-            heads.append(int(fields[6]))
+            if fields[6] != "_":
+                heads.append(int(fields[6]))
         assert ids == list(range(1, len(ids) + 1))
         assert all(0 <= head <= len(ids) for head in heads)
 

@@ -6,11 +6,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
+import numpy
 from spacy import Errors, Language
 from spacy.tokens import Doc, Span, Token
 from spacy.training.converters.conllu_to_docs import get_entities
 from spacy.training.iob_utils import spans_from_biluo_tags
 
+from spacy_conll.formatter import CONLL_FIELD_NAMES
 from spacy_conll.utils import UDPIPE_AVAILABLE
 
 if UDPIPE_AVAILABLE:
@@ -177,6 +179,7 @@ class ConllParser:
         input_encoding: str = "utf-8",
         ner_tag_pattern: str = NER_TAG_PATTERN,
         ner_map: dict[str, str] | None = None,
+        strict: bool = True,
     ) -> Doc:
         """Read a CoNLL-U file into a spaCy doc.
 
@@ -188,13 +191,17 @@ class ConllParser:
             ner_tag_pattern: Regex for the entity tag in the MISC field.
             ner_map: Maps old entity labels to new ones. A label that maps to
                 `""` becomes `O`.
+            strict: See `parse_conll_text_as_spacy`.
 
         Returns:
             A doc with all sentences of the file and the CoNLL extensions.
         """
         text = Path(input_file).resolve().read_text(encoding=input_encoding)
         return self.parse_conll_text_as_spacy(
-            text, ner_tag_pattern=ner_tag_pattern, ner_map=ner_map
+            text,
+            ner_tag_pattern=ner_tag_pattern,
+            ner_map=ner_map,
+            strict=strict,
         )
 
     def parse_conll_text_as_spacy(
@@ -203,29 +210,43 @@ class ConllParser:
         *,
         ner_tag_pattern: str = NER_TAG_PATTERN,
         ner_map: dict[str, str] | None = None,
+        strict: bool = True,
     ) -> Doc:
         r"""Read CoNLL-U text into a spaCy doc.
 
-        Sentences are separated by an empty line. Fields that spaCy does not
-        store are kept in extensions: DEPS in `Token._.conll_deps_graphs_field`,
-        MISC in `Token._.conll_misc_field` and the comment lines in
-        `Span._.conll_metadata` of the sentence. Multi-word tokens and empty
-        nodes are not supported. Adapted from spaCy's `conllu2json`
-        converter.
+        Sentences are separated by an empty line, and every sentence block
+        becomes one spaCy sentence. Fields that spaCy does not store are kept
+        in extensions: DEPS in `Token._.conll_deps_graphs_field`, MISC in
+        `Token._.conll_misc_field` and the comment lines in
+        `Span._.conll_metadata` of the sentence. A `_` in LEMMA, UPOS, XPOS
+        or FEATS leaves that attribute empty in spaCy, and the formatter
+        writes `_` again. Multi-word tokens and empty nodes are not
+        supported. Adapted from spaCy's `conllu2json` converter.
+
+        With `strict=False`, HEAD and DEPREL may be `_` (both on the same
+        line), for example in a file that is tagged but not parsed. Such a
+        token has no head in spaCy (`token.has_head()` is false and
+        `token.dep_` is `""`), and the formatter writes `_` for both fields.
+        The HEAD values of a sentence then do not have to form one tree.
 
         Args:
             text: CoNLL-U text.
             ner_tag_pattern: Regex for the entity tag in the MISC field.
             ner_map: Maps old entity labels to new ones. A label that maps to
                 `""` becomes `O`.
+            strict: Whether every token needs a HEAD and a DEPREL, and the
+                HEAD values of every sentence must form one tree.
 
         Returns:
             A doc with all sentences of the text and the CoNLL extensions.
 
         Raises:
-            ValueError: If a field is empty, a field other than FORM, LEMMA
-                or MISC contains a space, or a sentence block does not parse
-                into exactly one sentence.
+            ValueError: If a line does not have 10 fields, a field is empty,
+                a field other than FORM, LEMMA or MISC contains a space, ID
+                or HEAD is not a valid number, or only one of HEAD and DEPREL
+                is `_`. With `strict=True` also if HEAD or DEPREL is `_`, or
+                if the HEAD values of a sentence do not form one tree. The
+                message starts with the line number.
             NotImplementedError: If the text has multi-word tokens or empty
                 nodes.
 
@@ -250,6 +271,20 @@ class ConllParser:
             1 Hi hi INTJ UH _ 0 root 0:root _
             2 there there ADV RB _ 1 advmod 1:advmod SpaceAfter=No
             <BLANKLINE>
+
+            A sentence without dependency annotation needs `strict=False`:
+
+            >>> conll = "1\tHi\thi\tINTJ\tUH\t_\t_\t_\t_\t_"
+            >>> doc = ConllParser(nlp).parse_conll_text_as_spacy(
+            ...     conll, strict=False
+            ... )
+            >>> [(t.text, t.dep_, t.has_head()) for t in doc]
+            [('Hi', '', False)]
+            >>> print(doc._.conll_str.replace("\t", " "))
+            # sent_id = 1
+            # text = Hi
+            1 Hi hi INTJ UH _ _ _ _ _
+            <BLANKLINE>
         """
         if not Token.has_extension("conll_misc_field"):
             Token.set_extension("conll_misc_field", default="_")
@@ -259,14 +294,18 @@ class ConllParser:
             Span.set_extension("conll_metadata", default=None)
 
         docs = []
-        for chunk in text.split("\n\n"):
-            lines = [
-                line
-                for line in chunk.splitlines()
+        sent_starts = []
+        chunk_lineno = 1
+        for chunk in text.replace("\r\n", "\n").split("\n\n"):
+            numbered_lines = [
+                (chunk_lineno + offset, line)
+                for offset, line in enumerate(chunk.split("\n"))
                 if line and not line.startswith("#")
             ]
-            if not lines:
+            chunk_lineno += chunk.count("\n") + 2
+            if not numbered_lines:
                 continue
+            lines = [line for _, line in numbered_lines]
             words, spaces, tags, poses, morphs, lemmas, miscs = (
                 [],
                 [],
@@ -277,14 +316,27 @@ class ConllParser:
                 [],
             )
             heads, deps, deps_graphs = [], [], []
-            for line in lines:
+            for lineno, line in numbered_lines:
                 parts = line.split("\t")
 
-                if any(not p for p in parts):
+                if len(parts) != len(CONLL_FIELD_NAMES):
                     raise ValueError(
-                        "According to the CoNLL-U Format, fields cannot be empty. See"
-                        " https://universaldependencies.org/format.html"
+                        f"Line {lineno}: expected {len(CONLL_FIELD_NAMES)} tab-separated fields but found"
+                        f" {len(parts)}. See https://universaldependencies.org/format.html"
                     )
+
+                for name, value in zip(CONLL_FIELD_NAMES, parts, strict=True):
+                    if not value:
+                        raise ValueError(
+                            f"Line {lineno}: the {name} field is empty. According to the CoNLL-U format,"
+                            " fields cannot be empty. See https://universaldependencies.org/format.html"
+                        )
+                    if " " in value and name not in ("FORM", "LEMMA", "MISC"):
+                        raise ValueError(
+                            f"Line {lineno}: the {name} field contains a space. According to the CoNLL-U"
+                            " format, only FORM, LEMMA, and MISC fields can contain spaces. See"
+                            " https://universaldependencies.org/format.html"
+                        )
 
                 (
                     id_,
@@ -299,18 +351,13 @@ class ConllParser:
                     misc,
                 ) = parts
 
-                if any(
-                    " " in f
-                    for f in (id_, pos, tag, morph, head, dep, deps_graph)
-                ):
-                    raise ValueError(
-                        "According to the CoNLL-U Format, only FORM, LEMMA, and MISC fields can contain"
-                        " spaces. See https://universaldependencies.org/format.html"
-                    )
-
                 if "." in id_ or "-" in id_:
                     raise NotImplementedError(
-                        "Multi-word tokens and empty nodes are not supported in spacy_conll"
+                        f"Line {lineno}: multi-word tokens and empty nodes are not supported in spacy_conll"
+                    )
+                if not id_.isdigit():
+                    raise ValueError(
+                        f"Line {lineno}: ID must be a number but found {id_!r}"
                     )
 
                 words.append(word)
@@ -321,14 +368,33 @@ class ConllParser:
                     spaces.append(True)
 
                 id_ = int(id_) - 1
-                lemmas.append(lemma)
-                poses.append(pos)
-                tags.append(pos if tag == "_" else tag)
+                # The token "_" has the lemma "_", so that lemma is not missing.
+                lemmas.append("" if lemma == "_" and word != "_" else lemma)
+                poses.append("" if pos == "_" else pos)
+                tags.append("" if tag == "_" else tag)
                 morphs.append(morph if morph != "_" else "")
-                heads.append(
-                    (int(head) - 1) if head not in ("0", "_") else id_
-                )
-                deps.append("ROOT" if dep == "root" else dep)
+
+                if head == "_" or dep == "_":
+                    if strict:
+                        raise ValueError(
+                            f"Line {lineno}: HEAD and DEPREL must be filled in. Use strict=False to read"
+                            " sentences without (complete) dependency annotation"
+                        )
+                    if head != dep:
+                        raise ValueError(
+                            f"Line {lineno}: HEAD is {head!r} and DEPREL is {dep!r}. Both must be '_' or"
+                            " both must be filled in"
+                        )
+                    heads.append(None)
+                    deps.append(None)
+                else:
+                    if not head.isdigit() or int(head) > len(lines):
+                        raise ValueError(
+                            f"Line {lineno}: HEAD must be 0 or the ID of a token in the same sentence but"
+                            f" found {head!r}"
+                        )
+                    heads.append((int(head) - 1) if head != "0" else id_)
+                    deps.append("ROOT" if dep == "root" else dep)
                 deps_graphs.append(deps_graph)
                 miscs.append(misc)
 
@@ -352,24 +418,28 @@ class ConllParser:
             ents = get_entities(lines, ner_tag_pattern, ner_map)
             doc.ents = spans_from_biluo_tags(doc, ents)
 
-            # The deprel relations ensure that this CoNLL chunk is one sentence
-            # Deprel cannot therefore not be empty or each word is considered a separate sentence
-            if len(list(doc.sents)) != 1:
+            if strict and (n_sents := len(list(doc.sents))) != 1:
                 raise ValueError(
-                    "Your data is in an unexpected format. Make sure that it follows the CoNLL-U format"
-                    " requirements. See https://universaldependencies.org/format.html. Particularly make"
-                    " sure that the DEPREL field is filled in."
+                    f"Line {numbered_lines[0][0]}: the HEAD values of this sentence do not form one tree,"
+                    f" so spaCy splits it into {n_sents} sentences. Exactly one token must have HEAD 0."
+                    " Use strict=False to read sentences without (complete) dependency annotation"
                 )
 
             # Save the metadata in a custom sentence Span attribute so that the formatter can use it
             metadata = "\n".join(
                 [line for line in chunk.splitlines() if line.startswith("#")]
             )
-            # We really only expect one sentence
-            for sent in doc.sents:
-                sent._.conll_metadata = f"{metadata}\n" if metadata else ""
+            doc[:]._.conll_metadata = f"{metadata}\n" if metadata else ""
 
             docs.append(doc)
+            sent_starts.extend([1] + [-1] * (len(doc) - 1))
 
-        # Add CoNLL custom extensions
-        return self.nlp.get_pipe("conll_formatter")(Doc.from_docs(docs))
+        doc = Doc.from_docs(docs)
+        # Without complete HEAD values, spaCy cannot derive the sentence
+        # boundaries from the tree, so every block is marked explicitly.
+        doc.from_array(
+            ["SENT_START"],
+            numpy.array(sent_starts, dtype="int64").astype("uint64"),
+        )
+
+        return self.nlp.get_pipe("conll_formatter")(doc)
