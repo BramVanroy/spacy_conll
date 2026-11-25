@@ -6,6 +6,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [5.0.0] - Unreleased
 
+### Added
+
+- `ConllParser.parse_conll_text_as_spacy` and `ConllParser.parse_conll_file_as_spacy` take `strict` (default `True`). With `strict=False`, HEAD and DEPREL may be `_`, for example in CoNLL-U that is tagged but not parsed. Every sentence block still becomes one spaCy sentence ([#34](https://github.com/BramVanroy/spacy_conll/issues/34)).
+
 ### Changed
 
 - Python 3.11 or newer and spaCy 3.8 or newer are required.
@@ -15,6 +19,9 @@ All notable changes to this project are documented in this file. The format is b
 - `ConllParser.parse_conll_file_as_spacy` and `ConllParser.parse_conll_text_as_spacy` take keyword-only options, and `input_encoding` defaults to `"utf-8"`. The entity tag regular expression is available as the constant `spacy_conll.parser.NER_TAG_PATTERN`.
 - The root token always has the DEPREL `root` in the CoNLL output, whatever the label of the parser. spaCy models gave `ROOT` before. `conversion_maps={"DEPREL": {"root": "ROOT"}}` restores the old label.
 - `Token._.conll` is a plain `dict` instead of an `OrderedDict`.
+- The formatter writes `_` as HEAD of a token without a head, for example in a pipeline without a parser. It wrote the ID of the token itself before.
+- When CoNLL-U is read into spaCy, a `_` in LEMMA, UPOS or XPOS leaves the attribute empty. Before, LEMMA became `"_"`, UPOS `_` raised an error and XPOS `_` was replaced by the UPOS value.
+- Errors for invalid CoNLL-U input name the line and the field.
 - The options of `parse-as-conll` use hyphens: `-f/--input-file`, `--input-str`, `--input-encoding`, `-o/--output-file`, `--output-encoding` (default `utf-8`), `--disable-sbd`, `--is-tokenized`, `--include-headers`, `--[no-]renumber-sent-ids`, `--n-process`, `--ignore-pipe-errors`, `--[no-]split-on-newline` and `-v/--verbose`. One of `--input-file` and `--input-str` is required. The short flags `-a`, `-b`, `-c`, `-s`, `-t`, `-d`, `-e` and `-j` are removed.
 - Documentation moved to MkDocs, published at https://bramvanroy.github.io/spacy_conll. Development happens on `main`, the `dev` branch is gone.
 
@@ -29,6 +36,7 @@ All notable changes to this project are documented in this file. The format is b
 - Pretokenized input with an empty string raised an `IndexError`.
 - Empty docs raised an error when pandas was installed.
 - CoNLL-U text that ends with a blank line raised an error.
+- CoNLL-U text with Windows line endings was read as one sentence.
 - `n_process=-1` skipped the multiprocessing checks.
 - The output started with a stray newline when the first line of the input was empty.
 - Newlines, tabs and repeated spaces in the input gave token lines with tabs or newlines in FORM and LEMMA, and a `# text` line that spanned several lines, so the output was not valid CoNLL-U ([#35](https://github.com/BramVanroy/spacy_conll/issues/35)). Whitespace tokens are now left out, IDs and heads are renumbered, and the whitespace is written to `MISC` as `SpacesAfter` or `SpacesBefore` following the UD convention. Whitespace tokens have `None` as their CoNLL extensions, and sentences that only contain whitespace are skipped.

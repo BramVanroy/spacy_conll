@@ -117,7 +117,7 @@ print(repr(doc[0]._.conll_str))
 '1\tI\tI\tPRON\tPRP\tCase=Nom|Number=Sing|Person=1|PronType=Prs\t2\tnsubj\t_\t_\n'
 ```
 
-Empty values are written as `_`. `HEAD` is the position of the head within its sentence, and `0` for the root. `MISC` is `SpaceAfter=No` for tokens that are not followed by whitespace. Other whitespace is described below.
+Empty values are written as `_`. `HEAD` is the position of the head within its sentence, `0` for the root, and `_` for a token without a head (for example in a pipeline without a parser). `MISC` is `SpaceAfter=No` for tokens that are not followed by whitespace. Other whitespace is described below.
 
 ### Newlines, tabs and other whitespace
 
@@ -237,14 +237,63 @@ for token in doc:
 From case ADP AP
 the det DET AP
 AP obl PROPN comes
-comes root VERB comes
+comes ROOT VERB comes
 this det DET story
 story nsubj NOUN comes
 ```
 
 Both methods have two more keyword-only options for named entities that are stored in the MISC field. `ner_tag_pattern` is the regular expression that matches the BILUO tag (the default is the constant `spacy_conll.parser.NER_TAG_PATTERN`) and `ner_map` renames labels. A label that maps to `""` becomes `O`.
 
-Multi-word tokens and empty nodes (IDs such as `1-2` or `2.1`) raise a `NotImplementedError`. Empty fields, spaces in fields other than FORM, LEMMA and MISC, and sentences without a filled DEPREL field raise a `ValueError`. A trailing blank line in the text is allowed.
+Multi-word tokens and empty nodes (IDs such as `1-2` or `2.1`) raise a `NotImplementedError`. A `ValueError` names the line of the problem. It is raised for a line without 10 tab-separated fields, an empty field, a space in a field other than FORM, LEMMA and MISC, an ID or HEAD that is not a valid number, a HEAD or DEPREL that is `_`, and a sentence whose HEAD values do not form one tree. A trailing blank line and Windows line endings are allowed.
+
+A `_` in LEMMA, UPOS, XPOS or FEATS is a missing value: the spaCy attribute stays empty (`token.pos_ == ""`), and the formatter writes `_` again.
+
+### Sentences without dependencies
+
+Use `strict=False` for CoNLL-U that is tagged but not (completely) parsed. HEAD and DEPREL may then be `_`, as long as both are `_` on the same line. Such a token has no head in spaCy (`token.has_head()` is false and `token.dep_` is `""`), and the formatter writes `_` for both fields. Every sentence block still becomes one spaCy sentence, and a round trip gives the same CoNLL-U.
+
+```python
+conll = """1\tana\tana\tADP\tPRP\t_\t_\t_\t_\t_
+2\tŠumaya\tŠumaya\tPROPN\tPN\t_\t_\t_\t_\t_
+3\tummā\tummu\tNOUN\tN\t_\t_\t_\t_\t_
+"""
+doc = parser.parse_conll_text_as_spacy(conll, strict=False)
+print(
+    [(token.text, token.pos_, token.dep_, token.has_head()) for token in doc]
+)
+```
+
+```text
+[('ana', 'ADP', '', False), ('Šumaya', 'PROPN', '', False), ('ummā', 'NOUN', '', False)]
+```
+
+A pipeline can then add the missing annotation to the returned `Doc`. Pass the `Doc` to `nlp` and enable only the components that you need, so that the tags from the file are kept. The parser keeps the sentence boundaries of the file. This example runs the parser of `en_core_web_sm` (which needs `tok2vec`) on tagged text:
+
+```python
+import spacy
+from spacy_conll import ConllParser
+
+nlp = spacy.load("en_core_web_sm")
+nlp.add_pipe("conll_formatter", last=True)
+parser = ConllParser(nlp)
+
+conll = """1\tI\tI\tPRON\tPRP\t_\t_\t_\t_\t_
+2\tlike\tlike\tVERB\tVBP\t_\t_\t_\t_\t_
+3\tcookies\tcookie\tNOUN\tNNS\t_\t_\t_\t_\tSpaceAfter=No
+4\t.\t.\tPUNCT\t.\t_\t_\t_\t_\t_
+"""
+doc = parser.parse_conll_text_as_spacy(conll, strict=False)
+with nlp.select_pipes(enable=["tok2vec", "parser", "conll_formatter"]):
+    doc = nlp(doc)
+print(doc._.conll_str)
+```
+
+```text
+1	I	I	PRON	PRP	_	2	nsubj	_	_
+2	like	like	VERB	VBP	_	0	root	_	_
+3	cookies	cookie	NOUN	NNS	_	2	dobj	_	SpaceAfter=No
+4	.	.	PUNCT	.	_	2	punct	_	_
+```
 
 ### Fields that spaCy does not store
 
