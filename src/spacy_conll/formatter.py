@@ -1,5 +1,6 @@
 """The `conll_formatter` pipeline component."""
 
+import re
 from dataclasses import dataclass, field
 
 from spacy.language import Language
@@ -22,6 +23,51 @@ CONLL_FIELD_NAMES = [
     "DEPS",
     "MISC",
 ]
+CUSTOM_COLUMN_RE = re.compile(r"[A-Z]+(?::[A-Z]+)+")
+
+
+def check_columns(columns: list[str]) -> list[str]:
+    """Check a list of CoNLL-U Plus column names.
+
+    A column is one of the ten CoNLL-U fields (`ID`, `FORM`, ..., `MISC`) or a
+    custom column with a namespace, such as `PARSEME:MWE`. Custom columns
+    consist of uppercase letters and colons.
+
+    Args:
+        columns: The column names in output order.
+
+    Returns:
+        The same list.
+
+    Raises:
+        ValueError: If the list is empty, has duplicates or has an invalid
+            name.
+
+    Examples:
+        >>> check_columns(["ID", "FORM", "PARSEME:MWE"])
+        ['ID', 'FORM', 'PARSEME:MWE']
+        >>> check_columns(["ID", "upos"])
+        Traceback (most recent call last):
+        ...
+        ValueError: Invalid column name 'upos'...
+    """
+    if not columns:
+        raise ValueError("At least one column is required")
+
+    for col in columns:
+        if col not in CONLL_FIELD_NAMES and not CUSTOM_COLUMN_RE.fullmatch(
+            col
+        ):
+            raise ValueError(
+                f"Invalid column name {col!r}. Use one of {CONLL_FIELD_NAMES}"
+                " or a custom name with a namespace, such as 'PARSEME:MWE'"
+            )
+
+    if len(set(columns)) != len(columns):
+        raise ValueError(f"Duplicate column names in {columns}")
+
+    return columns
+
 
 UD_WHITESPACE_ESCAPES = str.maketrans(
     {" ": "\\s", "\t": "\\t", "\n": "\\n", "\r": "\\r"}
@@ -156,6 +202,13 @@ class ConllFormatter:
         disable_pandas: Whether to skip the `conll_pd` extension even if
             pandas is installed. This avoids pickling problems with
             multiprocessing.
+        columns: The CoNLL-U Plus columns to write, in this order. `None`
+            writes plain CoNLL-U. Otherwise `conll_str` of the doc starts
+            with a `# global.columns` line. The names are the CoNLL-U names
+            (also when `field_names` renames them) or custom names such as
+            `PARSEME:MWE`. A custom column takes its value from the dict in
+            `Token._.conll_custom_columns`, and is `_` when the dict does
+            not have it.
 
     Examples:
         >>> import spacy
@@ -183,6 +236,9 @@ class ConllFormatter:
     field_names: dict[str, str] = field(default_factory=dict)
     include_headers: bool = False
     disable_pandas: bool = False
+    columns: list[str] | None = None
+    columns_header: str = field(init=False, default="")
+    output_names: list[str] = field(init=False, default_factory=list)
 
     def __post_init__(self):
         """Merge the custom names into the defaults and register extensions."""
@@ -196,6 +252,15 @@ class ConllFormatter:
         self.field_names = merge_dicts_strict(
             default_field_names, self.field_names
         )
+        if self.columns is not None:
+            check_columns(self.columns)
+            self.columns_header = (
+                f"# global.columns = {' '.join(self.columns)}\n"
+            )
+        self.output_names = [
+            self.field_names.get(c, c)
+            for c in self.columns or CONLL_FIELD_NAMES
+        ]
 
         self._set_extensions()
 
@@ -226,7 +291,8 @@ class ConllFormatter:
         )
         doc._.set(
             self.ext_names["conll_str"],
-            "\n".join([s._.get(self.ext_names["conll_str"]) for s in sents]),
+            self.columns_header
+            + "\n".join([s._.get(self.ext_names["conll_str"]) for s in sents]),
         )
 
         if PD_AVAILABLE and not self.disable_pandas:
@@ -235,7 +301,7 @@ class ConllFormatter:
                 self.ext_names["conll_pd"],
                 pd.concat(sent_dfs).reset_index(drop=True)
                 if sent_dfs
-                else pd.DataFrame(columns=list(self.field_names.values())),
+                else pd.DataFrame(columns=self.output_names),
             )
 
         return doc
@@ -310,7 +376,7 @@ class ConllFormatter:
                 self.ext_names["conll_pd"],
                 pd.DataFrame(
                     [t._.get(self.ext_names["conll"]) for t in words],
-                    columns=list(self.field_names.values()),
+                    columns=self.output_names,
                 ),
             )
 
@@ -370,9 +436,13 @@ class ConllFormatter:
             token._.conll_misc_field,
         )
 
-        token_conll_d = dict(
-            zip(self.field_names.values(), token_conll, strict=True)
+        values = (token._.conll_custom_columns or {}) | dict(
+            zip(CONLL_FIELD_NAMES, token_conll, strict=True)
         )
+        token_conll_d = {
+            self.field_names.get(c, c): values.get(c, "_")
+            for c in self.columns or CONLL_FIELD_NAMES
+        }
 
         if self.conversion_maps:
             token_conll_d = self._map_conll(token_conll_d)
@@ -407,6 +477,8 @@ class ConllFormatter:
             Token.set_extension("conll_deps_graphs_field", default="_")
         if not Token.has_extension("conll_misc_field"):
             Token.set_extension("conll_misc_field", default="_")
+        if not Token.has_extension("conll_custom_columns"):
+            Token.set_extension("conll_custom_columns", default=None)
         if not Span.has_extension("conll_metadata"):
             Span.set_extension("conll_metadata", default=None)
 
@@ -419,6 +491,7 @@ class ConllFormatter:
         "field_names": None,
         "include_headers": False,
         "disable_pandas": False,
+        "columns": None,
     },
 )
 def create_conll_formatter(
@@ -429,6 +502,7 @@ def create_conll_formatter(
     field_names: dict[str, str] | None = None,
     include_headers: bool = False,
     disable_pandas: bool = False,
+    columns: list[str] | None = None,
 ) -> ConllFormatter:
     """Create the `conll_formatter` pipeline component.
 
@@ -440,6 +514,7 @@ def create_conll_formatter(
         field_names: See `ConllFormatter`.
         include_headers: See `ConllFormatter`.
         disable_pandas: See `ConllFormatter`.
+        columns: See `ConllFormatter`.
 
     Returns:
         The component.
@@ -450,4 +525,5 @@ def create_conll_formatter(
         field_names=field_names or {},
         include_headers=include_headers,
         disable_pandas=disable_pandas,
+        columns=columns,
     )

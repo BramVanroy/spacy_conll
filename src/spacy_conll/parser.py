@@ -13,7 +13,7 @@ from spacy.tokens import Doc, Span, Token
 from spacy.training.converters.conllu_to_docs import get_entities
 from spacy.training.iob_utils import spans_from_biluo_tags
 
-from spacy_conll.formatter import CONLL_FIELD_NAMES
+from spacy_conll.formatter import CONLL_FIELD_NAMES, check_columns
 from spacy_conll.utils import UDPIPE_AVAILABLE
 
 if UDPIPE_AVAILABLE:
@@ -21,6 +21,7 @@ if UDPIPE_AVAILABLE:
 
 SENT_ID_RE = re.compile(r"(?<=# sent_id = )(\d+)")
 SENT_ID_LINE_RE = re.compile(r"^# sent_id = .*$", re.MULTILINE)
+GLOBAL_COLUMNS_RE = re.compile(r"#\s*global\.columns\s*=(.*)")
 NER_TAG_PATTERN = "^((?:name|NE)=)?([BILU])-([A-Z_]+)|O$"
 
 
@@ -137,7 +138,9 @@ class ConllParser:
                 input line is one sentence, so you can give one ID per line.
 
         Returns:
-            The CoNLL-U string, with one empty line between sentences.
+            The CoNLL-U string, with one empty line between sentences. It
+            starts with a `# global.columns` line when the formatter has
+            `columns`.
 
         Raises:
             OSError: If `n_process` is not 1, `ignore_pipe_errors` is false,
@@ -198,7 +201,7 @@ class ConllParser:
         texts = text.splitlines() if split_on_newline else [text]
 
         conll_idx = 0
-        output = ""
+        output = formatter.columns_header
         for doc in self.nlp.pipe(texts, n_process=n_process):
             for sent in doc.sents:
                 sent_as_conll = sent._.conll_str
@@ -294,6 +297,14 @@ class ConllParser:
         `token.dep_` is `""`), and the formatter writes `_` for both fields.
         The HEAD values of a sentence then do not have to form one tree.
 
+        CoNLL-U Plus is supported: when the first line is a
+        `# global.columns` comment, the lines have these columns in this
+        order. A standard column that is missing gets the value `_`, and an
+        `ID` column that is missing gets the token position. Custom columns
+        such as `PARSEME:MWE` are kept in the dict
+        `Token._.conll_custom_columns`. The `# global.columns` line is not
+        part of `Span._.conll_metadata`.
+
         Args:
             text: CoNLL-U text.
             ner_tag_pattern: Regex for the entity tag in the MISC field.
@@ -306,10 +317,12 @@ class ConllParser:
             A doc with all sentences of the text and the CoNLL extensions.
 
         Raises:
-            ValueError: If a line does not have 10 fields, a field is empty,
-                a field other than FORM, LEMMA or MISC contains a space, ID
-                or HEAD is not a valid number, or only one of HEAD and DEPREL
-                is `_`. With `strict=True` also if HEAD or DEPREL is `_`, or
+            ValueError: If a line does not have 10 fields (or as many as the
+                `# global.columns` line lists), a field is empty, a field
+                other than FORM, LEMMA, MISC or a custom column contains a
+                space, ID or HEAD is not a valid number, only one of HEAD and
+                DEPREL is `_`, or `# global.columns` has an invalid column
+                name. With `strict=True` also if HEAD or DEPREL is `_`, or
                 if the HEAD values of a sentence do not form one tree. The
                 message starts with the line number.
             NotImplementedError: If the text has multi-word tokens or empty
@@ -355,12 +368,21 @@ class ConllParser:
             Token.set_extension("conll_misc_field", default="_")
         if not Token.has_extension("conll_deps_graphs_field"):
             Token.set_extension("conll_deps_graphs_field", default="_")
+        if not Token.has_extension("conll_custom_columns"):
+            Token.set_extension("conll_custom_columns", default=None)
         if not Span.has_extension("conll_metadata"):
             Span.set_extension("conll_metadata", default=None)
 
+        columns = CONLL_FIELD_NAMES
+        chunk_lineno = 1
+        first_line, _, rest = text.lstrip("\r\n").partition("\n")
+        if match := GLOBAL_COLUMNS_RE.fullmatch(first_line.strip()):
+            columns = check_columns(match.group(1).split())
+            chunk_lineno += text[: len(text) - len(rest)].count("\n")
+            text = rest
+
         docs = []
         sent_starts = []
-        chunk_lineno = 1
         for chunk in text.replace("\r\n", "\n").split("\n\n"):
             numbered_lines = [
                 (chunk_lineno + offset, line)
@@ -381,27 +403,44 @@ class ConllParser:
                 [],
             )
             heads, deps, deps_graphs = [], [], []
-            for lineno, line in numbered_lines:
+            std_lines, custom_columns = [], []
+            for position, (lineno, line) in enumerate(numbered_lines, 1):
                 parts = line.split("\t")
 
-                if len(parts) != len(CONLL_FIELD_NAMES):
+                if len(parts) != len(columns):
                     raise ValueError(
-                        f"Line {lineno}: expected {len(CONLL_FIELD_NAMES)} tab-separated fields but found"
+                        f"Line {lineno}: expected {len(columns)} tab-separated fields but found"
                         f" {len(parts)}. See https://universaldependencies.org/format.html"
                     )
 
-                for name, value in zip(CONLL_FIELD_NAMES, parts, strict=True):
+                for name, value in zip(columns, parts, strict=True):
                     if not value:
                         raise ValueError(
                             f"Line {lineno}: the {name} field is empty. According to the CoNLL-U format,"
                             " fields cannot be empty. See https://universaldependencies.org/format.html"
                         )
-                    if " " in value and name not in ("FORM", "LEMMA", "MISC"):
+                    if (
+                        " " in value
+                        and name in CONLL_FIELD_NAMES
+                        and name not in ("FORM", "LEMMA", "MISC")
+                    ):
                         raise ValueError(
                             f"Line {lineno}: the {name} field contains a space. According to the CoNLL-U"
                             " format, only FORM, LEMMA, and MISC fields can contain spaces. See"
                             " https://universaldependencies.org/format.html"
                         )
+
+                values = dict(zip(columns, parts, strict=True))
+                values.setdefault("ID", str(position))
+                parts = [values.get(c, "_") for c in CONLL_FIELD_NAMES]
+                std_lines.append("\t".join(parts))
+                custom_columns.append(
+                    {
+                        c: v
+                        for c, v in values.items()
+                        if c not in CONLL_FIELD_NAMES
+                    }
+                )
 
                 (
                     id_,
@@ -479,8 +518,10 @@ class ConllParser:
             for i in range(len(doc)):
                 doc[i]._.conll_misc_field = miscs[i]
                 doc[i]._.conll_deps_graphs_field = deps_graphs[i]
+                if custom_columns[i]:
+                    doc[i]._.conll_custom_columns = custom_columns[i]
 
-            ents = get_entities(lines, ner_tag_pattern, ner_map)
+            ents = get_entities(std_lines, ner_tag_pattern, ner_map)
             doc.ents = spans_from_biluo_tags(doc, ents)
 
             if strict and (n_sents := len(list(doc.sents))) != 1:
