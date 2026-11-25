@@ -46,14 +46,14 @@ User @matgrioni rightfully pointed out that the default fields in the library ar
 should be in all caps, and for xpostag it should be XPOS and for upostag UPOS. Additionally, the user asked for more
 control over these fields. This release accommodates that request.
 
-- **[formatter]** Breaking change: `CONLL_FIELD_NAMES` now is in line with the CoNLL-U descriptor field names: 
+- **[formatter]** Breaking change: `CONLL_FIELD_NAMES` now is in line with the CoNLL-U descriptor field names:
 "ID", "FORM", "LEMMA", "UPOS", "XPOS", "FEATS", "HEAD", "DEPREL", "DEPS", "MISC". These are the new default fields.
-- **[formatter]** New parameter: `field_names` that allows you to override the fields that were described above. 
+- **[formatter]** New parameter: `field_names` that allows you to override the fields that were described above.
 Simply add a dictionary of `{"default field name": "new field name"}`, e.g. `{"UPOS": "upostag"}
 
 ## [3.3.0] - 2023-01-17
 
-Since spaCy 3.2.0, the data that is passed to a spaCy pipeline has become more strict. This means that passing 
+Since spaCy 3.2.0, the data that is passed to a spaCy pipeline has become more strict. This means that passing
 a list of pretokenized tokens (`["This", "is", "a", "pretokenized", "sentence"]`) is not accepted anymore. Therefore,
 the `is_tokenized` option needed to be adapted to reflect this. It is still possible to pass a string where tokens
 are separated by whitespaces, e.g. `"This is a pretokenized sentence"`, which will continue to work for spaCy and
@@ -68,15 +68,15 @@ Specific changes:
 ## [3.2.0] - 2022-04-04
 
 - **[conllformatter]** Fixed an issue where `SpaceAfter=No` was not added correctly to tokens
-- **[conllformatter]** Added `ConllFormatter` as an entry point, which means that you do not have to import 
-  `spacy_conll` anymore when you want to add the pipe to a parser! spaCy will know where to look for the CoNLL 
+- **[conllformatter]** Added `ConllFormatter` as an entry point, which means that you do not have to import
+  `spacy_conll` anymore when you want to add the pipe to a parser! spaCy will know where to look for the CoNLL
   formatter when you use `nlp.add_pipe("conll_formatter")` without you having to import the component manually
 - **[conllformatter]** Now adds the component constructor on a construction function rather than directly on the class
   as recommended by spacy. The formatter has also been re-written as a dataclass
 - **[conllformatter/utils]** Moved `merge_dicts_strict` to utils, outside the formatter class
 - **[conllparser]** Make ConllParser directly importable from the root of the library, i.e.,
   `from spacy_conll import ConllParser`
-- **[init_parser]** Allow users to exclude pipeline components when using the spaCy parser with the 
+- **[init_parser]** Allow users to exclude pipeline components when using the spaCy parser with the
   `exclude_spacy_components` argument
 - **[init_parser]** Fixed an issue where disabling sentence segmentation would not work if your model does
   not have a parser
@@ -113,13 +113,13 @@ Specific changes:
 - **[init_parser]** Improvement: models are automatically downloaded for Stanza and UDPipe
 - **[cli]** Reworked the position of the CLI script in the directory structure as well as the arguments. Run
   `parse-as-conll -h` for more information.
-- **[conllparser]** Made the [`ConllParser`](spacy_conll/parser.py) class available as a utility to easily create a 
+- **[conllparser]** Made the [`ConllParser`](spacy_conll/parser.py) class available as a utility to easily create a
   wrapper for a spaCy-like
   parser which can return the parsed CoNLL output of a given file or text
 - **[conllparser,cli]** Improvements to usability of `n_process`. Will try to figure out whether multiprocessing
   is available for your platform and if not, tell you so. Such a priori error messages can be disabled, with
   `ignore_pipe_errors`, both on the command line as in ConllParser's parse methods
-  
+
 
 
 ## [2.1.0] - 2021-06-23
