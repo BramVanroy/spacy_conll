@@ -26,7 +26,7 @@ CONLL_FIELD_NAMES = [
 
 @dataclass
 class ConllFormatter:
-    """spaCy component that adds CoNLL-U representations to docs, sentences and tokens.
+    r"""spaCy component that adds CoNLL-U representations to docs, sentences and tokens.
 
     The extension `conll` holds a dict of field names to values on a
     `Token`, a list of those dicts on a sentence `Span`, and a list of
@@ -62,7 +62,7 @@ class ConllFormatter:
         {'ID': 2, 'FORM': 'world', 'LEMMA': '_', 'UPOS': '_', 'XPOS': '_',
          'FEATS': '_', 'HEAD': 2, 'DEPREL': '_', 'DEPS': '_',
          'MISC': 'SpaceAfter=No'}
-        >>> print(doc._.conll_str.expandtabs(2))
+        >>> print(doc._.conll_str.replace("\t", " "))
         # sent_id = 1
         # text = Hello world.
         1 Hello _ _ _ _ 1 _ _ _

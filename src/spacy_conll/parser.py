@@ -1,17 +1,17 @@
+"""Convert text to CoNLL-U and CoNLL-U to spaCy docs."""
+
 import os
 import re
 from dataclasses import dataclass, field
-from locale import getpreferredencoding
-from os import PathLike
 from pathlib import Path
-from typing import Dict, Union
+from typing import Literal
 
 from spacy import Errors, Language
 from spacy.tokens import Doc, Span, Token
 from spacy.training.converters.conllu_to_docs import get_entities
 from spacy.training.iob_utils import spans_from_biluo_tags
-from spacy_conll.utils import STANZA_AVAILABLE, UDPIPE_AVAILABLE
 
+from spacy_conll.utils import STANZA_AVAILABLE, UDPIPE_AVAILABLE
 
 if STANZA_AVAILABLE:
     from spacy_stanza.tokenizer import StanzaTokenizer
@@ -20,111 +20,162 @@ if UDPIPE_AVAILABLE:
     from spacy_udpipe import UDPipeTokenizer
 
 SENT_ID_RE = re.compile(r"(?<=# sent_id = )(\d+)")
+NER_TAG_PATTERN = "^((?:name|NE)=)?([BILU])-([A-Z_]+)|O$"
 
 
 @dataclass(eq=False, repr=False)
 class ConllParser:
-    """Constructor for a ConllParser, which is a wrapper around a spaCy-like parser with a ConllFormatter
-    component. This class simply provides convenience methods to parse text according to some options.
+    """Wrapper around a pipeline with `conll_formatter` that parses text and files.
 
-    Constructor arguments:
-    :param nlp: instantiated spaCy-like parser
+    The backend (`"spacy"`, `"stanza"` or `"udpipe"`) is detected from the
+    tokenizer of `nlp` and stored in `parser`.
+
+    Args:
+        nlp: A pipeline that contains the `conll_formatter` component, for
+            example the output of `init_parser`.
+
+    Raises:
+        ValueError: If `nlp` has no `conll_formatter` component.
     """
 
     nlp: Language
-    parser: str = field(init=False, default=None)
+    parser: Literal["spacy", "stanza", "udpipe"] = field(
+        init=False, default="spacy"
+    )
 
     def __post_init__(self):
+        """Check the pipeline and detect the backend."""
         if "conll_formatter" not in self.nlp.pipe_names:
-            raise ValueError(Errors.E001.format(name="conll_formatter", opts=self.nlp.pipe_names))
+            raise ValueError(
+                Errors.E001.format(
+                    name="conll_formatter", opts=self.nlp.pipe_names
+                )
+            )
 
-        # Figure out what kind of parser was provided (needed during data preparation)
-        if STANZA_AVAILABLE and isinstance(self.nlp.tokenizer, StanzaTokenizer):
+        if STANZA_AVAILABLE and isinstance(
+            self.nlp.tokenizer, StanzaTokenizer
+        ):
             self.parser = "stanza"
             import torch
 
-            # Fixes some pickling issues
-            # See https://github.com/explosion/spacy-stanza/issues/34
+            # Avoids pickling issues, see
+            # https://github.com/explosion/spacy-stanza/issues/34
             torch.set_num_threads(1)
-        elif UDPIPE_AVAILABLE and isinstance(self.nlp.tokenizer, UDPipeTokenizer):
+        elif UDPIPE_AVAILABLE and isinstance(
+            self.nlp.tokenizer, UDPipeTokenizer
+        ):
             self.parser = "udpipe"
         else:
             self.parser = "spacy"
 
     def __repr__(self) -> str:
+        """Return the class name and the backend."""
         return f"{self.__class__.__name__}(parser={self.parser})"
 
     def parse_file_as_conll(
-        self, input_file: Union[PathLike, Path, str], input_encoding: str = getpreferredencoding(), **kwargs
+        self,
+        input_file: str | os.PathLike[str],
+        *,
+        input_encoding: str = "utf-8",
+        n_process: int = 1,
+        renumber_sent_ids: bool = True,
+        ignore_pipe_errors: bool = False,
+        split_on_newline: bool = True,
     ) -> str:
-        """Parses a given input file with self.parser and returns its CoNLL output.
-        :param input_file: path to the input file to process
-        :param input_encoding: encoding of 'input_file'
-        :param kwargs: keyword arguments that will be passed to `parse_text_as_conll`
+        """Parse a text file and return its CoNLL-U representation.
+
+        Args:
+            input_file: Path to the text file.
+            input_encoding: Encoding of `input_file`.
+            n_process: See `parse_text_as_conll`.
+            renumber_sent_ids: See `parse_text_as_conll`.
+            ignore_pipe_errors: See `parse_text_as_conll`.
+            split_on_newline: See `parse_text_as_conll`.
+
+        Returns:
+            The CoNLL-U string of all sentences in the file.
         """
         text = Path(input_file).resolve().read_text(encoding=input_encoding)
 
-        return self.parse_text_as_conll(text, **kwargs)
+        return self.parse_text_as_conll(
+            text,
+            n_process=n_process,
+            renumber_sent_ids=renumber_sent_ids,
+            ignore_pipe_errors=ignore_pipe_errors,
+            split_on_newline=split_on_newline,
+        )
 
     def parse_text_as_conll(
         self,
         text: str,
+        *,
         n_process: int = 1,
-        no_force_counting: bool = False,
+        renumber_sent_ids: bool = True,
         ignore_pipe_errors: bool = False,
-        no_split_on_newline: bool = False,
+        split_on_newline: bool = True,
     ) -> str:
-        """Parses a given text (string) with self.parser and returns its CoNLL output.
-        :param text: input text (string) to process
-        :param n_process: number of processes to use in nlp.pipe(). -1 will use as many cores as available. Might not
-               work for a 'parser' other than 'spacy' depending on your environment
-        :param no_force_counting: whether to  disable force counting the 'sent_id', starting from 1 and increasing for
-               each sentence. Instead, 'sent_id' will depend on how spaCy returns the sentences. Must have
-               'self.include_headers' enabled
-        :param ignore_pipe_errors: whether to ignore a priori errors concerning 'n_process' By default we try to
-               determine whether processing works on your system and stop execution if we think it doesn't. If you
-               know what you are doing, you can ignore such pre-emptive errors, though, and run the code as-is, which
-               will then throw the default Python errors when applicable
-        :param no_split_on_newline: by default, the input text will be split on newlines for faster processing. This
-               can be disabled with this option
+        """Parse a text and return its CoNLL-U representation.
+
+        Each line is a separate doc in `nlp.pipe`, so `# sent_id` would
+        restart at 1 for every line. With `renumber_sent_ids`, the sentences
+        are numbered 1, 2, 3 and so on over the whole text instead. This only
+        matters when the formatter has `include_headers=True`.
+
+        Args:
+            text: The text to parse.
+            n_process: Number of processes for `nlp.pipe`. -1 uses all
+                cores. Values other than 1 require `disable_pandas=True` in
+                the formatter, and may not work with stanza and UDPipe.
+            renumber_sent_ids: Whether to number `# sent_id` consecutively
+                over the whole text.
+            ignore_pipe_errors: Whether to skip the checks that raise an
+                `OSError` when `n_process` is likely to fail on this system.
+            split_on_newline: Whether to split the text on newlines and pass
+                every line to `nlp.pipe` separately. This is faster for long
+                texts.
+
+        Returns:
+            The CoNLL-U string, with one empty line between sentences.
+
+        Raises:
+            OSError: If `n_process` is not 1, `ignore_pipe_errors` is false,
+                and pandas is enabled in the formatter or the backend is
+                stanza or UDPipe on Windows.
         """
-        if n_process > 1 and not ignore_pipe_errors:
-            if not self.nlp.get_pipe("conll_formatter").disable_pandas:
+        formatter = self.nlp.get_pipe("conll_formatter")
+        if n_process != 1 and not ignore_pipe_errors:
+            if not formatter.disable_pandas:
                 raise OSError(
-                    "Due to pandas serialisation, 'n_process' > 1 is not supported when"
-                    " 'disable_pandas' is False in the ConllFormatter. Set 'n_process' to 1 or"
-                    " initialise the ConllFormatter with 'disable_pandas=True'"
+                    "Due to pandas serialisation, 'n_process' other than 1 is"
+                    " not supported when 'disable_pandas' is False in the"
+                    " ConllFormatter. Set 'n_process' to 1 or initialise the"
+                    " ConllFormatter with 'disable_pandas=True'"
                 )
 
-            # Seems that Windows only supports mp on spaCy. Both for UDPipe and Stanza the issue is
-            # pickling of the models
-            if os.name == "nt" and self.parser in ["udpipe", "stanza"]:
+            # On Windows, stanza and UDPipe models cannot be pickled for
+            # multiprocessing.
+            if os.name == "nt" and self.parser in ("udpipe", "stanza"):
                 raise OSError(
-                    "'n_process' > 1 is not supported on all platforms/all parsers. Please try again with"
-                    " the default value 'n_process' = 1. You can also try to run the code without this pre-emptive"
-                    " error message by using the 'ignore_pipe_errors' option"
+                    "'n_process' other than 1 is not supported on all"
+                    " platforms and parsers. Try again with 'n_process=1',"
+                    " or use 'ignore_pipe_errors' to run without this check"
                 )
 
-        if no_split_on_newline:
-            text = [text]
-        else:
-            text = text.splitlines()
+        texts = text.splitlines() if split_on_newline else [text]
 
         conll_idx = 0
         output = ""
-        for doc_idx, doc in enumerate(self.nlp.pipe(text, n_process=n_process)):
+        for doc in self.nlp.pipe(texts, n_process=n_process):
             for sent in doc.sents:
                 conll_idx += 1
 
                 sent_as_conll = sent._.conll_str
-                if self.nlp.get_pipe("conll_formatter").include_headers and not no_force_counting:
-                    # nlp.pipe returns different docs, meaning that the generated sentence indices
-                    # by ConllFormatter are not consecutive (they reset for each new doc)
-                    # We can do a regex replace to fix that, though.
-                    sent_as_conll = re.sub(SENT_ID_RE, str(conll_idx), sent_as_conll, 1)
+                if formatter.include_headers and renumber_sent_ids:
+                    sent_as_conll = SENT_ID_RE.sub(
+                        str(conll_idx), sent_as_conll, count=1
+                    )
 
-                # Prepend additional newline for all except the very first string.
-                if not (doc_idx == 0 and sent.start == 0):
+                if conll_idx > 1:
                     sent_as_conll = "\n" + sent_as_conll
 
                 output += sent_as_conll
@@ -133,44 +184,84 @@ class ConllParser:
 
     def parse_conll_file_as_spacy(
         self,
-        input_file: Union[PathLike, Path, str],
-        input_encoding: str = getpreferredencoding(),
-        ner_tag_pattern: str = "^((?:name|NE)=)?([BILU])-([A-Z_]+)|O$",
-        ner_map: Dict[str, str] = None,
+        input_file: str | os.PathLike[str],
+        *,
+        input_encoding: str = "utf-8",
+        ner_tag_pattern: str = NER_TAG_PATTERN,
+        ner_map: dict[str, str] | None = None,
     ) -> Doc:
-        """Parses a given CoNLL-U file into a spaCy doc. Parsed sentence section must be separated by a new line.
-        See :py:meth:`ConllParser.parse_conll_text_as_spacy`.
-        :param input_file: path to the input file to process
-        :param input_encoding: encoding of 'input_file'
-        :param ner_tag_pattern: Regex pattern for entity tag in the MISC field
-        :param ner_map: Map old NER tag names to new ones, '' maps to O
-        :return: a spacy Doc containing all the tokens and sentences from the CoNLL file including the custom CoNLL extensions
+        """Read a CoNLL-U file into a spaCy doc.
+
+        See `parse_conll_text_as_spacy`.
+
+        Args:
+            input_file: Path to the CoNLL-U file.
+            input_encoding: Encoding of `input_file`.
+            ner_tag_pattern: Regex for the entity tag in the MISC field.
+            ner_map: Maps old entity labels to new ones. A label that maps to
+                `""` becomes `O`.
+
+        Returns:
+            A doc with all sentences of the file and the CoNLL extensions.
         """
         text = Path(input_file).resolve().read_text(encoding=input_encoding)
-        return self.parse_conll_text_as_spacy(text, ner_tag_pattern=ner_tag_pattern, ner_map=ner_map)
+        return self.parse_conll_text_as_spacy(
+            text, ner_tag_pattern=ner_tag_pattern, ner_map=ner_map
+        )
 
     def parse_conll_text_as_spacy(
         self,
         text: str,
-        ner_tag_pattern: str = "^((?:name|NE)=)?([BILU])-([A-Z_]+)|O$",
-        ner_map: Dict[str, str] = None,
+        *,
+        ner_tag_pattern: str = NER_TAG_PATTERN,
+        ner_map: dict[str, str] | None = None,
     ) -> Doc:
-        """Parses a given CoNLL-U string into a spaCy doc. Parsed sentence section must be separated by a new line (\n\n).
-        Note that we do our best to retain as much information as possible but that not all CoNLL-U fields are
-        supported in spaCy. We add a Token._.conll_misc_field extension to save CoNLL-U MISC field, and a
-        Token._.conll_deps_graphs_field extension to save CoNLL-U DEPS field. The metadata (lines starting with #)
-        is saved in Span._.conll_metadata of sentence Spans.
+        r"""Read CoNLL-U text into a spaCy doc.
 
-        This method has been adapted from the work by spaCy.
-        See: https://github.com/explosion/spaCy/blob/a1c5b694be117ac92e21f9860309821ad6da06f7/spacy/cli/converters/conllu2json.py#L179
+        Sentences are separated by an empty line. Fields that spaCy does not
+        store are kept in extensions: DEPS in `Token._.conll_deps_graphs_field`,
+        MISC in `Token._.conll_misc_field` and the comment lines in
+        `Span._.conll_metadata` of the sentence. Multi-word tokens and empty
+        nodes are not supported. Adapted from spaCy's `conllu2json`
+        converter.
 
-        Multi-word tokens and empty nodes are not supported.
+        Args:
+            text: CoNLL-U text.
+            ner_tag_pattern: Regex for the entity tag in the MISC field.
+            ner_map: Maps old entity labels to new ones. A label that maps to
+                `""` becomes `O`.
 
-        :param text: CoNLL-U formatted text
-        :param ner_tag_pattern: Regex pattern for entity tag in the MISC field
-        :param ner_map: Map old NER tag names to new ones, '' maps to O
-        :return: a spacy Doc containing all the tokens and sentences from the CoNLL file including
-         the custom CoNLL extensions
+        Returns:
+            A doc with all sentences of the text and the CoNLL extensions.
+
+        Raises:
+            ValueError: If a field is empty, a field other than FORM, LEMMA
+                or MISC contains a space, or a sentence block does not parse
+                into exactly one sentence.
+            NotImplementedError: If the text has multi-word tokens or empty
+                nodes.
+
+        Examples:
+            >>> import spacy
+            >>> nlp = spacy.blank("en")
+            >>> _ = nlp.add_pipe(
+            ...     "conll_formatter", config={"include_headers": True}
+            ... )
+            >>> conll = "\n".join(
+            ...     [
+            ...         "# sent_id = a1",
+            ...         "1\tHi\thi\tINTJ\tUH\t_\t0\troot\t0:root\t_",
+            ...         "2\tthere\tthere\tADV\tRB\t_\t1\tadvmod\t1:advmod\tSpaceAfter=No",
+            ...     ]
+            ... )
+            >>> doc = ConllParser(nlp).parse_conll_text_as_spacy(conll)
+            >>> [(t.text, t.dep_, t.head.text) for t in doc]
+            [('Hi', 'ROOT', 'Hi'), ('there', 'advmod', 'Hi')]
+            >>> print(doc._.conll_str.replace("\t", " "))
+            # sent_id = a1
+            1 Hi hi INTJ UH _ 0 ROOT 0:root _
+            2 there there ADV RB _ 1 advmod 1:advmod SpaceAfter=No
+            <BLANKLINE>
         """
         if not Token.has_extension("conll_misc_field"):
             Token.set_extension("conll_misc_field", default="_")
@@ -181,11 +272,24 @@ class ConllParser:
 
         docs = []
         for chunk in text.split("\n\n"):
-            lines = [l for l in chunk.splitlines() if l and not l.startswith("#")]
-            words, spaces, tags, poses, morphs, lemmas, miscs = [], [], [], [], [], [], []
+            lines = [
+                line
+                for line in chunk.splitlines()
+                if line and not line.startswith("#")
+            ]
+            if not lines:
+                continue
+            words, spaces, tags, poses, morphs, lemmas, miscs = (
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+            )
             heads, deps, deps_graphs = [], [], []
-            for i in range(len(lines)):
-                line = lines[i]
+            for line in lines:
                 parts = line.split("\t")
 
                 if any(not p for p in parts):
@@ -194,16 +298,32 @@ class ConllParser:
                         " https://universaldependencies.org/format.html"
                     )
 
-                id_, word, lemma, pos, tag, morph, head, dep, deps_graph, misc = parts
+                (
+                    id_,
+                    word,
+                    lemma,
+                    pos,
+                    tag,
+                    morph,
+                    head,
+                    dep,
+                    deps_graph,
+                    misc,
+                ) = parts
 
-                if any(" " in f for f in (id_, pos, tag, morph, head, dep, deps_graph)):
+                if any(
+                    " " in f
+                    for f in (id_, pos, tag, morph, head, dep, deps_graph)
+                ):
                     raise ValueError(
                         "According to the CoNLL-U Format, only FORM, LEMMA, and MISC fields can contain"
                         " spaces. See https://universaldependencies.org/format.html"
                     )
 
                 if "." in id_ or "-" in id_:
-                    raise NotImplementedError("Multi-word tokens and empty nodes are not supported in spacy_conll")
+                    raise NotImplementedError(
+                        "Multi-word tokens and empty nodes are not supported in spacy_conll"
+                    )
 
                 words.append(word)
 
@@ -217,7 +337,9 @@ class ConllParser:
                 poses.append(pos)
                 tags.append(pos if tag == "_" else tag)
                 morphs.append(morph if morph != "_" else "")
-                heads.append((int(head) - 1) if head not in ("0", "_") else id_)
+                heads.append(
+                    (int(head) - 1) if head not in ("0", "_") else id_
+                )
                 deps.append("ROOT" if dep == "root" else dep)
                 deps_graphs.append(deps_graph)
                 miscs.append(misc)
@@ -252,7 +374,9 @@ class ConllParser:
                 )
 
             # Save the metadata in a custom sentence Span attribute so that the formatter can use it
-            metadata = "\n".join([l for l in chunk.splitlines() if l.startswith("#")])
+            metadata = "\n".join(
+                [line for line in chunk.splitlines() if line.startswith("#")]
+            )
             # We really only expect one sentence
             for sent in doc.sents:
                 sent._.conll_metadata = f"{metadata}\n" if metadata else ""
