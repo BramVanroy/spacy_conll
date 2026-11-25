@@ -130,6 +130,7 @@ class ConllParser:
                 every line to `nlp.pipe` separately. This is faster for long
                 texts.
             sent_ids: One ID per output sentence for the `# sent_id` lines.
+                An ID cannot be empty or contain whitespace.
                 It replaces the generated numbers and `renumber_sent_ids`
                 has no effect. Requires `include_headers=True` in the
                 formatter. With `disable_sbd=True` in `init_parser`, every
@@ -142,8 +143,9 @@ class ConllParser:
             OSError: If `n_process` is not 1, `ignore_pipe_errors` is false,
                 and pandas is enabled in the formatter or the backend is
                 UDPipe on Windows.
-            ValueError: If `sent_ids` is given without `include_headers`, or
-                if the number of IDs differs from the number of sentences.
+            ValueError: If `sent_ids` is given without `include_headers`, if
+                an ID is empty or contains whitespace, or if the number of
+                IDs differs from the number of sentences.
 
         Examples:
             >>> from spacy_conll import init_parser
@@ -186,6 +188,12 @@ class ConllParser:
                     " ConllFormatter, otherwise there are no '# sent_id' lines"
                 )
             sent_ids = [str(sent_id) for sent_id in sent_ids]
+            for sent_idx, sent_id in enumerate(sent_ids):
+                if not sent_id or any(char.isspace() for char in sent_id):
+                    raise ValueError(
+                        f"sent_ids[{sent_idx}] is {sent_id!r}, but a sentence"
+                        " ID cannot be empty or contain whitespace"
+                    )
 
         texts = text.splitlines() if split_on_newline else [text]
 

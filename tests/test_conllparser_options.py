@@ -82,11 +82,11 @@ def _sent_id_values(conll: str) -> list[str]:
 def test_sent_ids(spacy_conllparser, renumber_sent_ids):
     out = spacy_conllparser.parse_text_as_conll(
         TEXT,
-        sent_ids=["008", "a\\1 b"],
+        sent_ids=["008", "a\\1b"],
         renumber_sent_ids=renumber_sent_ids,
     )
 
-    assert _sent_id_values(out) == ["008", "a\\1 b"]
+    assert _sent_id_values(out) == ["008", "a\\1b"]
 
 
 def test_sent_ids_accepts_ints_and_iterables(spacy_conllparser):
@@ -143,3 +143,9 @@ def test_sent_ids_round_trip(spacy_conllparser):
         "# sent_id = 009",
     ]
     assert _sent_id_values(doc._.conll_str) == ["008", "009"]
+
+
+@pytest.mark.parametrize("bad_id", ["", "a b", "a\tb", "a\nb"])
+def test_sent_ids_invalid(spacy_conllparser, bad_id):
+    with pytest.raises(ValueError, match=r"sent_ids\[1\]"):
+        spacy_conllparser.parse_text_as_conll(TEXT, sent_ids=["ok", bad_id])

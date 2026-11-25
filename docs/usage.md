@@ -196,7 +196,7 @@ print(conll)
 
 ### Your own sentence IDs
 
-If your sentences already have IDs, pass them as `sent_ids`. They replace the generated numbers, so `renumber_sent_ids` has no effect. This requires `include_headers=True`. The number of IDs must equal the number of sentences in the output, otherwise you get a `ValueError`. With `disable_sbd=True` every line of the input is one sentence (empty lines are skipped), so you give one ID per non-empty line:
+If your sentences already have IDs, pass them as `sent_ids`. They replace the generated numbers, so `renumber_sent_ids` has no effect. This requires `include_headers=True`. An ID cannot be empty or contain whitespace. The number of IDs must equal the number of sentences in the output, otherwise you get a `ValueError`. With `disable_sbd=True` every line of the input is one sentence (empty lines are skipped), so you give one ID per non-empty line:
 
 ```python
 from spacy_conll import ConllParser, init_parser
