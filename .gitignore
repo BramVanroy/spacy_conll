@@ -112,3 +112,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 test.py
+
+# Claude Code
+CLAUDE.md
