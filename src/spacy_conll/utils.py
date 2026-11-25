@@ -15,13 +15,6 @@ except ImportError:
     PD_AVAILABLE = False
 
 try:
-    import spacy_stanza  # noqa: F401
-
-    STANZA_AVAILABLE = True
-except ImportError:
-    STANZA_AVAILABLE = False
-
-try:
     import spacy_udpipe  # noqa: F401
 
     UDPIPE_AVAILABLE = True
@@ -31,7 +24,7 @@ except ImportError:
 
 def init_parser(
     model_or_lang: str,
-    parser: Literal["spacy", "stanza", "udpipe"],
+    parser: Literal["spacy", "udpipe"],
     *,
     is_tokenized: bool = False,
     disable_sbd: bool = False,
@@ -39,29 +32,23 @@ def init_parser(
     parser_opts: dict[str, Any] | None = None,
     formatter_config: dict[str, Any] | None = None,
 ) -> Language:
-    """Load a spaCy, stanza or UDPipe pipeline and add `conll_formatter` last.
+    """Load a spaCy or UDPipe pipeline and add `conll_formatter` last.
 
-    The stanza and UDPipe backends need `spacy-stanza` or `spacy-udpipe` and
-    download their model automatically. A spaCy model must be installed.
+    The UDPipe backend needs `spacy-udpipe` and downloads its model
+    automatically. A spaCy model must be installed.
 
     Args:
         model_or_lang: Name of a spaCy model (`"en_core_web_sm"`) or a
-            language code for stanza and UDPipe (`"en"`).
+            language code for UDPipe (`"en"`).
         parser: The backend to use.
         is_tokenized: Whether the input text is already split into tokens
-            separated by whitespace. For spaCy this also disables sentence
-            segmentation. For stanza, sentences are then only split on
-            newlines. UDPipe does not support this option.
+            separated by whitespace. This also disables sentence
+            segmentation. Only supported for spaCy.
         disable_sbd: Whether to disable automatic sentence boundary
-            detection in spaCy and stanza. Stanza then expects sentences
-            that are separated by two newlines. UDPipe does not support this
-            option.
+            detection. Only supported for spaCy.
         exclude_spacy_components: spaCy components to exclude from the
             pipeline, which speeds up processing. Only used for spaCy.
-        parser_opts: Keyword arguments for `spacy.load` (spaCy) or
-            `spacy_stanza.load_pipeline` (stanza). The stanza option
-            `verbose` is also passed to `stanza.download`. Ignored for
-            UDPipe.
+        parser_opts: Keyword arguments for `spacy.load`. Ignored for UDPipe.
         formatter_config: Config for the `conll_formatter` component, for
             example `{"include_headers": True}`. See `ConllFormatter`.
 
@@ -95,19 +82,6 @@ def init_parser(
                 nlp.add_pipe("disable_sbd", before="parser")
             except ValueError:
                 nlp.add_pipe("disable_sbd", first=True)
-    elif parser == "stanza":
-        import spacy_stanza
-        import stanza
-
-        verbose = parser_opts.pop("verbose", False)
-        stanza.download(model_or_lang, verbose=verbose)
-        nlp = spacy_stanza.load_pipeline(
-            model_or_lang,
-            verbose=verbose,
-            tokenize_no_ssplit=disable_sbd,
-            tokenize_pretokenized=is_tokenized,
-            **parser_opts,
-        )
     elif parser == "udpipe":
         import spacy_udpipe
 
@@ -116,7 +90,7 @@ def init_parser(
     else:
         raise ValueError(
             f"Unexpected value {parser!r} for 'parser'. Options are: 'spacy',"
-            " 'stanza', 'udpipe'"
+            " 'udpipe'"
         )
 
     nlp.add_pipe("conll_formatter", config=formatter_config or {}, last=True)

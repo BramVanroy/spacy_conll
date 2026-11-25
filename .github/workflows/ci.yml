@@ -61,7 +61,6 @@ jobs:
         uses: actions/cache@v6.1.0
         with:
           path: |
-            ~/stanza_resources
             .venv/lib/python${{ matrix.python-version }}/site-packages/spacy_udpipe/models
           key: parser-models-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
           restore-keys: |

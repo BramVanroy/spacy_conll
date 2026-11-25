@@ -13,7 +13,7 @@ from spacy_conll.utils import init_parser
 def run(
     *,
     model_or_lang: str,
-    parser: Literal["spacy", "stanza", "udpipe"],
+    parser: Literal["spacy", "udpipe"],
     input_file: str | os.PathLike[str] | None = None,
     input_str: str | None = None,
     input_encoding: str = "utf-8",
@@ -98,20 +98,19 @@ def main() -> None:
     cparser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="Parse an input string or input file to CoNLL-U format"
-        " with a spaCy, stanza or UDPipe pipeline. The output is written to"
+        " with a spaCy or UDPipe pipeline. The output is written to"
         " stdout or to a file.",
     )
 
     cparser.add_argument(
         "model_or_lang",
         help="Model or language to use. spaCy models must be installed,"
-        " stanza and UDPipe models are downloaded automatically.",
+        " UDPipe models are downloaded automatically.",
     )
     cparser.add_argument(
         "parser",
-        choices=["spacy", "stanza", "udpipe"],
-        help="Which parser to use. 'stanza' needs 'spacy-stanza' and 'udpipe'"
-        " needs 'spacy-udpipe'.",
+        choices=["spacy", "udpipe"],
+        help="Which parser to use. 'udpipe' needs 'spacy-udpipe'.",
     )
 
     input_group = cparser.add_mutually_exclusive_group(required=True)
@@ -185,7 +184,7 @@ def main() -> None:
         type=int,
         default=1,
         help="Number of processes for nlp.pipe(). -1 uses all cores. May not"
-        " work for 'stanza' and 'udpipe'.",
+        " work for 'udpipe'.",
     )
     cparser.add_argument(
         "--ignore-pipe-errors",

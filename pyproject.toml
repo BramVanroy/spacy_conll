@@ -19,9 +19,7 @@ keywords = [
     "parsing",
     "spacy",
     "spacy-extension",
-    "spacy_stanza",
     "spacy_udpipe",
-    "stanza",
     "tagging",
     "udpipe",
 ]
@@ -44,9 +42,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-stanza = ["spacy-stanza>=1.0.4"]
 udpipe = ["spacy-udpipe>=1.0.0"]
-parsers = ["spacy-conll[stanza,udpipe]"]
+parsers = ["spacy-conll[udpipe]"]
 pd = ["pandas"]
 all = ["spacy-conll[parsers,pd]"]
 
@@ -62,7 +59,7 @@ Homepage = "https://github.com/BramVanroy/spacy_conll"
 Documentation = "https://bramvanroy.github.io/spacy_conll"
 Repository = "https://github.com/BramVanroy/spacy_conll"
 Issues = "https://github.com/BramVanroy/spacy_conll/issues"
-Changelog = "https://github.com/BramVanroy/spacy_conll/blob/main/HISTORY.md"
+Changelog = "https://github.com/BramVanroy/spacy_conll/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["hatchling>=1.27", "hatch-vcs>=0.5"]
@@ -101,7 +98,6 @@ testpaths = ["tests", "src"]
 addopts = ["--doctest-modules", "--import-mode=importlib"]
 strict = true
 markers = [
-    "stanza: needs spacy-stanza and downloads a stanza model",
     "udpipe: needs spacy-udpipe and downloads a udpipe model",
 ]
 

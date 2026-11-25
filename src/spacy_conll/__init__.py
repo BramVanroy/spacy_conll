@@ -1,4 +1,4 @@
-"""CoNLL-U output for spaCy, spacy-stanza and spacy-udpipe pipelines."""
+"""CoNLL-U output for spaCy and spacy-udpipe pipelines."""
 
 from importlib.metadata import PackageNotFoundError, version
 

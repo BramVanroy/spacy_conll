@@ -9,7 +9,7 @@ uv sync --locked              # install the package, dev tools and en_core_web_s
 make style                    # ruff check --fix + ruff format
 make quality                  # ruff check + ruff format --check
 make test                     # pytest with coverage (includes doctests in src/)
-uv run pytest -m "not stanza and not udpipe"   # skip backends that download models
+uv run pytest -m "not udpipe"   # skip backends that download models
 uv run pytest tests/test_formatter.py::test_name
 uv run mkdocs build --strict  # docs
 ```
@@ -18,7 +18,7 @@ uv run mkdocs build --strict  # docs
 
 - Python 3.11+. Use built-in generics and `X | None`, never `typing.List`, `Optional` and so on.
 - Google-style docstrings: one short paragraph, then `Args`, `Returns` and `Raises`. Add an `Examples` section with doctests when the behavior is not obvious. Doctests run in `make test`.
-- Imports at the top of the module. Optional backends (`spacy_stanza`, `spacy_udpipe`, `pandas`) are imported lazily or behind the `*_AVAILABLE` flags in `utils.py`.
+- Imports at the top of the module. Optional backends (`spacy_udpipe`, `pandas`) are imported lazily or behind the `*_AVAILABLE` flags in `utils.py`.
 - Never pass an `argparse.Namespace` into a function. `main()` parses the arguments and calls the core function with explicit keyword arguments.
 - No single-line wrapper functions, no banner comments, no comments that narrate the code or refer to old code or bugs.
 - Do not change `pyproject.toml` dependencies without approval from the maintainer.

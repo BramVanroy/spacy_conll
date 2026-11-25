@@ -11,10 +11,7 @@ from spacy.tokens import Doc, Span, Token
 from spacy.training.converters.conllu_to_docs import get_entities
 from spacy.training.iob_utils import spans_from_biluo_tags
 
-from spacy_conll.utils import STANZA_AVAILABLE, UDPIPE_AVAILABLE
-
-if STANZA_AVAILABLE:
-    from spacy_stanza.tokenizer import StanzaTokenizer
+from spacy_conll.utils import UDPIPE_AVAILABLE
 
 if UDPIPE_AVAILABLE:
     from spacy_udpipe import UDPipeTokenizer
@@ -27,7 +24,7 @@ NER_TAG_PATTERN = "^((?:name|NE)=)?([BILU])-([A-Z_]+)|O$"
 class ConllParser:
     """Wrapper around a pipeline with `conll_formatter` that parses text and files.
 
-    The backend (`"spacy"`, `"stanza"` or `"udpipe"`) is detected from the
+    The backend (`"spacy"` or `"udpipe"`) is detected from the
     tokenizer of `nlp` and stored in `parser`.
 
     Args:
@@ -39,7 +36,7 @@ class ConllParser:
     """
 
     nlp: Language
-    parser: Literal["spacy", "stanza", "udpipe"] = field(
+    parser: Literal["spacy", "udpipe"] = field(
         init=False, default="spacy"
     )
 
@@ -52,16 +49,7 @@ class ConllParser:
                 )
             )
 
-        if STANZA_AVAILABLE and isinstance(
-            self.nlp.tokenizer, StanzaTokenizer
-        ):
-            self.parser = "stanza"
-            import torch
-
-            # Avoids pickling issues, see
-            # https://github.com/explosion/spacy-stanza/issues/34
-            torch.set_num_threads(1)
-        elif UDPIPE_AVAILABLE and isinstance(
+        if UDPIPE_AVAILABLE and isinstance(
             self.nlp.tokenizer, UDPipeTokenizer
         ):
             self.parser = "udpipe"
@@ -125,7 +113,7 @@ class ConllParser:
             text: The text to parse.
             n_process: Number of processes for `nlp.pipe`. -1 uses all
                 cores. Values other than 1 require `disable_pandas=True` in
-                the formatter, and may not work with stanza and UDPipe.
+                the formatter, and may not work with UDPipe.
             renumber_sent_ids: Whether to number `# sent_id` consecutively
                 over the whole text.
             ignore_pipe_errors: Whether to skip the checks that raise an
@@ -140,7 +128,7 @@ class ConllParser:
         Raises:
             OSError: If `n_process` is not 1, `ignore_pipe_errors` is false,
                 and pandas is enabled in the formatter or the backend is
-                stanza or UDPipe on Windows.
+                UDPipe on Windows.
         """
         formatter = self.nlp.get_pipe("conll_formatter")
         if n_process != 1 and not ignore_pipe_errors:
@@ -152,9 +140,9 @@ class ConllParser:
                     " ConllFormatter with 'disable_pandas=True'"
                 )
 
-            # On Windows, stanza and UDPipe models cannot be pickled for
+            # On Windows, UDPipe models cannot be pickled for
             # multiprocessing.
-            if os.name == "nt" and self.parser in ("udpipe", "stanza"):
+            if os.name == "nt" and self.parser == "udpipe":
                 raise OSError(
                     "'n_process' other than 1 is not supported on all"
                     " platforms and parsers. Try again with 'n_process=1',"

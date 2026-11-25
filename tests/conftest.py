@@ -42,27 +42,29 @@ def clean_underscore():
     Underscore.token_extensions = {}
 
 
-@pytest.fixture(params=["spacy", "stanza", "udpipe"])
+UDPIPE = pytest.param("udpipe", marks=pytest.mark.udpipe)
+
+
+@pytest.fixture(params=["spacy", UDPIPE])
 def base_parser(request):
     yield get_parser(request.param)
 
 
-# Not testing with UDPipe, which does not support this
-@pytest.fixture(params=["spacy", "stanza"])
-def pretokenized_parser(request):
-    yield get_parser(request.param, is_tokenized=True), request.param
+@pytest.fixture
+def pretokenized_parser():
+    # UDPipe does not support pretokenized input
+    yield get_parser("spacy", is_tokenized=True), "spacy"
 
 
-@pytest.fixture(params=["spacy", "stanza", "udpipe"])
+@pytest.fixture(params=["spacy", UDPIPE])
 def conllparser(request):
     yield ConllParser(get_parser(request.param, include_headers=True))
 
 
-# Not testing with UDPipe, which does not support this
-@pytest.fixture(params=["spacy", "stanza"])
-def pretokenized_conllparser(request):
+@pytest.fixture
+def pretokenized_conllparser():
     yield ConllParser(
-        get_parser(request.param, is_tokenized=True, include_headers=True)
+        get_parser("spacy", is_tokenized=True, include_headers=True)
     )
 
 
