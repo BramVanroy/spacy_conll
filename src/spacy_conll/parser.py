@@ -2,6 +2,7 @@
 
 import os
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
@@ -19,6 +20,7 @@ if UDPIPE_AVAILABLE:
     from spacy_udpipe import UDPipeTokenizer
 
 SENT_ID_RE = re.compile(r"(?<=# sent_id = )(\d+)")
+SENT_ID_LINE_RE = re.compile(r"^# sent_id = .*$", re.MULTILINE)
 NER_TAG_PATTERN = "^((?:name|NE)=)?([BILU])-([A-Z_]+)|O$"
 
 
@@ -69,6 +71,7 @@ class ConllParser:
         renumber_sent_ids: bool = True,
         ignore_pipe_errors: bool = False,
         split_on_newline: bool = True,
+        sent_ids: Iterable[str | int] | None = None,
     ) -> str:
         """Parse a text file and return its CoNLL-U representation.
 
@@ -79,6 +82,7 @@ class ConllParser:
             renumber_sent_ids: See `parse_text_as_conll`.
             ignore_pipe_errors: See `parse_text_as_conll`.
             split_on_newline: See `parse_text_as_conll`.
+            sent_ids: See `parse_text_as_conll`.
 
         Returns:
             The CoNLL-U string of all sentences in the file.
@@ -91,6 +95,7 @@ class ConllParser:
             renumber_sent_ids=renumber_sent_ids,
             ignore_pipe_errors=ignore_pipe_errors,
             split_on_newline=split_on_newline,
+            sent_ids=sent_ids,
         )
 
     def parse_text_as_conll(
@@ -101,13 +106,16 @@ class ConllParser:
         renumber_sent_ids: bool = True,
         ignore_pipe_errors: bool = False,
         split_on_newline: bool = True,
+        sent_ids: Iterable[str | int] | None = None,
     ) -> str:
-        """Parse a text and return its CoNLL-U representation.
+        r"""Parse a text and return its CoNLL-U representation.
 
         Each line is a separate doc in `nlp.pipe`, so `# sent_id` would
         restart at 1 for every line. With `renumber_sent_ids`, the sentences
         are numbered 1, 2, 3 and so on over the whole text instead. This only
-        matters when the formatter has `include_headers=True`.
+        matters when the formatter has `include_headers=True`. With
+        `sent_ids`, the sentences get your own IDs instead, in order of the
+        output.
 
         Args:
             text: The text to parse.
@@ -121,6 +129,11 @@ class ConllParser:
             split_on_newline: Whether to split the text on newlines and pass
                 every line to `nlp.pipe` separately. This is faster for long
                 texts.
+            sent_ids: One ID per output sentence for the `# sent_id` lines.
+                It replaces the generated numbers and `renumber_sent_ids`
+                has no effect. Requires `include_headers=True` in the
+                formatter. With `disable_sbd=True` in `init_parser`, every
+                input line is one sentence, so you can give one ID per line.
 
         Returns:
             The CoNLL-U string, with one empty line between sentences.
@@ -129,6 +142,23 @@ class ConllParser:
             OSError: If `n_process` is not 1, `ignore_pipe_errors` is false,
                 and pandas is enabled in the formatter or the backend is
                 UDPipe on Windows.
+            ValueError: If `sent_ids` is given without `include_headers`, or
+                if the number of IDs differs from the number of sentences.
+
+        Examples:
+            >>> from spacy_conll import init_parser
+            >>> nlp = init_parser(
+            ...     "en_core_web_sm",
+            ...     "spacy",
+            ...     disable_sbd=True,
+            ...     formatter_config={"include_headers": True},
+            ... )
+            >>> conll = ConllParser(nlp).parse_text_as_conll(
+            ...     "I like cookies.\nMe too.",
+            ...     sent_ids=["doc1-008", "doc1-009"],
+            ... )
+            >>> [line for line in conll.splitlines() if line.startswith("#")]
+            ['# sent_id = doc1-008', '# text = I like cookies.', '# sent_id = doc1-009', '# text = Me too.']
         """
         formatter = self.nlp.get_pipe("conll_formatter")
         if n_process != 1 and not ignore_pipe_errors:
@@ -149,6 +179,14 @@ class ConllParser:
                     " or use 'ignore_pipe_errors' to run without this check"
                 )
 
+        if sent_ids is not None:
+            if not formatter.include_headers:
+                raise ValueError(
+                    "'sent_ids' requires 'include_headers=True' in the"
+                    " ConllFormatter, otherwise there are no '# sent_id' lines"
+                )
+            sent_ids = [str(sent_id) for sent_id in sent_ids]
+
         texts = text.splitlines() if split_on_newline else [text]
 
         conll_idx = 0
@@ -160,7 +198,20 @@ class ConllParser:
                     continue
 
                 conll_idx += 1
-                if formatter.include_headers and renumber_sent_ids:
+                if sent_ids is not None:
+                    if conll_idx > len(sent_ids):
+                        raise ValueError(
+                            f"Got {len(sent_ids)} sent_ids but the text has"
+                            " more sentences. Use 'disable_sbd=True' in"
+                            " init_parser to keep every line as one sentence"
+                        )
+                    sent_id_line = f"# sent_id = {sent_ids[conll_idx - 1]}"
+                    sent_as_conll = SENT_ID_LINE_RE.sub(
+                        sent_id_line.replace("\\", r"\\"),
+                        sent_as_conll,
+                        count=1,
+                    )
+                elif formatter.include_headers and renumber_sent_ids:
                     sent_as_conll = SENT_ID_RE.sub(
                         str(conll_idx), sent_as_conll, count=1
                     )
@@ -169,6 +220,12 @@ class ConllParser:
                     sent_as_conll = "\n" + sent_as_conll
 
                 output += sent_as_conll
+
+        if sent_ids is not None and conll_idx != len(sent_ids):
+            raise ValueError(
+                f"Got {len(sent_ids)} sent_ids but the text has {conll_idx}"
+                " sentences"
+            )
 
         return output
 
