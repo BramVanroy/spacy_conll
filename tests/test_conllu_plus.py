@@ -133,7 +133,7 @@ def test_invalid_header_raises(columns):
 def test_wrong_field_count_raises():
     text = plus_text("ID FORM HEAD DEPREL", "1 Hi 0 root", "2 there 1")
 
-    with pytest.raises(ValueError, match="Expected"):
+    with pytest.raises(ValueError, match=r"^Line 4: expected 4"):
         blank_parser().parse_conll_text_as_spacy(text)
 
 
@@ -237,3 +237,43 @@ def test_round_trip_with_custom_column():
     doc = parser.parse_conll_text_as_spacy(text)
 
     assert doc._.conll_str.strip() == text
+
+
+def test_header_once_with_sent_ids(spacy_parser_with):
+    parser = ConllParser(
+        spacy_parser_with(columns=["ID", "FORM"], include_headers=True)
+    )
+    output = parser.parse_text_as_conll(
+        f"{TEXT}\n{TEXT}", sent_ids=["first", "second"]
+    )
+
+    assert output.startswith("# global.columns = ID FORM\n# sent_id = first\n")
+    assert output.count(HEADER) == 1
+    assert "# sent_id = second\n" in output
+
+
+def test_round_trip_sample_file():
+    columns = SAMPLE.read_text(encoding="utf-8").split("\n")[0].split()[3:]
+    parser = blank_parser(columns=columns, include_headers=True)
+
+    doc = parser.parse_conll_file_as_spacy(SAMPLE)
+
+    assert doc._.conll_str == SAMPLE.read_text(encoding="utf-8")
+
+
+def test_read_without_head_and_deprel_needs_strict_false():
+    text = plus_text("ID FORM UPOS", "1 Hi INTJ", "2 there ADV")
+    parser = blank_parser(columns=["ID", "FORM", "UPOS", "HEAD", "DEPREL"])
+
+    with pytest.raises(ValueError, match=r"^Line 3: HEAD and DEPREL"):
+        parser.parse_conll_text_as_spacy(text)
+
+    doc = parser.parse_conll_text_as_spacy(text, strict=False)
+
+    assert [t.pos_ for t in doc] == ["INTJ", "ADV"]
+    assert not any(t.has_head() for t in doc)
+    assert len(list(doc.sents)) == 1
+    assert doc._.conll_str.split("\n")[1:3] == [
+        "1\tHi\tINTJ\t_\t_",
+        "2\tthere\tADV\t_\t_",
+    ]
