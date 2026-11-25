@@ -112,6 +112,14 @@ def test_sent_ids_count_mismatch(spacy_conllparser, sent_ids):
         spacy_conllparser.parse_text_as_conll(TEXT, sent_ids=sent_ids)
 
 
+def test_sent_ids_skip_whitespace_lines(spacy_conllparser):
+    out = spacy_conllparser.parse_text_as_conll(
+        "First one.\n \t \nSecond one.", sent_ids=["s1", "s2"]
+    )
+
+    assert _sent_id_values(out) == ["s1", "s2"]
+
+
 def test_sent_ids_require_headers():
     parser = ConllParser(init_parser("en_core_web_sm", "spacy"))
 
