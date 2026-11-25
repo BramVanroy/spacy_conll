@@ -3,30 +3,13 @@ from pathlib import Path
 import pytest
 import spacy
 
-from spacy_conll import init_parser
 from spacy_conll.formatter import CONLL_FIELD_NAMES, check_columns
 from spacy_conll.parser import ConllParser
 
 SAMPLE = Path(__file__).parent.joinpath("conllu-plus-sample.txt")
 HEADER = "# global.columns = "
-PARSERS = {}
-
-
-def single_sent() -> str:
-    return "He wanted to elaborate more on his grandma's cookie."
-
-
-def multi_sent() -> str:
-    return "A cookie is a baked food. It usually contains flour and sugar."
-
-
-def get_parser(name: str, **formatter_config):
-    key = str(formatter_config)
-    if key not in PARSERS:
-        PARSERS[key] = init_parser(
-            "en_core_web_sm", name, formatter_config=formatter_config
-        )
-    return PARSERS[key]
+TEXT = "He wanted to elaborate more on his grandma's cookie."
+TEXT_2 = "A cookie is a baked food. It usually contains flour and sugar."
 
 
 def blank_parser(**config) -> ConllParser:
@@ -41,9 +24,9 @@ def plus_text(columns: str, *rows: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def test_writing_subset_and_order():
+def test_writing_subset_and_order(spacy_parser_with):
     columns = ["FORM", "ID", "HEAD", "DEPREL"]
-    doc = get_parser("spacy", columns=columns)(single_sent())
+    doc = spacy_parser_with(columns=columns)(TEXT)
 
     assert list(doc[0]._.conll) == columns
     assert list(doc._.conll_pd.columns) == columns
@@ -52,53 +35,50 @@ def test_writing_subset_and_order():
     assert lines[0].split("\t")[:2] == ["He", "1"]
 
 
-def test_header_only_on_doc():
-    doc = get_parser("spacy", columns=["ID", "FORM"])(single_sent())
+def test_header_only_on_doc(spacy_parser_with):
+    doc = spacy_parser_with(columns=["ID", "FORM"])(TEXT)
 
     assert doc._.conll_str.startswith("# global.columns = ID FORM\n")
     assert HEADER not in doc[0]._.conll_str
     assert HEADER not in next(doc.sents)._.conll_str
 
 
-def test_header_once_in_parse_text_as_conll():
+def test_header_once_in_parse_text_as_conll(spacy_parser_with):
     parser = ConllParser(
-        get_parser(
-            "spacy", columns=["ID", "FORM", "UPOS"], include_headers=True
-        )
+        spacy_parser_with(columns=["ID", "FORM", "UPOS"], include_headers=True)
     )
     output = parser.parse_text_as_conll(
-        f"{single_sent()}\n{multi_sent()}", split_on_newline=True
+        f"{TEXT}\n{TEXT_2}", split_on_newline=True
     )
 
     assert output.startswith("# global.columns = ID FORM UPOS\n# sent_id = 1")
     assert output.count(HEADER) == 1
 
 
-def test_default_has_no_header_and_all_fields():
-    doc = get_parser("spacy")(single_sent())
+def test_default_has_no_header_and_all_fields(spacy_parser_with):
+    doc = spacy_parser_with()(TEXT)
 
     assert HEADER not in doc._.conll_str
     assert list(doc[0]._.conll) == CONLL_FIELD_NAMES
     assert len(doc._.conll_str.splitlines()[0].split("\t")) == 10
 
 
-def test_field_names_with_columns():
-    doc = get_parser(
-        "spacy", columns=["FORM", "UPOS"], field_names={"UPOS": "upostag"}
-    )(single_sent())
+def test_field_names_with_columns(spacy_parser_with):
+    doc = spacy_parser_with(
+        columns=["FORM", "UPOS"], field_names={"UPOS": "upostag"}
+    )(TEXT)
 
     assert list(doc[0]._.conll) == ["FORM", "upostag"]
     assert list(doc._.conll_pd.columns) == ["FORM", "upostag"]
     assert doc._.conll_str.startswith("# global.columns = FORM UPOS\n")
 
 
-def test_conversion_maps_with_columns():
-    doc = get_parser(
-        "spacy",
+def test_conversion_maps_with_columns(spacy_parser_with):
+    doc = spacy_parser_with(
         columns=["FORM", "UPOS"],
         field_names={"UPOS": "upostag"},
         conversion_maps={"upostag": {"PRON": "P"}},
-    )(single_sent())
+    )(TEXT)
 
     assert doc[0]._.conll["upostag"] == "P"
     assert doc._.conll_str.splitlines()[1].split("\t") == ["He", "P"]
@@ -120,8 +100,8 @@ def test_custom_column_from_extension_and_missing():
     assert doc._.conll_str.splitlines()[1:] == ["a\t1:VID", "b\t_"]
 
 
-def test_empty_doc_pandas_columns_follow_columns():
-    doc = get_parser("spacy", columns=["FORM", "PARSEME:MWE"])("")
+def test_empty_doc_pandas_columns_follow_columns(spacy_parser_with):
+    doc = spacy_parser_with(columns=["FORM", "PARSEME:MWE"])("")
 
     assert list(doc._.conll_pd.columns) == ["FORM", "PARSEME:MWE"]
 

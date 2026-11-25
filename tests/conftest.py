@@ -1,3 +1,4 @@
+from functools import partial
 from pathlib import Path
 
 import pytest
@@ -48,6 +49,12 @@ UDPIPE = pytest.param("udpipe", marks=pytest.mark.udpipe)
 @pytest.fixture(params=["spacy", UDPIPE])
 def base_parser(request):
     yield get_parser(request.param)
+
+
+@pytest.fixture
+def spacy_parser_with():
+    # Cached spaCy parser with the formatter config given as kwargs
+    return partial(get_parser, "spacy")
 
 
 @pytest.fixture
