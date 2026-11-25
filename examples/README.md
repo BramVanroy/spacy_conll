@@ -5,7 +5,7 @@ Each script runs with `uv run python examples/<script>.py` after `uv sync`. They
 - `example-adding-conll-to-docbin.py`: add CoNLL-U to documents that are stored in a `DocBin`.
 - `example-reading-conllu-file.py`: read a CoNLL-U file as a spaCy `Doc`.
 - `example-spacy-df-write-to-file.py`: write the pandas table of every sentence to its own file.
-- `example-use-own-indices.py`: replace the generated `# sent_id` values with your own IDs.
+- `example-use-own-indices.py`: write your own IDs in the `# sent_id` lines with the `sent_ids` option of `ConllParser.parse_text_as_conll`.
 
 `init_parser` builds a pipeline that ends with the `conll_formatter` component. Options for the formatter go in `formatter_config`:
 
