@@ -1,9 +1,10 @@
+"""CoNLL-U output for spaCy, spacy-stanza and spacy-udpipe pipelines."""
+
 from importlib.metadata import PackageNotFoundError, version
 
 from .formatter import ConllFormatter
 from .parser import ConllParser
 from .utils import init_parser
-
 
 try:
     __version__ = version("spacy-conll")
