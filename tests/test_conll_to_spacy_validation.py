@@ -257,3 +257,16 @@ def test_crlf_line_endings(spacy_conllparser: ConllParser):
     )
 
     assert [len(s) for s in doc.sents] == [1, 1]
+
+
+@pytest.mark.parametrize(
+    "text", ["", "\n\n", "  \n\t\n", "# sent_id = 1\n# text = Hi\n"]
+)
+@pytest.mark.parametrize("strict", [True, False])
+def test_text_without_tokens_gives_empty_doc(
+    spacy_conllparser: ConllParser, text, strict
+):
+    doc = spacy_conllparser.parse_conll_text_as_spacy(text, strict=strict)
+
+    assert len(doc) == 0
+    assert doc._.conll_str == ""

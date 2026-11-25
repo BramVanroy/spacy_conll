@@ -300,7 +300,7 @@ class ConllParser:
             numbered_lines = [
                 (chunk_lineno + offset, line)
                 for offset, line in enumerate(chunk.split("\n"))
-                if line and not line.startswith("#")
+                if line.strip() and not line.startswith("#")
             ]
             chunk_lineno += chunk.count("\n") + 2
             if not numbered_lines:
@@ -434,7 +434,7 @@ class ConllParser:
             docs.append(doc)
             sent_starts.extend([1] + [-1] * (len(doc) - 1))
 
-        doc = Doc.from_docs(docs)
+        doc = Doc.from_docs(docs) if docs else Doc(self.nlp.vocab, words=[])
         # Without complete HEAD values, spaCy cannot derive the sentence
         # boundaries from the tree, so every block is marked explicitly.
         doc.from_array(
