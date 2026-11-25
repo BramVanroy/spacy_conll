@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file. The format is b
 
 - `ConllParser.parse_conll_text_as_spacy` and `ConllParser.parse_conll_file_as_spacy` take `strict` (default `True`). With `strict=False`, HEAD and DEPREL may be `_`, for example in CoNLL-U that is tagged but not parsed. Every sentence block still becomes one spaCy sentence ([#34](https://github.com/BramVanroy/spacy_conll/issues/34)).
 - `ConllParser.parse_text_as_conll` and `ConllParser.parse_file_as_conll` take `sent_ids`, your own IDs for the `# sent_id` lines ([#28](https://github.com/BramVanroy/spacy_conll/issues/28)).
+- CoNLL-U Plus support. The formatter option `columns` selects and orders the output columns, including custom columns such as `PARSEME:MWE`, and writes a `# global.columns` line at the start of the output. `ConllParser.parse_conll_text_as_spacy` and `ConllParser.parse_conll_file_as_spacy` read the `# global.columns` line. Missing standard columns are read as `_` and custom columns are stored in `Token._.conll_custom_columns` ([#26](https://github.com/BramVanroy/spacy_conll/issues/26)).
 
 ### Changed
 

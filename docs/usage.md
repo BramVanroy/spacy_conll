@@ -39,6 +39,7 @@ The options of `init_parser` are:
 - `field_names`: new names for the CoNLL-U fields `ID`, `FORM`, `LEMMA`, `UPOS`, `XPOS`, `FEATS`, `HEAD`, `DEPREL`, `DEPS` and `MISC`. These are the dict keys of `._.conll` and the column names of `._.conll_pd`.
 - `conversion_maps`: a dict of the form `{field_name: {old_value: new_value}}` that replaces output values. The field name is the name after `field_names` was applied.
 - `disable_pandas`: do not set `conll_pd`, even if pandas is installed.
+- `columns`: a list of CoNLL-U Plus column names that selects and orders the output columns. Default `None` (plain CoNLL-U). See [CoNLL-U Plus](#conll-u-plus).
 
 Unknown keys in `ext_names` and `field_names` raise a `KeyError`.
 
@@ -335,6 +336,7 @@ print(doc._.conll_str)
 
 - `Token._.conll_deps_graphs_field`: the `DEPS` value of the token. Default `"_"`.
 - `Token._.conll_misc_field`: the `MISC` value of the token. Default `"_"`.
+- `Token._.conll_custom_columns`: a dict with the values of custom CoNLL-U Plus columns, see [CoNLL-U Plus](#conll-u-plus). Default `None`.
 - `Span._.conll_metadata`: the comment lines of a sentence, with a trailing newline. Default `None`.
 
 ```python
@@ -349,6 +351,91 @@ print(doc[2]._.conll_deps_graphs_field, doc[5]._.conll_misc_field)
 ```
 
 A round trip from CoNLL-U to spaCy and back keeps these values. When the formatter writes `MISC`, it only sets or removes the entries `SpaceAfter`, `SpacesAfter` and `SpacesBefore` and keeps all other entries in their order. An existing `SpacesAfter` stays when spaCy has a space after the token, because spaCy cannot store other whitespace between tokens of a doc that is read from CoNLL-U. With `include_headers=True`, the formatter writes an existing `conll_metadata` as the header of a sentence instead of generating `# sent_id` and `# text`.
+
+## CoNLL-U Plus
+
+[CoNLL-U Plus](https://universaldependencies.org/ext-format.html) files have a `# global.columns` line that lists the columns of the file. The columns can be any subset of the ten CoNLL-U fields in any order, plus custom columns.
+
+### Writing
+
+Set `columns` in the formatter config. The names are the canonical CoNLL-U names (`ID`, `FORM`, `LEMMA`, `UPOS`, `XPOS`, `FEATS`, `HEAD`, `DEPREL`, `DEPS`, `MISC`) or custom names with a namespace, such as `PARSEME:MWE`. Custom names consist of uppercase letters and colons. A list that is empty, has duplicates or has another kind of name raises a `ValueError`.
+
+```python
+from spacy_conll import ConllParser, init_parser
+
+nlp = init_parser(
+    "en_core_web_sm",
+    "spacy",
+    formatter_config={"columns": ["ID", "FORM", "UPOS", "HEAD", "DEPREL"]},
+)
+doc = nlp("I like cookies.")
+print(doc._.conll_str)
+print(doc[1]._.conll)
+print(doc._.conll_pd.columns.tolist())
+```
+
+```text
+# global.columns = ID FORM UPOS HEAD DEPREL
+1	I	PRON	2	nsubj
+2	like	VERB	0	root
+3	cookies	NOUN	2	dobj
+4	.	PUNCT	2	punct
+
+{'ID': 2, 'FORM': 'like', 'UPOS': 'VERB', 'HEAD': 0, 'DEPREL': 'root'}
+['ID', 'FORM', 'UPOS', 'HEAD', 'DEPREL']
+```
+
+The `conll`, `conll_str` and `conll_pd` extensions of tokens, sentences and docs only have the selected columns. The `conll_str` of a `Doc` and the output of `ConllParser.parse_text_as_conll` start with the `# global.columns` line. It is written whenever `columns` is set, also if the list has all ten columns.
+
+A custom column takes its value from the dict `Token._.conll_custom_columns` and is `_` for tokens without that key:
+
+```python
+doc[1]._.conll_custom_columns = {"PARSEME:MWE": "1:VID"}
+```
+
+`field_names` and `columns` are independent. `field_names` renames the dict keys and the pandas columns only. `columns` and the `# global.columns` line always use the canonical names. With `field_names={"UPOS": "upostag"}` and `columns=["FORM", "UPOS"]`, the keys of `._.conll` are `FORM` and `upostag` and the header is `# global.columns = FORM UPOS`.
+
+### Reading
+
+`parse_conll_text_as_spacy` and `parse_conll_file_as_spacy` read a `# global.columns` first line. Every line must have as many tab-separated fields as there are columns, otherwise a `ValueError` is raised.
+
+- A standard column that is missing is read as `_`. A missing `ID` is the position of the token in its sentence.
+- Custom columns are stored in `Token._.conll_custom_columns`.
+- The `# global.columns` line is not part of `Span._.conll_metadata`.
+- Without `HEAD` and `DEPREL` columns, the tokens have no dependency annotation. This needs `strict=False`, as for `_` in these fields.
+
+```python
+from spacy_conll import ConllParser, init_parser
+
+nlp = init_parser(
+    "en_core_web_sm",
+    "spacy",
+    formatter_config={"columns": ["FORM", "HEAD", "DEPREL", "PARSEME:MWE"]},
+)
+parser = ConllParser(nlp)
+text = """# global.columns = FORM HEAD DEPREL PARSEME:MWE
+I\t2\tnsubj\t*
+take\t0\troot\t1:VID
+a\t4\tdet\t1
+look\t2\tobj\t1
+"""
+doc = parser.parse_conll_text_as_spacy(text)
+print([(t.i, t.text, t.dep_, t.head.i) for t in doc])
+print(doc[1]._.conll_custom_columns)
+print(doc._.conll_str)
+```
+
+```text
+[(0, 'I', 'nsubj', 1), (1, 'take', 'ROOT', 1), (2, 'a', 'det', 3), (3, 'look', 'obj', 1)]
+{'PARSEME:MWE': '1:VID'}
+# global.columns = FORM HEAD DEPREL PARSEME:MWE
+I	2	nsubj	*
+take	0	root	1:VID
+a	4	det	1
+look	2	obj	1
+```
+
+The reader does not configure the formatter. To write a Plus file back, as in the example, give the formatter the same `columns`. A formatter without `columns` writes all ten standard columns and drops the custom ones.
 
 ## Pandas and multiprocessing
 
