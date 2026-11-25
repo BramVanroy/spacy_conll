@@ -1,0 +1,85 @@
+name: Publish docs to GitHub Pages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Git tag to publish docs for, for example v0.3.0
+        required: true
+        type: string
+
+# Deploys push to gh-pages: queue them instead of cancelling one mid-push.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Resolve docs tag and version
+        id: docs_ref
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            DOCS_GIT_TAG="${{ github.event.release.tag_name }}"
+          else
+            DOCS_GIT_TAG="${{ inputs.release_tag }}"
+          fi
+
+          if [ -z "${DOCS_GIT_TAG}" ]; then
+            echo "A release tag is required to publish docs." >&2
+            exit 1
+          fi
+
+          if ! git rev-parse --verify "refs/tags/${DOCS_GIT_TAG}" >/dev/null 2>&1; then
+            echo "Git tag '${DOCS_GIT_TAG}' does not exist." >&2
+            exit 1
+          fi
+
+          DOCS_VERSION="${DOCS_GIT_TAG#v}"
+          if [ -z "${DOCS_VERSION}" ] || [ "${DOCS_VERSION}" = "${DOCS_GIT_TAG}" ]; then
+            echo "Release tag must start with 'v'; got '${DOCS_GIT_TAG}'." >&2
+            exit 1
+          fi
+
+          echo "docs_git_tag=${DOCS_GIT_TAG}" >> "$GITHUB_OUTPUT"
+          echo "docs_version=${DOCS_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "DOCS_SOURCE_REF=${DOCS_GIT_TAG}" >> "$GITHUB_ENV"
+
+      - name: Check out docs tag
+        run: git checkout "${{ steps.docs_ref.outputs.docs_git_tag }}"
+
+      - name: Restore current docs build tooling for manual reruns
+        if: github.event_name == 'workflow_dispatch'
+        run: git checkout "${GITHUB_SHA}" -- pyproject.toml uv.lock mkdocs.yml docs/hooks.py docs/overrides docs/templates
+
+      - uses: astral-sh/setup-uv@v10.3.1
+        with:
+          enable-cache: true
+
+      - name: Install docs dependencies
+        run: uv sync --locked --group docs
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch gh-pages branch for mike
+        run: git fetch origin gh-pages --depth=1 || true
+
+      - name: Deploy release docs (tag -> version + set as latest)
+        run: |
+          VERSION="${{ steps.docs_ref.outputs.docs_version }}"
+          uv run mike deploy --push --update-aliases "${VERSION}" latest
+          uv run mike set-default --push latest

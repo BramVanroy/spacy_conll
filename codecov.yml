@@ -1,0 +1,14 @@
+coverage:
+  status:
+    # Total project coverage
+    project:
+      default:
+        # 'auto' means the target is whatever the base branch currently has
+        # i.e. "coverage must maintain at least the same value as the current base branch coverage"
+        target: auto
+        # Allow the project coverage to drop by up to 3% compared to previous commit
+        threshold: 3%
+    # The separate commit status
+    patch:
+      default:
+        target: 90%
