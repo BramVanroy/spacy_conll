@@ -23,6 +23,59 @@ CONLL_FIELD_NAMES = [
     "MISC",
 ]
 
+UD_WHITESPACE_ESCAPES = str.maketrans(
+    {" ": "\\s", "\t": "\\t", "\n": "\\n", "\r": "\\r"}
+)
+
+
+def get_whitespace_misc(token: Token) -> str:
+    r"""Describe the whitespace around a token in the MISC notation of UD.
+
+    The whitespace after a token is its own trailing space plus the text of
+    the whitespace tokens that follow it, also when these tokens belong to
+    the next sentence. A single space gives `_`, no whitespace gives
+    `SpaceAfter=No` and anything else gives `SpacesAfter` with the escapes
+    `\s`, `\t`, `\n` and `\r`. Whitespace at the start of the doc gives
+    `SpacesBefore` on the first token that is not whitespace. See
+    https://universaldependencies.org/misc.html.
+
+    Args:
+        token: A token that is not whitespace.
+
+    Returns:
+        The MISC value.
+
+    Examples:
+        >>> import spacy
+        >>> doc = spacy.blank("en")("\nHello  world.\t")
+        >>> [t.text for t in doc]
+        ['\n', 'Hello', ' ', 'world', '.', '\t']
+        >>> [get_whitespace_misc(t) for t in doc if not t.is_space]
+        ['SpacesAfter=\\s\\s|SpacesBefore=\\n', 'SpaceAfter=No', 'SpacesAfter=\\t']
+    """
+    spaces_after = token.whitespace_
+    for next_token in token.doc[token.i + 1 :]:
+        if not next_token.is_space:
+            break
+        spaces_after += next_token.text_with_ws
+
+    misc = []
+    if not spaces_after:
+        misc.append("SpaceAfter=No")
+    elif spaces_after != " ":
+        misc.append(
+            f"SpacesAfter={spaces_after.translate(UD_WHITESPACE_ESCAPES)}"
+        )
+
+    preceding = token.doc[: token.i]
+    if len(preceding) and all(t.is_space for t in preceding):
+        spaces_before = preceding.text_with_ws
+        misc.append(
+            f"SpacesBefore={spaces_before.translate(UD_WHITESPACE_ESCAPES)}"
+        )
+
+    return "|".join(misc) or "_"
+
 
 @dataclass
 class ConllFormatter:
@@ -105,22 +158,25 @@ class ConllFormatter:
         # extensions (https://github.com/explosion/spaCy/issues/4903).
         self._set_extensions()
 
-        for sent_idx, sent in enumerate(doc.sents, 1):
-            self._set_span_conll(sent, sent_idx)
+        sents = []
+        for sent in doc.sents:
+            if all(token.is_space for token in sent):
+                self._set_span_conll(sent)
+            else:
+                sents.append(sent)
+                self._set_span_conll(sent, len(sents))
 
         doc._.set(
             self.ext_names["conll"],
-            [s._.get(self.ext_names["conll"]) for s in doc.sents],
+            [s._.get(self.ext_names["conll"]) for s in sents],
         )
         doc._.set(
             self.ext_names["conll_str"],
-            "\n".join(
-                [s._.get(self.ext_names["conll_str"]) for s in doc.sents]
-            ),
+            "\n".join([s._.get(self.ext_names["conll_str"]) for s in sents]),
         )
 
         if PD_AVAILABLE and not self.disable_pandas:
-            sent_dfs = [s._.get(self.ext_names["conll_pd"]) for s in doc.sents]
+            sent_dfs = [s._.get(self.ext_names["conll_pd"]) for s in sents]
             doc._.set(
                 self.ext_names["conll_pd"],
                 pd.concat(sent_dfs).reset_index(drop=True)
@@ -153,60 +209,94 @@ class ConllFormatter:
     def _set_span_conll(self, span: Span, span_idx: int = 1):
         """Set the CoNLL extensions on a sentence and its tokens.
 
+        Whitespace tokens get no CoNLL line and their extensions are `None`.
+        Their whitespace goes to MISC of a neighbouring token (see
+        `get_whitespace_misc`) and the IDs skip them. A sentence of only
+        whitespace tokens gets an empty `conll_str` and no header.
+
         Args:
             span: A sentence.
             span_idx: The 1-based index of the sentence in its doc, used for
                 `# sent_id` when the sentence has no `conll_metadata`.
         """
+        words = [t for t in span if not t.is_space]
+        token_ids = {t.i: idx for idx, t in enumerate(words, 1)}
+
         span_conll_str = ""
-        if self.include_headers:
+        if self.include_headers and words:
             if not (
                 span.has_extension("conll_metadata") and span._.conll_metadata
             ):
+                text = " ".join(span.text.split())
                 span._.conll_metadata = (
-                    f"# sent_id = {span_idx}\n# text = {span.text}\n"
+                    f"# sent_id = {span_idx}\n# text = {text}\n"
                 )
 
             span_conll_str += span._.conll_metadata
 
-        for token_idx, token in enumerate(span, 1):
-            self._set_token_conll(token, token_idx)
+        for token in span:
+            if token.is_space:
+                for ext_name in self.ext_names.values():
+                    if token.has_extension(ext_name):
+                        token._.set(ext_name, None)
+            else:
+                self._set_token_conll(token, token_ids[token.i], token_ids)
 
         span._.set(
             self.ext_names["conll"],
-            [t._.get(self.ext_names["conll"]) for t in span],
+            [t._.get(self.ext_names["conll"]) for t in words],
         )
         span_conll_str += "".join(
-            [t._.get(self.ext_names["conll_str"]) for t in span]
+            [t._.get(self.ext_names["conll_str"]) for t in words]
         )
         span._.set(self.ext_names["conll_str"], span_conll_str)
 
         if PD_AVAILABLE and not self.disable_pandas:
             span._.set(
                 self.ext_names["conll_pd"],
-                pd.DataFrame([t._.get(self.ext_names["conll"]) for t in span]),
+                pd.DataFrame(
+                    [t._.get(self.ext_names["conll"]) for t in words],
+                    columns=list(self.field_names.values()),
+                ),
             )
 
-    def _set_token_conll(self, token: Token, token_idx: int = 1) -> Token:
-        """Set the CoNLL extensions on a token.
+    def _set_token_conll(
+        self,
+        token: Token,
+        token_idx: int = 1,
+        token_ids: dict[int, int] | None = None,
+    ) -> Token:
+        """Set the CoNLL extensions on a token that is not whitespace.
+
+        A head that is a whitespace token is replaced by the nearest
+        ancestor that is not whitespace. If there is none, the token becomes
+        a root.
 
         Args:
             token: A token.
             token_idx: The 1-based index of the token in its sentence.
+            token_ids: Maps the doc index of every token in the sentence that
+                is not whitespace to its CoNLL ID. If not given, the IDs are
+                the positions in the sentence.
 
         Returns:
             The same token.
         """
-        if token.dep_.lower().strip() == "root":
+        head = token.head
+        while head.is_space and head.head.i != head.i:
+            head = head.head
+
+        if token.dep_.lower().strip() == "root" or head.is_space:
             head_idx = 0
             deprel = "root"
+        elif token_ids is None:
+            head_idx = head.i + 1 - token.sent[0].i
+            deprel = token.dep_ or "_"
         else:
-            head_idx = token.head.i + 1 - token.sent[0].i
+            head_idx = token_ids[head.i]
             deprel = token.dep_ or "_"
 
-        token._.conll_misc_field = (
-            "_" if token.whitespace_ else "SpaceAfter=No"
-        )
+        token._.conll_misc_field = get_whitespace_misc(token)
 
         token_conll = (
             token_idx,

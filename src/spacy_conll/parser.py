@@ -153,9 +153,11 @@ class ConllParser:
         output = ""
         for doc in self.nlp.pipe(texts, n_process=n_process):
             for sent in doc.sents:
-                conll_idx += 1
-
                 sent_as_conll = sent._.conll_str
+                if not sent_as_conll:
+                    continue
+
+                conll_idx += 1
                 if formatter.include_headers and renumber_sent_ids:
                     sent_as_conll = SENT_ID_RE.sub(
                         str(conll_idx), sent_as_conll, count=1
