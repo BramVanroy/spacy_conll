@@ -36,9 +36,7 @@ class ConllParser:
     """
 
     nlp: Language
-    parser: Literal["spacy", "udpipe"] = field(
-        init=False, default="spacy"
-    )
+    parser: Literal["spacy", "udpipe"] = field(init=False, default="spacy")
 
     def __post_init__(self):
         """Check the pipeline and detect the backend."""
