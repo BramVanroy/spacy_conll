@@ -19,7 +19,9 @@ def test_pretokenized_conllparser(pretokenized_conllparser_conllstr):
 
 def test_conllparser_n_process(conllparser):
     # error due to pandas
-    with pytest.raises(OSError) as e_info:
+    with pytest.raises(OSError):
         conllparser.parse_file_as_conll(
-            Path(__file__).parent.joinpath("test.txt"), input_encoding="utf-8", n_process=2
+            Path(__file__).parent.joinpath("test.txt"),
+            input_encoding="utf-8",
+            n_process=2,
         )

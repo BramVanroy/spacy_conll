@@ -19,4 +19,4 @@ def test_token_conll(base_doc):
         assert token.has_extension("conll")
         assert token._.conll is not None
         assert isinstance(token._.conll, dict)
-        assert CONLL_FIELD_NAMES == list(token._.conll.keys())
+        assert list(token._.conll.keys()) == CONLL_FIELD_NAMES
