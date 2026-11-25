@@ -120,11 +120,12 @@ class ConllFormatter:
         )
 
         if PD_AVAILABLE and not self.disable_pandas:
+            sent_dfs = [s._.get(self.ext_names["conll_pd"]) for s in doc.sents]
             doc._.set(
                 self.ext_names["conll_pd"],
-                pd.concat(
-                    [s._.get(self.ext_names["conll_pd"]) for s in doc.sents]
-                ).reset_index(drop=True),
+                pd.concat(sent_dfs).reset_index(drop=True)
+                if sent_dfs
+                else pd.DataFrame(columns=list(self.field_names.values())),
             )
 
         return doc
