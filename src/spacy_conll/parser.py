@@ -540,7 +540,11 @@ class ConllParser:
             docs.append(doc)
             sent_starts.extend([1] + [-1] * (len(doc) - 1))
 
-        doc = Doc.from_docs(docs) if docs else Doc(self.nlp.vocab, words=[])
+        doc = (
+            Doc.from_docs(docs, ensure_whitespace=False)
+            if docs
+            else Doc(self.nlp.vocab, words=[])
+        )
         # Without complete HEAD values, spaCy cannot derive the sentence
         # boundaries from the tree, so every block is marked explicitly.
         doc.from_array(

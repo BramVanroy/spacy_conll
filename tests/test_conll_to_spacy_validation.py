@@ -197,6 +197,26 @@ def test_non_strict_round_trip_keeps_misc(spacy_conllparser: ConllParser):
     assert doc._.conll_str == ISSUE_34_SAMPLE
 
 
+def test_round_trip_keeps_space_after_no_between_sentences(
+    spacy_conllparser: ConllParser,
+):
+    conll = (
+        "1\tHi\thi\tINTJ\tUH\t_\t0\troot\t_\tSpaceAfter=No\n"
+        "\n"
+        "1\tthere\tthere\tADV\tRB\t_\t0\troot\t_\tSpaceAfter=No\n"
+    )
+    doc = spacy_conllparser.parse_conll_text_as_spacy(conll)
+
+    token_lines = [
+        line
+        for line in doc._.conll_str.splitlines(keepends=True)
+        if not line.startswith("#")
+    ]
+
+    assert doc.text == "Hithere"
+    assert "".join(token_lines) == conll
+
+
 def test_file_reader_passes_strict(spacy_conllparser: ConllParser, tmp_path):
     path = tmp_path / "sample.conllu"
     path.write_text(ISSUE_34_SAMPLE, encoding="utf-8")
