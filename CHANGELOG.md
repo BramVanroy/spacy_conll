@@ -31,6 +31,8 @@ All notable changes to this project are documented in this file. The format is b
 - CoNLL-U text that ends with a blank line raised an error.
 - `n_process=-1` skipped the multiprocessing checks.
 - The output started with a stray newline when the first line of the input was empty.
+- Newlines, tabs and repeated spaces in the input gave token lines with tabs or newlines in FORM and LEMMA, and a `# text` line that spanned several lines, so the output was not valid CoNLL-U ([#35](https://github.com/BramVanroy/spacy_conll/issues/35)). Whitespace tokens are now left out, IDs and heads are renumbered, and the whitespace is written to `MISC` as `SpacesAfter` or `SpacesBefore` following the UD convention. Whitespace tokens have `None` as their CoNLL extensions, and sentences that only contain whitespace are skipped.
+- The formatter replaced the `MISC` value that was read from CoNLL-U. It now keeps all entries other than `SpaceAfter`, `SpacesAfter` and `SpacesBefore`.
 
 ## [4.0.0] - 2024-07-02
 

@@ -134,3 +134,5 @@ parse-as-conll en_core_web_sm spacy --input-str "I like cookies." --include-head
 - CoNLL-U text that ends with a blank line raised an error.
 - `n_process=-1` skipped the multiprocessing checks.
 - Output no longer starts with a newline when the first line of the input is empty.
+- Newlines, tabs and repeated spaces no longer appear as token lines, so the output is valid CoNLL-U ([#35](https://github.com/BramVanroy/spacy_conll/issues/35)). IDs and heads skip the whitespace tokens, the whitespace goes to `MISC` as `SpacesAfter` or `SpacesBefore`, and the whitespace tokens have `None` as their extensions. See [Newlines, tabs and other whitespace](usage.md#newlines-tabs-and-other-whitespace).
+- The formatter keeps the `MISC` entries of a token that was read from CoNLL-U, such as `Translit=x`, instead of replacing them with `_` or `SpaceAfter=No`.

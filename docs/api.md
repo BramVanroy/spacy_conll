@@ -7,6 +7,8 @@
       members:
         - ConllFormatter
         - create_conll_formatter
+        - get_whitespace_misc
+        - merge_misc
 
 ## Parser
 

@@ -117,7 +117,43 @@ print(repr(doc[0]._.conll_str))
 '1\tI\tI\tPRON\tPRP\tCase=Nom|Number=Sing|Person=1|PronType=Prs\t2\tnsubj\t_\t_\n'
 ```
 
-Empty values are written as `_`. `HEAD` is the position of the head within its sentence, and `0` for the root. `MISC` is `SpaceAfter=No` for tokens that are not followed by whitespace.
+Empty values are written as `_`. `HEAD` is the position of the head within its sentence, and `0` for the root. `MISC` is `SpaceAfter=No` for tokens that are not followed by whitespace. Other whitespace is described below.
+
+### Newlines, tabs and other whitespace
+
+spaCy keeps newlines, tabs and repeated spaces as separate tokens with the tag `_SP`. The formatter leaves these whitespace tokens out of the output, because a CoNLL-U field cannot contain a tab or a newline. It follows the [UD convention](https://universaldependencies.org/misc.html) and records the whitespace in `MISC` of the token before it:
+
+- a single space: no entry (`_`)
+- no whitespace: `SpaceAfter=No`
+- any other whitespace: `SpacesAfter` with the escapes `\s` (space), `\t` (tab), `\n` (newline) and `\r` (carriage return)
+- whitespace at the start of the doc: `SpacesBefore` on the first token
+
+The IDs and heads are renumbered without the whitespace tokens. A token whose head is a whitespace token gets the nearest ancestor that is not whitespace as its head, or becomes a root if there is none. The `# text` line has its whitespace collapsed to single spaces. A sentence that only contains whitespace has no output and does not count for `# sent_id`.
+
+```python
+import spacy
+
+nlp = spacy.load("en_core_web_sm")
+nlp.add_pipe("conll_formatter", last=True, config={"include_headers": True})
+doc = nlp("Results are clear.\n2.\t")
+print(doc._.conll_str)
+```
+
+```text
+# sent_id = 1
+# text = Results are clear.
+1	Results	result	NOUN	NNS	Number=Plur	2	nsubj	_	_
+2	are	be	AUX	VBP	Mood=Ind|Tense=Pres|VerbForm=Fin	0	root	_	_
+3	clear	clear	ADJ	JJ	Degree=Pos	2	acomp	_	SpaceAfter=No
+4	.	.	PUNCT	.	PunctType=Peri	2	punct	_	SpacesAfter=\n
+
+# sent_id = 2
+# text = 2.
+1	2	2	X	LS	NumType=Ord	0	root	_	SpaceAfter=No
+2	.	.	PUNCT	.	PunctType=Peri	1	punct	_	SpacesAfter=\t
+```
+
+The whitespace tokens themselves have `None` as `._.conll`, `._.conll_str` and `._.conll_pd`. The sentence and doc extensions only contain the other tokens, so `doc[4]._.conll` is `None` here (the token `"\n"`), and `len(doc._.conll_pd)` is 6 for the 8 tokens of the doc.
 
 ## Parsing text and files
 
@@ -229,7 +265,7 @@ print(doc[2]._.conll_deps_graphs_field, doc[5]._.conll_misc_field)
 4:obl:from SpaceAfter=No
 ```
 
-A round trip from CoNLL-U to spaCy and back keeps these values. With `include_headers=True`, the formatter writes an existing `conll_metadata` as the header of a sentence instead of generating `# sent_id` and `# text`.
+A round trip from CoNLL-U to spaCy and back keeps these values. When the formatter writes `MISC`, it only sets or removes the entries `SpaceAfter`, `SpacesAfter` and `SpacesBefore` and keeps all other entries in their order. An existing `SpacesAfter` stays when spaCy has a space after the token, because spaCy cannot store other whitespace between tokens of a doc that is read from CoNLL-U. With `include_headers=True`, the formatter writes an existing `conll_metadata` as the header of a sentence instead of generating `# sent_id` and `# text`.
 
 ## Pandas and multiprocessing
 
