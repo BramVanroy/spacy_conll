@@ -77,6 +77,58 @@ def get_whitespace_misc(token: Token) -> str:
     return "|".join(misc) or "_"
 
 
+def merge_misc(misc: str, whitespace_misc: str) -> str:
+    r"""Replace the whitespace entries in a MISC value and keep the others.
+
+    The entries `SpaceAfter`, `SpacesAfter` and `SpacesBefore` of `misc`
+    are replaced by those of `whitespace_misc` in the same position, or
+    removed when `whitespace_misc` has no such entry. New whitespace entries
+    go at the end. spaCy stores the whitespace after a token as a single
+    space or nothing, so an existing `SpacesAfter` (for example read from a
+    CoNLL-U file) stays when the token is followed by a single space. An
+    existing `SpacesBefore` stays when `whitespace_misc` has none.
+
+    Args:
+        misc: The current MISC value, `_` if empty.
+        whitespace_misc: The output of `get_whitespace_misc`.
+
+    Returns:
+        The merged MISC value, `_` if empty.
+
+    Examples:
+        >>> merge_misc("Translit=a|SpaceAfter=No", "_")
+        'Translit=a'
+        >>> merge_misc("Translit=a", "SpaceAfter=No")
+        'Translit=a|SpaceAfter=No'
+        >>> merge_misc("SpacesAfter=\\n|Translit=a", "_")
+        'SpacesAfter=\\n|Translit=a'
+        >>> merge_misc("SpacesAfter=\\n|Translit=a", "SpaceAfter=No")
+        'Translit=a|SpaceAfter=No'
+    """
+    whitespace = dict(
+        entry.split("=", 1)
+        for entry in whitespace_misc.split("|")
+        if entry != "_"
+    )
+    entries = [] if misc in ("", "_") else misc.split("|")
+    old = dict(entry.partition("=")[::2] for entry in entries)
+    if "SpacesAfter" in old and "SpaceAfter" not in whitespace:
+        whitespace.setdefault("SpacesAfter", old["SpacesAfter"])
+    if "SpacesBefore" in old:
+        whitespace.setdefault("SpacesBefore", old["SpacesBefore"])
+
+    merged = []
+    for entry in entries:
+        key = entry.partition("=")[0]
+        if key not in ("SpaceAfter", "SpacesAfter", "SpacesBefore"):
+            merged.append(entry)
+        elif key in whitespace:
+            merged.append(f"{key}={whitespace.pop(key)}")
+    merged += [f"{key}={value}" for key, value in whitespace.items()]
+
+    return "|".join(merged) or "_"
+
+
 @dataclass
 class ConllFormatter:
     r"""spaCy component that adds CoNLL-U representations to docs, sentences and tokens.
@@ -296,7 +348,9 @@ class ConllFormatter:
             head_idx = token_ids[head.i]
             deprel = token.dep_ or "_"
 
-        token._.conll_misc_field = get_whitespace_misc(token)
+        token._.conll_misc_field = merge_misc(
+            token._.conll_misc_field, get_whitespace_misc(token)
+        )
 
         token_conll = (
             token_idx,
