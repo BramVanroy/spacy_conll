@@ -192,6 +192,40 @@ print(conll)
 - `renumber_sent_ids`: number `# sent_id` over the whole input. Every line of the input is a separate `Doc` and spaCy would restart the numbering at 1 for each. Default `True`. This only matters with `include_headers=True`.
 - `ignore_pipe_errors`: skip the checks that raise an `OSError` when `n_process` is not 1 and the setup is likely to fail. Default `False`.
 - `split_on_newline`: process every line of the input as its own `Doc`, which is faster for long input. Without it, the whole input is one text. Default `True`.
+- `sent_ids`: your own IDs for the `# sent_id` lines, one per output sentence. Default `None`. See below.
+
+### Your own sentence IDs
+
+If your sentences already have IDs, pass them as `sent_ids`. They replace the generated numbers, so `renumber_sent_ids` has no effect. This requires `include_headers=True`. The number of IDs must equal the number of sentences in the output, otherwise you get a `ValueError`. With `disable_sbd=True` every line of the input is one sentence (empty lines are skipped), so you give one ID per non-empty line:
+
+```python
+from spacy_conll import ConllParser, init_parser
+
+nlp = init_parser(
+    "en_core_web_sm",
+    "spacy",
+    disable_sbd=True,
+    formatter_config={"include_headers": True},
+)
+parser = ConllParser(nlp)
+conll = parser.parse_text_as_conll(
+    "I like cookies.\nWhat about you?", sent_ids=["chat-008", "chat-009"]
+)
+print(conll)
+```
+
+```text
+# sent_id = chat-008
+# text = I like cookies.
+1	I	I	PRON	PRP	Case=Nom|Number=Sing|Person=1|PronType=Prs	2	nsubj	_	_
+...
+
+# sent_id = chat-009
+# text = What about you?
+...
+```
+
+`parse_file_as_conll` takes the same option. When you read the output back with `parse_conll_text_as_spacy`, the IDs stay in `Span._.conll_metadata` of every sentence.
 
 ### Pretokenized input
 
