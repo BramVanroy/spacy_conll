@@ -63,7 +63,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: git checkout "${GITHUB_SHA}" -- pyproject.toml uv.lock mkdocs.yml docs/hooks.py docs/overrides docs/templates
 
-      - uses: astral-sh/setup-uv@v10.3.1
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           enable-cache: true
 
