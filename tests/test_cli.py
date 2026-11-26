@@ -112,3 +112,79 @@ def test_main_input_file_and_input_str_are_exclusive(monkeypatch, capsys):
 
     assert exc_info.value.code == 2
     assert "not allowed with argument" in capsys.readouterr().err
+
+
+def run_main(monkeypatch, *args):
+    monkeypatch.setattr(
+        sys, "argv", ["parse-as-conll", "en_core_web_sm", "spacy", *args]
+    )
+    main()
+
+
+def test_main_columns(monkeypatch, capsys):
+    run_main(
+        monkeypatch,
+        "--input-str",
+        TEXT,
+        "--columns",
+        "ID",
+        "FORM",
+        "UPOS",
+    )
+
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0] == "# global.columns = ID FORM UPOS"
+    token_lines = [line for line in lines[1:] if line]
+    assert token_lines[0] == "1\tHe\tPRON"
+    assert all(len(line.split("\t")) == 3 for line in token_lines)
+
+
+def test_main_invalid_column(monkeypatch, capsys):
+    with pytest.raises(SystemExit) as exc_info:
+        run_main(monkeypatch, "--input-str", TEXT, "--columns", "ID", "upos")
+
+    assert exc_info.value.code == 2
+    err = capsys.readouterr().err
+    assert "Invalid column name 'upos'" in err
+    assert "Traceback" not in err
+
+
+def test_main_sent_ids_file(tmp_path, monkeypatch, capsys):
+    ids_file = tmp_path / "ids.txt"
+    ids_file.write_text("doc1-008\n\ndoc1-009\n", encoding="utf-8")
+
+    run_main(
+        monkeypatch,
+        "--input-str",
+        "First one.\nSecond one.",
+        "--disable-sbd",
+        "--sent-ids-file",
+        str(ids_file),
+    )
+
+    sent_ids = [
+        line.split(" = ")[1]
+        for line in capsys.readouterr().out.splitlines()
+        if line.startswith("# sent_id")
+    ]
+    assert sent_ids == ["doc1-008", "doc1-009"]
+
+
+def test_main_sent_ids_file_wrong_count(tmp_path, monkeypatch, capsys):
+    ids_file = tmp_path / "ids.txt"
+    ids_file.write_text("only-one\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit) as exc_info:
+        run_main(
+            monkeypatch,
+            "--input-str",
+            "First one.\nSecond one.",
+            "--disable-sbd",
+            "--sent-ids-file",
+            str(ids_file),
+        )
+
+    assert exc_info.value.code == 2
+    err = capsys.readouterr().err
+    assert "sent_ids" in err
+    assert "Traceback" not in err
