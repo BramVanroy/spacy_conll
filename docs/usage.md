@@ -439,21 +439,21 @@ The reader does not configure the formatter. To write a Plus file back, as in th
 
 ## Pandas and multiprocessing
 
-If pandas is installed, `conll_pd` is set automatically. pandas objects cannot be passed between processes, so `n_process` other than 1 requires `disable_pandas=True`. Otherwise `parse_text_as_conll` raises an `OSError` (unless `ignore_pipe_errors=True`):
+If pandas is installed, `conll_pd` is available automatically. It is computed from `conll` when you access it and is not stored in the doc, so docs with `conll_pd` can be saved with `DocBin` and processed with `n_process` other than 1:
 
 ```python
 from spacy_conll import ConllParser, init_parser
 
-nlp = init_parser(
-    "en_core_web_sm", "spacy", formatter_config={"disable_pandas": True}
-)
+nlp = init_parser("en_core_web_sm", "spacy")
 parser = ConllParser(nlp)
 conll = parser.parse_text_as_conll(
     "I like cookies.\nWhat about you?", n_process=2
 )
 ```
 
-`n_process=-1` uses all cores and goes through the same check. On Windows, UDPipe pipelines also fail the check, because the models cannot be pickled.
+`n_process=-1` uses all cores. On Windows, UDPipe pipelines fail a check, because the models cannot be pickled. `ignore_pipe_errors=True` skips this check.
+
+A doc that is loaded from a `DocBin(store_user_data=True)` has `conll` and `conll_str`, and `conll_pd` is computed again from `conll` (see `examples/example-adding-conll-to-docbin.py`).
 
 Put the code that starts processes under `if __name__ == "__main__":`, as for any use of `multiprocessing` on Windows and macOS.
 

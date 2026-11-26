@@ -121,8 +121,7 @@ class ConllParser:
         Args:
             text: The text to parse.
             n_process: Number of processes for `nlp.pipe`. -1 uses all
-                cores. Values other than 1 require `disable_pandas=True` in
-                the formatter, and may not work with UDPipe.
+                cores. Values other than 1 may not work with UDPipe.
             renumber_sent_ids: Whether to number `# sent_id` consecutively
                 over the whole text.
             ignore_pipe_errors: Whether to skip the checks that raise an
@@ -144,8 +143,7 @@ class ConllParser:
 
         Raises:
             OSError: If `n_process` is not 1, `ignore_pipe_errors` is false,
-                and pandas is enabled in the formatter or the backend is
-                UDPipe on Windows.
+                and the backend is UDPipe on Windows.
             ValueError: If `sent_ids` is given without `include_headers`, if
                 an ID is empty or contains whitespace, or if the number of
                 IDs differs from the number of sentences.
@@ -166,23 +164,18 @@ class ConllParser:
             ['# sent_id = doc1-008', '# text = I like cookies.', '# sent_id = doc1-009', '# text = Me too.']
         """
         formatter = self.nlp.get_pipe("conll_formatter")
-        if n_process != 1 and not ignore_pipe_errors:
-            if not formatter.disable_pandas:
-                raise OSError(
-                    "Due to pandas serialisation, 'n_process' other than 1 is"
-                    " not supported when 'disable_pandas' is False in the"
-                    " ConllFormatter. Set 'n_process' to 1 or initialise the"
-                    " ConllFormatter with 'disable_pandas=True'"
-                )
-
-            # On Windows, UDPipe models cannot be pickled for
-            # multiprocessing.
-            if os.name == "nt" and self.parser == "udpipe":
-                raise OSError(
-                    "'n_process' other than 1 is not supported on all"
-                    " platforms and parsers. Try again with 'n_process=1',"
-                    " or use 'ignore_pipe_errors' to run without this check"
-                )
+        # On Windows, UDPipe models cannot be pickled for multiprocessing.
+        if (
+            n_process != 1
+            and not ignore_pipe_errors
+            and os.name == "nt"
+            and self.parser == "udpipe"
+        ):
+            raise OSError(
+                "'n_process' other than 1 is not supported on all"
+                " platforms and parsers. Try again with 'n_process=1',"
+                " or use 'ignore_pipe_errors' to run without this check"
+            )
 
         if sent_ids is not None:
             if not formatter.include_headers:

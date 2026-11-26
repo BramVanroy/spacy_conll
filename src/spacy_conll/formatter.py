@@ -185,7 +185,9 @@ class ConllFormatter:
     `Token`, a list of those dicts on a sentence `Span`, and a list of
     sentence lists on a `Doc`. The extension `conll_str` holds the
     tab-separated CoNLL-U text, and `conll_pd` (when pandas is installed and
-    `disable_pandas` is false) holds a pandas `Series` or `DataFrame`.
+    `disable_pandas` is false) holds a pandas `Series` or `DataFrame`. The
+    pandas object is built from `conll` on access and is not stored in the
+    doc, so docs can be saved with `DocBin` and sent between processes.
     Multi-word tokens and empty nodes are not supported.
 
     Args:
@@ -200,8 +202,7 @@ class ConllFormatter:
         include_headers: Whether `conll_str` of a sentence starts with the
             `# sent_id` and `# text` comment lines.
         disable_pandas: Whether to skip the `conll_pd` extension even if
-            pandas is installed. This avoids pickling problems with
-            multiprocessing.
+            pandas is installed.
         columns: The CoNLL-U Plus columns to write, in this order. `None`
             writes plain CoNLL-U. Otherwise `conll_str` of the doc starts
             with a `# global.columns` line. The names are the CoNLL-U names
@@ -295,15 +296,6 @@ class ConllFormatter:
             + "\n".join([s._.get(self.ext_names["conll_str"]) for s in sents]),
         )
 
-        if PD_AVAILABLE and not self.disable_pandas:
-            sent_dfs = [s._.get(self.ext_names["conll_pd"]) for s in sents]
-            doc._.set(
-                self.ext_names["conll_pd"],
-                pd.concat(sent_dfs).reset_index(drop=True)
-                if sent_dfs
-                else pd.DataFrame(columns=self.output_names),
-            )
-
         return doc
 
     def _map_conll(
@@ -356,9 +348,8 @@ class ConllFormatter:
 
         for token in span:
             if token.is_space:
-                for ext_name in self.ext_names.values():
-                    if token.has_extension(ext_name):
-                        token._.set(ext_name, None)
+                for key in ("conll", "conll_str"):
+                    token._.set(self.ext_names[key], None)
             else:
                 self._set_token_conll(token, token_ids[token.i], token_ids)
 
@@ -370,15 +361,6 @@ class ConllFormatter:
             [t._.get(self.ext_names["conll_str"]) for t in words]
         )
         span._.set(self.ext_names["conll_str"], span_conll_str)
-
-        if PD_AVAILABLE and not self.disable_pandas:
-            span._.set(
-                self.ext_names["conll_pd"],
-                pd.DataFrame(
-                    [t._.get(self.ext_names["conll"]) for t in words],
-                    columns=self.output_names,
-                ),
-            )
 
     def _set_token_conll(
         self,
@@ -451,10 +433,29 @@ class ConllFormatter:
         token_conll_str = "\t".join(map(str, token_conll_d.values())) + "\n"
         token._.set(self.ext_names["conll_str"], token_conll_str)
 
-        if PD_AVAILABLE and not self.disable_pandas:
-            token._.set(self.ext_names["conll_pd"], pd.Series(token_conll_d))
-
         return token
+
+    def _get_conll_pd(self, obj: Doc | Span | Token):
+        """Build the pandas object of a token, sentence or doc.
+
+        Args:
+            obj: A token, a span or a doc.
+
+        Returns:
+            A `Series` for a token (`None` for a whitespace token) and a
+            `DataFrame` with one row per token for a span or a doc.
+        """
+        conll_ext = self.ext_names["conll"]
+        if isinstance(obj, Token):
+            token_conll = obj._.get(conll_ext)
+            return None if token_conll is None else pd.Series(token_conll)
+
+        rows = [
+            conll
+            for conll in (t._.get(conll_ext) for t in obj)
+            if conll is not None
+        ]
+        return pd.DataFrame(rows, columns=self.output_names)
 
     def _set_extensions(self):
         """Register the extensions that do not exist yet."""
@@ -464,12 +465,16 @@ class ConllFormatter:
             if not obj.has_extension(self.ext_names["conll"]):
                 obj.set_extension(self.ext_names["conll"], default=None)
 
-            if (
-                PD_AVAILABLE
-                and not self.disable_pandas
-                and not obj.has_extension(self.ext_names["conll_pd"])
-            ):
-                obj.set_extension(self.ext_names["conll_pd"], default=None)
+            if PD_AVAILABLE and not self.disable_pandas:
+                # A getter, so that no pandas object is stored in
+                # `user_data`, which DocBin and multiprocessing cannot
+                # serialize. It replaces an extension that has the same name
+                # but another definition.
+                obj.set_extension(
+                    self.ext_names["conll_pd"],
+                    getter=self._get_conll_pd,
+                    force=True,
+                )
 
         # CoNLL-U fields that spaCy does not store. ConllParser fills them
         # when it reads CoNLL-U text.

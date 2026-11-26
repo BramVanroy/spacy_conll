@@ -25,6 +25,7 @@ All notable changes to this project are documented in this file. The format is b
 - When CoNLL-U is read into spaCy, a `_` in LEMMA, UPOS or XPOS leaves the attribute empty. Before, LEMMA became `"_"`, UPOS `_` raised an error and XPOS `_` was replaced by the UPOS value.
 - Errors for invalid CoNLL-U input name the line and the field.
 - The options of `parse-as-conll` use hyphens: `-f/--input-file`, `--input-str`, `--input-encoding`, `-o/--output-file`, `--output-encoding` (default `utf-8`), `--disable-sbd`, `--is-tokenized`, `--include-headers`, `--[no-]renumber-sent-ids`, `--n-process`, `--ignore-pipe-errors`, `--[no-]split-on-newline` and `-v/--verbose`. One of `--input-file` and `--input-str` is required. The short flags `-a`, `-b`, `-c`, `-s`, `-t`, `-d`, `-e` and `-j` are removed.
+- `conll_pd` is computed from `conll` when it is accessed and is not stored in the doc. `ConllParser.parse_text_as_conll` accepts `n_process` other than 1 when pandas is enabled, so `disable_pandas=True` is no longer needed for multiprocessing.
 - Documentation moved to MkDocs, published at https://bramvanroy.github.io/spacy_conll. Development happens on `main`, the `dev` branch is gone.
 
 ### Removed
@@ -33,6 +34,7 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Fixed
 
+- Saving docs with a `DocBin` failed with "can not serialize 'Series' object" when pandas was installed, because the `conll_pd` objects were stored in `doc.user_data`.
 - The command line script crashed on every run in 4.0.x.
 - Adding `conll_formatter` to a pipeline failed config validation with recent spaCy versions because `field_names` was `None`.
 - Pretokenized input with an empty string raised an `IndexError`.

@@ -14,8 +14,7 @@ def main():
     )
     doc_bin = DocBin(docs=docs)
 
-    # pandas objects cannot be serialized in a DocBin
-    formatter = ConllFormatter(disable_pandas=True)
+    formatter = ConllFormatter()
     conll_docs = [formatter(doc) for doc in doc_bin.get_docs(nlp.vocab)]
     conll_doc_bin = DocBin(docs=conll_docs, store_user_data=True)
 
