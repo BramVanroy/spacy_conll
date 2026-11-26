@@ -19,4 +19,4 @@ def test_ext_names_token_conll(spacy_ext_names_doc):
         assert token.has_extension("conllu")
         assert token._.conllu is not None
         assert isinstance(token._.conllu, dict)
-        assert CONLL_FIELD_NAMES == list(token._.conllu.keys())
+        assert list(token._.conllu.keys()) == CONLL_FIELD_NAMES

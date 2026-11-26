@@ -1,178 +1,255 @@
-from argparse import Namespace
-from locale import getpreferredencoding
+"""The `parse-as-conll` command."""
+
+import argparse
+import os
+import sys
 from pathlib import Path
-from sys import stdout
+from typing import Literal
 
-from spacy_conll import init_parser
 from spacy_conll.parser import ConllParser
+from spacy_conll.utils import init_parser
 
 
-def parse(args: Namespace):
-    if not args.input_str and not args.input_file:
+def run(
+    *,
+    model_or_lang: str,
+    parser: Literal["spacy", "udpipe"],
+    input_file: str | os.PathLike[str] | None = None,
+    input_str: str | None = None,
+    input_encoding: str = "utf-8",
+    output_file: str | os.PathLike[str] | None = None,
+    output_encoding: str = "utf-8",
+    disable_sbd: bool = False,
+    is_tokenized: bool = False,
+    include_headers: bool = False,
+    renumber_sent_ids: bool = True,
+    n_process: int = 1,
+    ignore_pipe_errors: bool = False,
+    split_on_newline: bool = True,
+    columns: list[str] | None = None,
+    sent_ids_file: str | os.PathLike[str] | None = None,
+    verbose: bool = False,
+) -> None:
+    """Parse a file or string and write the CoNLL-U output.
+
+    The output goes to `output_file`, or to stdout when no file is given.
+    The formatter runs with `disable_pandas=True` so that `n_process` can be
+    larger than 1.
+
+    Args:
+        model_or_lang: See `init_parser`.
+        parser: See `init_parser`.
+        input_file: Path to a text file to parse. Takes precedence over
+            `input_str`.
+        input_str: Text to parse.
+        input_encoding: Encoding of `input_file`.
+        output_file: Path to write the output to.
+        output_encoding: Encoding of `output_file`.
+        disable_sbd: See `init_parser`.
+        is_tokenized: See `init_parser`.
+        include_headers: Whether to write the `# sent_id` and `# text`
+            comment lines before every sentence.
+        renumber_sent_ids: See `ConllParser.parse_text_as_conll`.
+        n_process: See `ConllParser.parse_text_as_conll`.
+        ignore_pipe_errors: See `ConllParser.parse_text_as_conll`.
+        split_on_newline: See `ConllParser.parse_text_as_conll`.
+        columns: Column names for CoNLL-U Plus output, see the `columns`
+            option of `ConllFormatter`.
+        sent_ids_file: Path to a UTF-8 text file with one sentence ID per
+            line. Blank lines are ignored. This turns on `include_headers`.
+        verbose: Whether to also print the output to stdout when
+            `output_file` is given.
+
+    Raises:
+        ValueError: If neither `input_file` nor `input_str` is given, if
+            `columns` is invalid, or if the sentence IDs do not fit the
+            output.
+    """
+    if not input_str and not input_file:
         raise ValueError("'input_str' or 'input_file' must be given")
 
+    sent_ids = None
+    if sent_ids_file is not None:
+        lines = Path(sent_ids_file).read_text(encoding="utf-8").splitlines()
+        sent_ids = [line.strip() for line in lines if line.strip()]
+        include_headers = True
+
+    formatter_config = {
+        "disable_pandas": True,
+        "include_headers": include_headers,
+    }
+    if columns is not None:
+        formatter_config["columns"] = columns
+
     nlp = init_parser(
-        args.model_or_lang,
-        args.parser,
-        is_tokenized=args.is_tokenized,
-        disable_sbd=args.disable_sbd,
-        disable_pandas=True,
-        include_headers=args.include_headers,
+        model_or_lang,
+        parser,
+        is_tokenized=is_tokenized,
+        disable_sbd=disable_sbd,
+        formatter_config=formatter_config,
     )
+    conll_parser = ConllParser(nlp)
+    parse_opts = {
+        "n_process": n_process,
+        "renumber_sent_ids": renumber_sent_ids,
+        "ignore_pipe_errors": ignore_pipe_errors,
+        "split_on_newline": split_on_newline,
+        "sent_ids": sent_ids,
+    }
 
-    parser = ConllParser(nlp, is_tokenized=args.is_tokenized)
-
-    if args.input_file:
-        conll_str = parser.parse_file_as_conll(
-            args.input_file,
-            args.input_encoding,
-            n_process=args.n_process,
-            no_force_counting=args.no_force_counting,
-            ignore_pipe_errors=args.ignore_pipe_errors,
-            no_split_on_newline=args.no_split_on_newline,
+    if input_file:
+        conll_str = conll_parser.parse_file_as_conll(
+            input_file, input_encoding=input_encoding, **parse_opts
         )
     else:
-        conll_str = parser.parse_text_as_conll(
-            args.input_str,
-            n_process=args.n_process,
-            no_force_counting=args.no_force_counting,
-            ignore_pipe_errors=args.ignore_pipe_errors,
-            no_split_on_newline=args.no_split_on_newline,
-        )
+        conll_str = conll_parser.parse_text_as_conll(input_str, **parse_opts)
 
-    fhout = Path(args.output_file).open("w", encoding=args.output_encoding) if args.output_file is not None else stdout
-    fhout.write(conll_str)
-
-    if fhout is not stdout and args.verbose:
-        # end='' to avoid adding yet another newline
-        print(conll_str, end="")
+    if output_file is None:
+        sys.stdout.write(conll_str)
+    else:
+        Path(output_file).write_text(conll_str, encoding=output_encoding)
+        if verbose:
+            print(conll_str, end="")
 
 
-def main():
-    import argparse
-
+def main() -> None:
+    """Parse the command-line arguments and call `run`."""
     cparser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description="Parse an input string or input file to CoNLL-U format using a spaCy-wrapped parser. "
-        " The output can be written to stdout or a file, or both.",
+        description="Parse an input string or input file to CoNLL-U format"
+        " with a spaCy or UDPipe pipeline. The output is written to"
+        " stdout or to a file.",
     )
 
-    # Input arguments
-    cparser.add_argument(
-        "-f",
-        "--input_file",
-        default=None,
-        help="Path to file with sentences to parse. Has precedence over 'input_str'.",
-    )
-    cparser.add_argument(
-        "-a",
-        "--input_encoding",
-        default=getpreferredencoding(),
-        help="Encoding of the input file. Default value is system default.",
-    )
-    cparser.add_argument("-b", "--input_str", default=None, help="Input string to parse.")
-
-    # Output arguments
-    cparser.add_argument(
-        "-o",
-        "--output_file",
-        default=None,
-        help="Path to output file. If not specified, the output will be printed on standard output.",
-    )
-    cparser.add_argument(
-        "-c",
-        "--output_encoding",
-        default=getpreferredencoding(),
-        help="Encoding of the output file. Default value is system default.",
-    )
-
-    # Model/pipeline arguments
     cparser.add_argument(
         "model_or_lang",
-        help="Model or language to use. SpaCy models must be pre-installed, stanza and udpipe models will be"
-        " downloaded automatically",
+        help="Model or language to use. spaCy models must be installed,"
+        " UDPipe models are downloaded automatically.",
     )
     cparser.add_argument(
         "parser",
-        choices=["spacy", "stanza", "udpipe"],
-        help="Which parser to use. Parsers other than 'spacy' need to be installed separately."
-        " For 'stanza' you need 'spacy-stanza', and for 'udpipe' the 'spacy-udpipe' library is"
-        " required.",
-    )
-    cparser.add_argument(
-        "-s",
-        "--disable_sbd",
-        default=False,
-        action="store_true",
-        help="Whether to disable spaCy automatic sentence boundary detection. In practice, disabling means that"
-        " every line will be parsed as one sentence, regardless of its actual content. When 'is_tokenized' is enabled,"
-        " 'disable_sbd' is enabled automatically (see 'is_tokenized')."
-        " Only works when using 'spacy' as 'parser'.",
-    )
-    cparser.add_argument(
-        "-t",
-        "--is_tokenized",
-        default=False,
-        action="store_true",
-        help="Whether your text has already been tokenized (space-seperated). Setting this"
-        " option has as an important consequence that no sentence splitting at all will be done except splitting"
-        " on new lines. So if your input is a file, and you want to use pretokenised text, make sure that each line"
-        " contains exactly one sentence.",
+        choices=["spacy", "udpipe"],
+        help="Which parser to use. 'udpipe' needs 'spacy-udpipe'.",
     )
 
-    # Additional arguments
-    cparser.add_argument(
-        "-d",
-        "--include_headers",
-        default=False,
-        action="store_true",
-        help="Whether to  include headers before the output of every sentence. These headers include the"
-        " sentence text and the sentence ID as per the CoNLL format.",
+    input_group = cparser.add_mutually_exclusive_group(required=True)
+    input_group.add_argument(
+        "-f",
+        "--input-file",
+        dest="input_file",
+        help="Path to a text file to parse.",
+    )
+    input_group.add_argument(
+        "--input-str",
+        dest="input_str",
+        help="Text to parse.",
     )
     cparser.add_argument(
-        "-e",
-        "--no_force_counting",
-        default=False,
-        action="store_true",
-        help="Whether to  disable force counting the 'sent_id', starting from 1 and increasing for each"
-        " sentence. Instead, 'sent_id' will depend on how spaCy returns the sentences."
-        " Must have 'include_headers' enabled.",
+        "--input-encoding",
+        dest="input_encoding",
+        default="utf-8",
+        help="Encoding of the input file.",
     )
 
     cparser.add_argument(
-        "-j",
-        "--n_process",
+        "-o",
+        "--output-file",
+        dest="output_file",
+        help="Path to the output file. Without it, the output is printed to"
+        " stdout.",
+    )
+    cparser.add_argument(
+        "--output-encoding",
+        dest="output_encoding",
+        default="utf-8",
+        help="Encoding of the output file.",
+    )
+
+    cparser.add_argument(
+        "--disable-sbd",
+        dest="disable_sbd",
+        action="store_true",
+        help="Disable automatic sentence boundary detection, so that every"
+        " line is one sentence. '--is-tokenized' enables this as well."
+        " Not supported for 'udpipe'.",
+    )
+    cparser.add_argument(
+        "--is-tokenized",
+        dest="is_tokenized",
+        action="store_true",
+        help="The text is already tokenized (tokens separated by whitespace)."
+        " Sentences are then only split on newlines, so put one sentence on"
+        " every line. Not supported for 'udpipe'.",
+    )
+    cparser.add_argument(
+        "--include-headers",
+        dest="include_headers",
+        action="store_true",
+        help="Write the '# sent_id' and '# text' comment lines before every"
+        " sentence.",
+    )
+    cparser.add_argument(
+        "--renumber-sent-ids",
+        dest="renumber_sent_ids",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Number '# sent_id' consecutively over the whole input. Without"
+        " it, the numbering restarts for every line of the input. Only"
+        " applies with '--include-headers'.",
+    )
+    cparser.add_argument(
+        "--n-process",
+        dest="n_process",
         type=int,
         default=1,
-        help="Number of processes to use in nlp.pipe(). -1 will use as many cores as available. Might not work for a"
-        " 'parser' other than 'spacy' depending on your environment.",
+        help="Number of processes for nlp.pipe(). -1 uses all cores. May not"
+        " work for 'udpipe'.",
+    )
+    cparser.add_argument(
+        "--ignore-pipe-errors",
+        dest="ignore_pipe_errors",
+        action="store_true",
+        help="Skip the checks that stop the program when '--n-process' is"
+        " likely to fail on this system.",
+    )
+    cparser.add_argument(
+        "--split-on-newline",
+        dest="split_on_newline",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Split the input on newlines and process every line as a"
+        " separate document, which is faster for long inputs.",
+    )
+    cparser.add_argument(
+        "--columns",
+        dest="columns",
+        nargs="+",
+        metavar="NAME",
+        help="Write CoNLL-U Plus with only these columns, in this order, and"
+        " a '# global.columns' line at the start. Names are the ten CoNLL-U"
+        " fields (ID, FORM, ..., MISC) or custom names with a namespace,"
+        " such as PARSEME:MWE.",
+    )
+    cparser.add_argument(
+        "--sent-ids-file",
+        dest="sent_ids_file",
+        help="Path to a UTF-8 text file with one sentence ID per line (blank"
+        " lines are ignored). The IDs replace the generated numbers in the"
+        " '# sent_id' lines, and the file needs one ID per output sentence."
+        " Implies '--include-headers'.",
     )
     cparser.add_argument(
         "-v",
         "--verbose",
-        default=False,
+        dest="verbose",
         action="store_true",
-        help="Whether to always print the output to stdout, regardless of 'output_file'.",
-    )
-    cparser.add_argument(
-        "--ignore_pipe_errors",
-        default=False,
-        action="store_true",
-        help="Whether to ignore a priori errors concerning 'n_process' By default we try to determine whether"
-        " processing works on your system and stop execution if we think it doesn't. If you know what you"
-        " are doing, you can ignore such pre-emptive errors, though, and run the code as-is, which will"
-        " then throw the default Python errors when applicable.",
-    )
-    cparser.add_argument(
-        "--no_split_on_newline",
-        default=False,
-        action="store_true",
-        help="By default, the input file or string is split on newlines for faster processing of the split up parts."
-        " If you want to disable that behavior, you can use this flag.",
+        help="Also print the output to stdout when '--output-file' is given.",
     )
 
-    cargs = cparser.parse_args()
-    parse(cargs)
+    try:
+        run(**vars(cparser.parse_args()))
+    except ValueError as err:
+        cparser.error(str(err))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,55 @@
-# History
+# Changelog
 
-## 4.0.0 (July 2nd, 2024)
+All notable changes to this project are documented in this file. The format is based on
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [5.0.0] - Unreleased
+
+### Added
+
+- `ConllParser.parse_conll_text_as_spacy` and `ConllParser.parse_conll_file_as_spacy` take `strict` (default `True`). With `strict=False`, HEAD and DEPREL may be `_`, for example in CoNLL-U that is tagged but not parsed. Every sentence block still becomes one spaCy sentence ([#34](https://github.com/BramVanroy/spacy_conll/issues/34)).
+- `ConllParser.parse_text_as_conll` and `ConllParser.parse_file_as_conll` take `sent_ids`, your own IDs for the `# sent_id` lines ([#28](https://github.com/BramVanroy/spacy_conll/issues/28)).
+- CoNLL-U Plus support. The formatter option `columns` selects and orders the output columns, including custom columns such as `PARSEME:MWE`, and writes a `# global.columns` line at the start of the output. `ConllParser.parse_conll_text_as_spacy` and `ConllParser.parse_conll_file_as_spacy` read the `# global.columns` line. Missing standard columns are read as `_` and custom columns are stored in `Token._.conll_custom_columns`. The columns are stored in `Doc._.conll_columns` and the formatter writes the doc with them, unless it has its own `columns` ([#26](https://github.com/BramVanroy/spacy_conll/issues/26)).
+- `parse-as-conll` has the options `--columns NAME [NAME ...]` (CoNLL-U Plus output) and `--sent-ids-file` (one sentence ID per line, implies `--include-headers`). Invalid column names and a wrong number of IDs end with an error message and exit code 2.
+
+### Changed
+
+- Python 3.11 or newer and spaCy 3.8 or newer are required.
+- Packaging uses hatchling and uv. The version comes from git tags.
+- `init_parser` takes the formatter options in the new argument `formatter_config` (a dict) instead of `**kwargs`, for example `formatter_config={"include_headers": True}`. `parser` is typed as `Literal["spacy", "udpipe"]`. `parser_opts` is not modified any more.
+- `ConllParser.parse_text_as_conll` and `ConllParser.parse_file_as_conll` take keyword-only options. `no_force_counting` is replaced by `renumber_sent_ids` (default `True`) and `no_split_on_newline` by `split_on_newline` (default `True`). `input_encoding` defaults to `"utf-8"` instead of the system encoding.
+- `ConllParser.parse_conll_file_as_spacy` and `ConllParser.parse_conll_text_as_spacy` take keyword-only options, and `input_encoding` defaults to `"utf-8"`. The entity tag regular expression is available as the constant `spacy_conll.parser.NER_TAG_PATTERN`.
+- The root token always has the DEPREL `root` in the CoNLL output, whatever the label of the parser. spaCy models gave `ROOT` before. `conversion_maps={"DEPREL": {"root": "ROOT"}}` restores the old label.
+- `Token._.conll` is a plain `dict` instead of an `OrderedDict`.
+- The formatter writes `_` as HEAD of a token without a head, for example in a pipeline without a parser. It wrote the ID of the token itself before.
+- When CoNLL-U is read into spaCy, a `_` in LEMMA, UPOS or XPOS leaves the attribute empty. Before, LEMMA became `"_"`, UPOS `_` raised an error and XPOS `_` was replaced by the UPOS value.
+- Errors for invalid CoNLL-U input name the line and the field.
+- The options of `parse-as-conll` use hyphens: `-f/--input-file`, `--input-str`, `--input-encoding`, `-o/--output-file`, `--output-encoding` (default `utf-8`), `--disable-sbd`, `--is-tokenized`, `--include-headers`, `--[no-]renumber-sent-ids`, `--n-process`, `--ignore-pipe-errors`, `--[no-]split-on-newline` and `-v/--verbose`. One of `--input-file` and `--input-str` is required. The short flags `-a`, `-b`, `-c`, `-s`, `-t`, `-d`, `-e` and `-j` are removed.
+- `conll_pd` is computed from `conll` when it is accessed and is not stored in the doc. `ConllParser.parse_text_as_conll` accepts `n_process` other than 1 when pandas is enabled, so `disable_pandas=True` is no longer needed for multiprocessing.
+- Documentation moved to MkDocs, published at https://bramvanroy.github.io/spacy_conll. Development happens on `main`, the `dev` branch is gone.
+
+### Removed
+
+- The stanza backend (`parser="stanza"` and the `stanza` extra). `spacy-stanza` pins `stanza<1.7`, which cannot load models with current versions of torch.
+
+### Fixed
+
+- Saving docs with a `DocBin` failed with "can not serialize 'Series' object" when pandas was installed, because the `conll_pd` objects were stored in `doc.user_data`.
+- The command line script crashed on every run in 4.0.x.
+- Adding `conll_formatter` to a pipeline failed config validation with recent spaCy versions because `field_names` was `None`.
+- Pretokenized input with an empty string raised an `IndexError`.
+- Empty docs raised an error when pandas was installed.
+- CoNLL-U text that ends with a blank line raised an error.
+- CoNLL-U text with Windows line endings was read as one sentence.
+- Reading CoNLL-U text without token lines (empty, only whitespace or only comments) raised an error. It now gives an empty `Doc`.
+- `n_process=-1` skipped the multiprocessing checks.
+- The output started with a stray newline when the first line of the input was empty.
+- Newlines, tabs and repeated spaces in the input gave token lines with tabs or newlines in FORM and LEMMA, and a `# text` line that spanned several lines, so the output was not valid CoNLL-U ([#35](https://github.com/BramVanroy/spacy_conll/issues/35)). Whitespace tokens are now left out, IDs and heads are renumbered, and the whitespace is written to `MISC` as `SpacesAfter` or `SpacesBefore` following the UD convention. Whitespace tokens have `None` as their CoNLL extensions, and sentences that only contain whitespace are skipped.
+- The formatter replaced the `MISC` value that was read from CoNLL-U. It now keeps all entries other than `SpaceAfter`, `SpacesAfter` and `SpacesBefore`.
+- Reading CoNLL-U added a space after the last token of every sentence, so `SpaceAfter=No` on that token was lost when the doc was written again.
+
+## [4.0.0] - 2024-07-02
 
 Two new changes thanks to user @rominf:
 
@@ -8,20 +57,20 @@ Two new changes thanks to user @rominf:
 removing support for Python <3.8.
 2. When dep, pos, tag, or lemma fields are empty, the underscore `_` will be used
 
-## 3.4.0 (April 2nd, 2023)
+## [3.4.0] - 2023-04-02
 
 User @matgrioni rightfully pointed out that the default fields in the library are not the real CoNLL-U fields. They
 should be in all caps, and for xpostag it should be XPOS and for upostag UPOS. Additionally, the user asked for more
 control over these fields. This release accommodates that request.
 
-- **[formatter]** Breaking change: `CONLL_FIELD_NAMES` now is in line with the CoNLL-U descriptor field names: 
+- **[formatter]** Breaking change: `CONLL_FIELD_NAMES` now is in line with the CoNLL-U descriptor field names:
 "ID", "FORM", "LEMMA", "UPOS", "XPOS", "FEATS", "HEAD", "DEPREL", "DEPS", "MISC". These are the new default fields.
-- **[formatter]** New parameter: `field_names` that allows you to override the fields that were described above. 
+- **[formatter]** New parameter: `field_names` that allows you to override the fields that were described above.
 Simply add a dictionary of `{"default field name": "new field name"}`, e.g. `{"UPOS": "upostag"}
 
-## 3.3.0 (January 17th, 2023)
+## [3.3.0] - 2023-01-17
 
-Since spaCy 3.2.0, the data that is passed to a spaCy pipeline has become more strict. This means that passing 
+Since spaCy 3.2.0, the data that is passed to a spaCy pipeline has become more strict. This means that passing
 a list of pretokenized tokens (`["This", "is", "a", "pretokenized", "sentence"]`) is not accepted anymore. Therefore,
 the `is_tokenized` option needed to be adapted to reflect this. It is still possible to pass a string where tokens
 are separated by whitespaces, e.g. `"This is a pretokenized sentence"`, which will continue to work for spaCy and
@@ -33,18 +82,18 @@ Specific changes:
 - **[utils/conllparser]** Breaking change: when using UDPipe, pretokenized data is not supported any more.
 - **[utils]** Breaking change: `SpacyPretokenizedTokenizer.__call__` does not support a list of tokens any more.
 
-## 3.2.0 (April 4th, 2022)
+## [3.2.0] - 2022-04-04
 
 - **[conllformatter]** Fixed an issue where `SpaceAfter=No` was not added correctly to tokens
-- **[conllformatter]** Added `ConllFormatter` as an entry point, which means that you do not have to import 
-  `spacy_conll` anymore when you want to add the pipe to a parser! spaCy will know where to look for the CoNLL 
+- **[conllformatter]** Added `ConllFormatter` as an entry point, which means that you do not have to import
+  `spacy_conll` anymore when you want to add the pipe to a parser! spaCy will know where to look for the CoNLL
   formatter when you use `nlp.add_pipe("conll_formatter")` without you having to import the component manually
 - **[conllformatter]** Now adds the component constructor on a construction function rather than directly on the class
   as recommended by spacy. The formatter has also been re-written as a dataclass
 - **[conllformatter/utils]** Moved `merge_dicts_strict` to utils, outside the formatter class
 - **[conllparser]** Make ConllParser directly importable from the root of the library, i.e.,
   `from spacy_conll import ConllParser`
-- **[init_parser]** Allow users to exclude pipeline components when using the spaCy parser with the 
+- **[init_parser]** Allow users to exclude pipeline components when using the spaCy parser with the
   `exclude_spacy_components` argument
 - **[init_parser]** Fixed an issue where disabling sentence segmentation would not work if your model does
   not have a parser
@@ -54,24 +103,24 @@ Specific changes:
   own code, by calling `nlp.add_pipe("disable_sbd", before="parser")`
 
 
-## 3.1.0 (October 31st, 2021)
+## [3.1.0] - 2021-10-31
 
 - **[conllparser]** The CoNLLParser can now parse a given CoNLL string or text file into a spaCy Doc.
   ([#14](https://github.com/BramVanroy/spacy_conll/pull/14) Parse conllu 2 spacy object, contributed by
   [shaked571](https://github.com/shaked571))
 
 
-## 3.0.2 (July 14th, 2021)
+## [3.0.2] - 2021-07-14
 
 - **[conllparser]** Fix: fixed an issue with no_split_on_newline in combination with `nlp.pipe`
 
 
-## 3.0.1 (July 14th, 2021)
+## [3.0.1] - 2021-07-14
 
 - **[conllparser]** Fix: make sure the parser also runs if stanza and UDPipe are not installed
 
 
-## 3.0.0 (July 12th, 2021)
+## [3.0.0] - 2021-07-12
 
 - **[general]** Breaking change: spaCy v3 required (closes [#8](https://github.com/BramVanroy/spacy_conll/issues/8))
 - **[init_parser]** Breaking change: in all cases, `is_tokenized` now disables sentence segmentation
@@ -81,16 +130,16 @@ Specific changes:
 - **[init_parser]** Improvement: models are automatically downloaded for Stanza and UDPipe
 - **[cli]** Reworked the position of the CLI script in the directory structure as well as the arguments. Run
   `parse-as-conll -h` for more information.
-- **[conllparser]** Made the [`ConllParser`](spacy_conll/parser.py) class available as a utility to easily create a 
+- **[conllparser]** Made the [`ConllParser`](spacy_conll/parser.py) class available as a utility to easily create a
   wrapper for a spaCy-like
   parser which can return the parsed CoNLL output of a given file or text
 - **[conllparser,cli]** Improvements to usability of `n_process`. Will try to figure out whether multiprocessing
   is available for your platform and if not, tell you so. Such a priori error messages can be disabled, with
   `ignore_pipe_errors`, both on the command line as in ConllParser's parse methods
-  
 
 
-## 2.1.0 (June 23rd, 2021)
+
+## [2.1.0] - 2021-06-23
 
 Preparing for v3 release
 
@@ -98,7 +147,7 @@ Preparing for v3 release
 - Last version to support ``spacy-stanfordnlp``. ``spacy-stanza`` is still supported
 
 
-## 2.0.0 (May 11th, 2020)
+## [2.0.0] - 2020-05-11
 
 **Fully reworked version!**
 
@@ -131,14 +180,14 @@ Preparing for v3 release
 - Many doc changes, added tests, and a few examples
 
 
-## 1.3.0 (April 28th, 2020)
+## [1.3.0] - 2020-04-28
 
 - **IMPORTANT**: This will be the last release that supports the deprecated `Spacy2ConllParser` class!
 - Community addition (@KoichiYasuoka): add `SpaceAfter=No` to the Misc field when applicable.
 - Fixed failing tests
 
 
-## 1.2.0 (February 2nd, 2020)
+## [1.2.0] - 2020-02-02
 
 - **BREAKING**: `._.conll` now outputs a dictionary for sentences `fieldname: [value1, value2...]`, and
   a list of such dictionaries for a `Doc`
@@ -148,17 +197,17 @@ Preparing for v3 release
 - Better documentation, including advanced example
 
 
-## 1.1.0 (January 21st, 2020)
+## [1.1.0] - 2020-01-21
 
 Include dependencies in `setup.py` rather than expecting users to install dependencies manually.
 
 
-## 1.0.1 (January 15th, 2020)
+## [1.0.1] - 2020-01-15
 
 Minor documentation changes for PyPi.
 
 
-## 1.0.0 (January 13th, 2020)
+## [1.0.0] - 2020-01-13
 
 - Complete overhaul. Can now be used a custom pipeline component in spaCy.
 - `Spacy2ConllParser` is now deprecated.
@@ -168,23 +217,23 @@ Minor documentation changes for PyPi.
   spaCy segments the sentences.
 
 
-## 0.1.6 (January 17th, 2019)
+## [0.1.6] - 2019-01-17
 
 Minor bugfix.
 
 
-## 0.1.5 (January 17th, 2019)
+## [0.1.5] - 2019-01-17
 
 Added the `-s|--disable_sbd` flag. By default, spaCy does automatic sentence boundary detection. You may not
 always want this. When you want to parse every line explicitly as one sentence, you can disable this functionality.
 
 
-## 0.1.0 (January 16th, 2019)
+## [0.1.0] - 2019-01-16
 
 Added the `-t|--is_tokenized` flag. It indicates that your text has already been tokenized and that it should not
 be tokenized again. The tokens should be space-separated, e.g. `I like grandma 's cookies !`.
 
 
-## 0.0.3 (January 14th, 2019)
+## [0.0.3] - 2019-01-14
 
 Initial commit.

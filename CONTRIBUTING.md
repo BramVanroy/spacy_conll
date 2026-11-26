@@ -1,35 +1,37 @@
-# Contributing to `spacy_conll`
+# Contributing to spacy-conll
 
-If you are solving a bug, please first create [an issue](https://github.com/BramVanroy/spacy_conll/issues)
- and mention that you are working on it. This way, other people with the same issue know that it is being worked on.
+If you want to fix a bug, first open [an issue](https://github.com/BramVanroy/spacy_conll/issues) and say that you are working on it. Other people with the same problem then know that a fix is on the way.
 
-If you want to implement a new feature, let's first discuss how to best approach it in the 
- [Discussions](https://github.com/BramVanroy/spacy_conll/discussions). 
+If you want to add a feature, discuss the approach first in the [Discussions](https://github.com/BramVanroy/spacy_conll/discussions).
 
-If you want to contribute to `spacy_conll`, it is recommended that you clone and install the repository with
- the `dev` option, which will install all required dependencies.
+## Setup
 
-```bash
+The project uses [uv](https://docs.astral.sh/uv/). Clone the repository and install the package with all development tools. This also installs the English spaCy model `en_core_web_sm` that the tests need.
+
+```shell
 git clone https://github.com/BramVanroy/spacy_conll.git
 cd spacy_conll
-pip install -e .[dev]
+uv sync
+uv run pre-commit install
 ```
 
-You'll also need to install the basic English spaCy model to successfully run the tests.
+## Checks
 
-```bash
-python -m spacy download en_core_web_sm
+```shell
+make style    # fix lint issues and format with ruff
+make quality  # check lint and formatting without changing files
+make test     # pytest with coverage, including the doctests in src/
 ```
 
-You are now ready to start working on your issue. You can begin your
- [pull request](https://github.com/BramVanroy/spacy_conll/pulls) from your cloned branch while still working on it
- (add `[WIP]` to the front of the title of the PR in that case) - or you can submit the PR once you're done.
+Some tests download UDPipe models on first use. Skip them with `uv run pytest -m "not udpipe"`. Preview the documentation with `make docs` and check it with `uv run mkdocs build --strict`.
 
-## Important notes
-- Do your pull request against the `dev` branch, not master!
-- If you are still working on a PR, add `[WIP]` to the front of the title of the PR!
-- If your PR solves an issue, add `closes <link to the issue>` to the PR text so that the issue is closed automatically
-- Run the tests before finalizing the PR to make sure that everything is running as expected with `pytest tests/`
-- Ensure style is as expected with `make style` and `make quality`. We use black and isort for formatting.
-- When your PR is ready to be reviewed, remove `[WIP]` from the title. If you have not received any response *after a
-  week*, feel free to tag me on Github.
+The code style is described in `AGENTS.md`. In short: Google-style docstrings, modern type hints (`list[str]`, `X | None`) and plain prose without dashes as punctuation.
+
+## Pull requests
+
+- Open pull requests against the `main` branch.
+- Add `[WIP]` to the title of a pull request that is not ready for review and remove it when it is.
+- If the pull request solves an issue, add `closes <link to the issue>` to the description.
+- Add tests for new behavior and update the docs and docstrings.
+- Run `make quality` and `make test` before you ask for a review.
+- If nobody has responded after a week, tag the maintainer.
