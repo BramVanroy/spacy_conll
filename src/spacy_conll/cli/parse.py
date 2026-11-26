@@ -26,6 +26,8 @@ def run(
     n_process: int = 1,
     ignore_pipe_errors: bool = False,
     split_on_newline: bool = True,
+    columns: list[str] | None = None,
+    sent_ids_file: str | os.PathLike[str] | None = None,
     verbose: bool = False,
 ) -> None:
     """Parse a file or string and write the CoNLL-U output.
@@ -51,24 +53,40 @@ def run(
         n_process: See `ConllParser.parse_text_as_conll`.
         ignore_pipe_errors: See `ConllParser.parse_text_as_conll`.
         split_on_newline: See `ConllParser.parse_text_as_conll`.
+        columns: Column names for CoNLL-U Plus output, see the `columns`
+            option of `ConllFormatter`.
+        sent_ids_file: Path to a UTF-8 text file with one sentence ID per
+            line. Blank lines are ignored. This turns on `include_headers`.
         verbose: Whether to also print the output to stdout when
             `output_file` is given.
 
     Raises:
-        ValueError: If neither `input_file` nor `input_str` is given.
+        ValueError: If neither `input_file` nor `input_str` is given, if
+            `columns` is invalid, or if the sentence IDs do not fit the
+            output.
     """
     if not input_str and not input_file:
         raise ValueError("'input_str' or 'input_file' must be given")
+
+    sent_ids = None
+    if sent_ids_file is not None:
+        lines = Path(sent_ids_file).read_text(encoding="utf-8").splitlines()
+        sent_ids = [line.strip() for line in lines if line.strip()]
+        include_headers = True
+
+    formatter_config = {
+        "disable_pandas": True,
+        "include_headers": include_headers,
+    }
+    if columns is not None:
+        formatter_config["columns"] = columns
 
     nlp = init_parser(
         model_or_lang,
         parser,
         is_tokenized=is_tokenized,
         disable_sbd=disable_sbd,
-        formatter_config={
-            "disable_pandas": True,
-            "include_headers": include_headers,
-        },
+        formatter_config=formatter_config,
     )
     conll_parser = ConllParser(nlp)
     parse_opts = {
@@ -76,6 +94,7 @@ def run(
         "renumber_sent_ids": renumber_sent_ids,
         "ignore_pipe_errors": ignore_pipe_errors,
         "split_on_newline": split_on_newline,
+        "sent_ids": sent_ids,
     }
 
     if input_file:
@@ -202,6 +221,24 @@ def main() -> None:
         " separate document, which is faster for long inputs.",
     )
     cparser.add_argument(
+        "--columns",
+        dest="columns",
+        nargs="+",
+        metavar="NAME",
+        help="Write CoNLL-U Plus with only these columns, in this order, and"
+        " a '# global.columns' line at the start. Names are the ten CoNLL-U"
+        " fields (ID, FORM, ..., MISC) or custom names with a namespace,"
+        " such as PARSEME:MWE.",
+    )
+    cparser.add_argument(
+        "--sent-ids-file",
+        dest="sent_ids_file",
+        help="Path to a UTF-8 text file with one sentence ID per line (blank"
+        " lines are ignored). The IDs replace the generated numbers in the"
+        " '# sent_id' lines, and the file needs one ID per output sentence."
+        " Implies '--include-headers'.",
+    )
+    cparser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
@@ -209,7 +246,10 @@ def main() -> None:
         help="Also print the output to stdout when '--output-file' is given.",
     )
 
-    run(**vars(cparser.parse_args()))
+    try:
+        run(**vars(cparser.parse_args()))
+    except ValueError as err:
+        cparser.error(str(err))
 
 
 if __name__ == "__main__":
