@@ -521,6 +521,28 @@ The script runs the formatter with `disable_pandas=True`, so `--n-process` works
 - `--n-process`: number of processes. `-1` uses all cores.
 - `--ignore-pipe-errors`: skip the multiprocessing checks.
 - `--split-on-newline` and `--no-split-on-newline`: see `split_on_newline`. On by default.
+- `--columns NAME [NAME ...]`: write CoNLL-U Plus with only these columns, in this order, and a `# global.columns` line. Invalid names end the program with an error message.
+- `--sent-ids-file`: a UTF-8 text file with one sentence ID per line (blank lines are ignored). The IDs replace the numbers in the `# sent_id` lines and the file needs one ID per output sentence. This implies `--include-headers`.
 - `-v, --verbose`: also print to stdout when `--output-file` is set.
+
+Select columns and use your own sentence IDs (`ids.txt` has the lines `doc1-008` and `doc1-009`):
+
+```shell
+parse-as-conll en_core_web_sm spacy --input-str "First one.
+Second one." --disable-sbd --columns ID FORM UPOS --sent-ids-file ids.txt
+```
+
+```text
+# global.columns = ID FORM UPOS
+# sent_id = doc1-008
+# text = First one.
+1	First	ADJ
+2	one	NUM
+3	.	PUNCT
+
+# sent_id = doc1-009
+# text = Second one.
+...
+```
 
 Run `parse-as-conll -h` for the full help text.
