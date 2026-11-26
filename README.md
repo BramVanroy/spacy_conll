@@ -7,7 +7,7 @@
 
 spacy-conll is a spaCy pipeline component that formats parsed documents as [CoNLL-U](https://universaldependencies.org/format.html). It also reads CoNLL-U into spaCy `Doc` objects and includes the command line tool `parse-as-conll`. It works with spaCy models and, as an optional backend, with [spacy-udpipe](https://github.com/TakeLab/spacy-udpipe).
 
-The output labels are those of the model that you use. For Universal Dependencies labels, use the UDPipe backend.
+The output labels are those of the model that you use. For Universal Dependencies labels, use the UDPipe backend. `spacy-stanza` is not supported anymore since it has been unmaintained for a while now.
 
 ## Installation
 
