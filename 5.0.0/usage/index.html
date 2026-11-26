@@ -1,0 +1,1471 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Convert spaCy and UDPipe parses to CoNLL-U and back">
+      
+      
+      
+        <link rel="canonical" href="https://bramvanroy.github.io/spacy_conll/latest/usage/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../migration/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
+    
+    
+      
+        <title>Usage - spacy-conll</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  <span id="version-warning">
+    You are not viewing the documentation of the latest released version.
+    <a href="../.."><strong>Go to the latest release docs.</strong></a>
+  </span>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),base=new URL(".."),outdated=__md_get("__outdated",sessionStorage,base);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="spacy-conll" class="md-header__button md-logo" aria-label="spacy-conll" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            spacy-conll
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Usage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BramVanroy/spacy_conll" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BramVanroy/spacy_conll
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Usage
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../migration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Migration to v5
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="spacy-conll" class="md-nav__button md-logo" aria-label="spacy-conll" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    spacy-conll
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BramVanroy/spacy_conll" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BramVanroy/spacy_conll
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-pipeline-component" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The pipeline component
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The pipeline component">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#formatter-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formatter options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extensions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extensions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#newlines-tabs-and-other-whitespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Newlines, tabs and other whitespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parsing-text-and-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing text and files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parsing text and files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#your-own-sentence-ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your own sentence IDs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pretokenized-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pretokenized input
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-conll-u-into-spacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading CoNLL-U into spaCy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reading CoNLL-U into spaCy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sentences-without-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sentences without dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fields-that-spacy-does-not-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fields that spaCy does not store
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conll-u-plus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CoNLL-U Plus
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CoNLL-U Plus">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#writing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pandas-and-multiprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pandas and multiprocessing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#udpipe-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UDPipe backend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command line
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration to v5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-pipeline-component" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The pipeline component
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The pipeline component">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#formatter-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formatter options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extensions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extensions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#newlines-tabs-and-other-whitespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Newlines, tabs and other whitespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parsing-text-and-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parsing text and files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parsing text and files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#your-own-sentence-ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your own sentence IDs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pretokenized-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pretokenized input
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-conll-u-into-spacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading CoNLL-U into spaCy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reading CoNLL-U into spaCy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sentences-without-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sentences without dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fields-that-spacy-does-not-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fields that spaCy does not store
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conll-u-plus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CoNLL-U Plus
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CoNLL-U Plus">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#writing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reading
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pandas-and-multiprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pandas and multiprocessing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#udpipe-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UDPipe backend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command line
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h1>
+<h2 id="the-pipeline-component">The pipeline component<a class="headerlink" href="#the-pipeline-component" title="Permanent link">&para;</a></h2>
+<p><code>conll_formatter</code> is a spaCy factory. spaCy finds it through an entry point, so <code>import spacy_conll</code> is not needed before <code>nlp.add_pipe("conll_formatter")</code>. Add it after all components that set tags, lemmas, morphology and dependencies:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"en_core_web_sm"</span><span class="p">)</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">"conll_formatter"</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">"I like cookies."</span><span class="p">)</span>
+</span></code></pre></div>
+<p><code>init_parser</code> loads a model and adds the formatter in one call. Options for the formatter go in <code>formatter_config</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_parser</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="s2">"en_core_web_sm"</span><span class="p">,</span> <span class="s2">"spacy"</span><span class="p">,</span> <span class="n">formatter_config</span><span class="o">=</span><span class="p">{</span><span class="s2">"include_headers"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>The options of <code>init_parser</code> are:</p>
+<ul>
+<li><code>model_or_lang</code>: the spaCy model name or, for UDPipe, a language code such as <code>"en"</code>. Models are downloaded automatically for UDPipe only.</li>
+<li><code>parser</code>: <code>"spacy"</code> or <code>"udpipe"</code>.</li>
+<li><code>is_tokenized</code>: the input is a string of tokens that are separated by whitespace. Sentences are then split on newlines only (spaCy) and UDPipe does not support this.</li>
+<li><code>disable_sbd</code>: disable sentence boundary detection, so that every input text is one sentence. Only for spaCy.</li>
+<li><code>exclude_spacy_components</code>: names of spaCy components to leave out of the pipeline.</li>
+<li><code>parser_opts</code>: extra keyword arguments for the loader of the backend (<code>spacy.load</code>). The dict is not modified.</li>
+<li><code>formatter_config</code>: the config of <code>conll_formatter</code>, see below.</li>
+</ul>
+<h3 id="formatter-options">Formatter options<a class="headerlink" href="#formatter-options" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>include_headers</code>: start every sentence with <code># sent_id = ...</code> and <code># text = ...</code> comment lines. Default <code>False</code>.</li>
+<li><code>ext_names</code>: new names for the extensions <code>conll</code>, <code>conll_str</code> and <code>conll_pd</code>.</li>
+<li><code>field_names</code>: new names for the CoNLL-U fields <code>ID</code>, <code>FORM</code>, <code>LEMMA</code>, <code>UPOS</code>, <code>XPOS</code>, <code>FEATS</code>, <code>HEAD</code>, <code>DEPREL</code>, <code>DEPS</code> and <code>MISC</code>. These are the dict keys of <code>._.conll</code> and the column names of <code>._.conll_pd</code>.</li>
+<li><code>conversion_maps</code>: a dict of the form <code>{field_name: {old_value: new_value}}</code> that replaces output values. The field name is the name after <code>field_names</code> was applied.</li>
+<li><code>disable_pandas</code>: do not set <code>conll_pd</code>, even if pandas is installed.</li>
+<li><code>columns</code>: a list of CoNLL-U Plus column names that selects and orders the output columns. Default <code>None</code> (plain CoNLL-U). See <a href="#conll-u-plus">CoNLL-U Plus</a>.</li>
+</ul>
+<p>Unknown keys in <code>ext_names</code> and <code>field_names</code> raise a <code>KeyError</code>.</p>
+<p>This example renames <code>conll_pd</code> to <code>pandas</code> and replaces the dependency label <code>nsubj</code> with <code>subj</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_parser</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="s2">"en_core_web_sm"</span><span class="p">,</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="s2">"spacy"</span><span class="p">,</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">formatter_config</span><span class="o">=</span><span class="p">{</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>        <span class="s2">"ext_names"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"conll_pd"</span><span class="p">:</span> <span class="s2">"pandas"</span><span class="p">},</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="s2">"conversion_maps"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"DEPREL"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"nsubj"</span><span class="p">:</span> <span class="s2">"subj"</span><span class="p">}},</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="p">},</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="p">)</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">"I like cookies."</span><span class="p">)</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">pandas</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>   ID     FORM  LEMMA   UPOS  ...  HEAD DEPREL DEPS           MISC
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>0   1        I      I   PRON  ...     2   subj    _              _
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>1   2     like   like   VERB  ...     0   root    _              _
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>2   3  cookies  cooky   NOUN  ...     2   dobj    _  SpaceAfter=No
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>3   4        .      .  PUNCT  ...     2  punct    _  SpaceAfter=No
+</span></code></pre></div>
+<p>The same config works with <code>nlp.add_pipe("conll_formatter", config={...}, last=True)</code>. Renaming fields changes the keys of the output:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_parser</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="s2">"en_core_web_sm"</span><span class="p">,</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="s2">"spacy"</span><span class="p">,</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">formatter_config</span><span class="o">=</span><span class="p">{</span><span class="s2">"field_names"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"UPOS"</span><span class="p">:</span> <span class="s2">"upostag"</span><span class="p">,</span> <span class="s2">"XPOS"</span><span class="p">:</span> <span class="s2">"xpostag"</span><span class="p">}},</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">)</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">"I like cookies."</span><span class="p">)</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_pd</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>['ID', 'FORM', 'LEMMA', 'upostag', 'xpostag', 'FEATS', 'HEAD', 'DEPREL', 'DEPS', 'MISC']
+</span></code></pre></div>
+<h2 id="extensions">Extensions<a class="headerlink" href="#extensions" title="Permanent link">&para;</a></h2>
+<p>The formatter sets three extensions on every <code>Token</code>, on every sentence <code>Span</code> and on the <code>Doc</code>. Other spans do not get them.</p>
+<ul>
+<li><code>._.conll</code>: the raw data.<ul>
+<li><code>Token</code>: a dict with the CoNLL-U fields as keys.</li>
+<li>Sentence <code>Span</code>: a list of the dicts of its tokens.</li>
+<li><code>Doc</code>: a list of the lists of its sentences.</li>
+</ul>
+</li>
+<li><code>._.conll_str</code>: the CoNLL-U text.<ul>
+<li><code>Token</code>: one tab-separated line that ends with a newline.</li>
+<li>Sentence <code>Span</code>: one line per token. With <code>include_headers=True</code> the <code># sent_id</code> and <code># text</code> lines come first.</li>
+<li><code>Doc</code>: the strings of all sentences, separated by an empty line.</li>
+</ul>
+</li>
+<li><code>._.conll_pd</code>: a pandas object, only available if pandas is installed and <code>disable_pandas</code> is false.<ul>
+<li><code>Token</code>: a <code>Series</code>.</li>
+<li>Sentence <code>Span</code>: a <code>DataFrame</code> with the field names as columns.</li>
+<li><code>Doc</code>: the <code>DataFrame</code> of all sentences with a new index. A <code>Doc</code> without tokens gives an empty <code>DataFrame</code> with the field columns.</li>
+</ul>
+</li>
+</ul>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"en_core_web_sm"</span><span class="p">)</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">"conll_formatter"</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">"I like cookies."</span><span class="p">)</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll</span><span class="p">)</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_str</span><span class="p">))</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>{'ID': 1, 'FORM': 'I', 'LEMMA': 'I', 'UPOS': 'PRON', 'XPOS': 'PRP', 'FEATS': 'Case=Nom|Number=Sing|Person=1|PronType=Prs', 'HEAD': 2, 'DEPREL': 'nsubj', 'DEPS': '_', 'MISC': '_'}
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>'1\tI\tI\tPRON\tPRP\tCase=Nom|Number=Sing|Person=1|PronType=Prs\t2\tnsubj\t_\t_\n'
+</span></code></pre></div>
+<p>Empty values are written as <code>_</code>. <code>HEAD</code> is the position of the head within its sentence, <code>0</code> for the root, and <code>_</code> for a token without a head (for example in a pipeline without a parser). <code>MISC</code> is <code>SpaceAfter=No</code> for tokens that are not followed by whitespace. Other whitespace is described below.</p>
+<h3 id="newlines-tabs-and-other-whitespace">Newlines, tabs and other whitespace<a class="headerlink" href="#newlines-tabs-and-other-whitespace" title="Permanent link">&para;</a></h3>
+<p>spaCy keeps newlines, tabs and repeated spaces as separate tokens with the tag <code>_SP</code>. The formatter leaves these whitespace tokens out of the output, because a CoNLL-U field cannot contain a tab or a newline. It follows the <a href="https://universaldependencies.org/misc.html">UD convention</a> and records the whitespace in <code>MISC</code> of the token before it:</p>
+<ul>
+<li>a single space: no entry (<code>_</code>)</li>
+<li>no whitespace: <code>SpaceAfter=No</code></li>
+<li>any other whitespace: <code>SpacesAfter</code> with the escapes <code>\s</code> (space), <code>\t</code> (tab), <code>\n</code> (newline) and <code>\r</code> (carriage return)</li>
+<li>whitespace at the start of the doc: <code>SpacesBefore</code> on the first token</li>
+</ul>
+<p>The IDs and heads are renumbered without the whitespace tokens. A token whose head is a whitespace token gets the nearest ancestor that is not whitespace as its head, or becomes a root if there is none. The <code># text</code> line has its whitespace collapsed to single spaces. A sentence that only contains whitespace has no output and does not count for <code># sent_id</code>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"en_core_web_sm"</span><span class="p">)</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">"conll_formatter"</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">"include_headers"</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">"Results are clear.</span><span class="se">\n</span><span class="s2">2.</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_str</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a># sent_id = 1
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a># text = Results are clear.
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>1   Results result  NOUN    NNS Number=Plur 2   nsubj   _   _
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>2   are be  AUX VBP Mood=Ind|Tense=Pres|VerbForm=Fin    0   root    _   _
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>3   clear   clear   ADJ JJ  Degree=Pos  2   acomp   _   SpaceAfter=No
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>4   .   .   PUNCT   .   PunctType=Peri  2   punct   _   SpacesAfter=\n
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a># sent_id = 2
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a># text = 2.
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>1   2   2   X   LS  NumType=Ord 0   root    _   SpaceAfter=No
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>2   .   .   PUNCT   .   PunctType=Peri  1   punct   _   SpacesAfter=\t
+</span></code></pre></div>
+<p>The whitespace tokens themselves have <code>None</code> as <code>._.conll</code>, <code>._.conll_str</code> and <code>._.conll_pd</code>. The sentence and doc extensions only contain the other tokens, so <code>doc[4]._.conll</code> is <code>None</code> here (the token <code>"\n"</code>), and <code>len(doc._.conll_pd)</code> is 6 for the 8 tokens of the doc.</p>
+<h2 id="parsing-text-and-files">Parsing text and files<a class="headerlink" href="#parsing-text-and-files" title="Permanent link">&para;</a></h2>
+<p><code>ConllParser</code> wraps a pipeline that contains <code>conll_formatter</code>, for example the output of <code>init_parser</code>. It raises a <code>ValueError</code> if the component is missing.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConllParser</span><span class="p">,</span> <span class="n">init_parser</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="s2">"en_core_web_sm"</span><span class="p">,</span> <span class="s2">"spacy"</span><span class="p">,</span> <span class="n">formatter_config</span><span class="o">=</span><span class="p">{</span><span class="s2">"include_headers"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="p">)</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="n">parser</span> <span class="o">=</span> <span class="n">ConllParser</span><span class="p">(</span><span class="n">nlp</span><span class="p">)</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">conll</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_text_as_conll</span><span class="p">(</span><span class="s2">"I like cookies. What about you?"</span><span class="p">)</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">conll</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a># sent_id = 1
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a># text = I like cookies.
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>1   I   I   PRON    PRP Case=Nom|Number=Sing|Person=1|PronType=Prs  2   nsubj   _   _
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>2   like    like    VERB    VBP Tense=Pres|VerbForm=Fin 0   root    _   _
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>3   cookies cooky   NOUN    NNS Number=Plur 2   dobj    _   SpaceAfter=No
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>4   .   .   PUNCT   .   PunctType=Peri  2   punct   _   _
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a># sent_id = 2
+</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a># text = What about you?
+</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>1   What    what    PRON    WP  _   2   dep _   _
+</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>2   about   about   ADP IN  _   0   root    _   _
+</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>3   you you PRON    PRP Case=Acc|Person=2|PronType=Prs  2   pobj    _   SpaceAfter=No
+</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>4   ?   ?   PUNCT   .   PunctType=Peri  2   punct   _   SpaceAfter=No
+</span></code></pre></div>
+<p><code>parse_file_as_conll(input_file)</code> does the same for a text file (<code>input_encoding</code> defaults to <code>"utf-8"</code>). Both methods take these keyword-only options:</p>
+<ul>
+<li><code>n_process</code>: number of processes for <code>nlp.pipe</code>. <code>-1</code> uses all cores. Default <code>1</code>.</li>
+<li><code>renumber_sent_ids</code>: number <code># sent_id</code> over the whole input. Every line of the input is a separate <code>Doc</code> and spaCy would restart the numbering at 1 for each. Default <code>True</code>. This only matters with <code>include_headers=True</code>.</li>
+<li><code>ignore_pipe_errors</code>: skip the checks that raise an <code>OSError</code> when <code>n_process</code> is not 1 and the setup is likely to fail. Default <code>False</code>.</li>
+<li><code>split_on_newline</code>: process every line of the input as its own <code>Doc</code>, which is faster for long input. Without it, the whole input is one text. Default <code>True</code>.</li>
+<li><code>sent_ids</code>: your own IDs for the <code># sent_id</code> lines, one per output sentence. Default <code>None</code>. See below.</li>
+</ul>
+<h3 id="your-own-sentence-ids">Your own sentence IDs<a class="headerlink" href="#your-own-sentence-ids" title="Permanent link">&para;</a></h3>
+<p>If your sentences already have IDs, pass them as <code>sent_ids</code>. They replace the generated numbers, so <code>renumber_sent_ids</code> has no effect. This requires <code>include_headers=True</code>. An ID cannot be empty or contain whitespace. The number of IDs must equal the number of sentences in the output, otherwise you get a <code>ValueError</code>. With <code>disable_sbd=True</code> every line of the input is one sentence (empty lines are skipped), so you give one ID per non-empty line:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConllParser</span><span class="p">,</span> <span class="n">init_parser</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="s2">"en_core_web_sm"</span><span class="p">,</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="s2">"spacy"</span><span class="p">,</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">disable_sbd</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="n">formatter_config</span><span class="o">=</span><span class="p">{</span><span class="s2">"include_headers"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="p">)</span>
+</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="n">parser</span> <span class="o">=</span> <span class="n">ConllParser</span><span class="p">(</span><span class="n">nlp</span><span class="p">)</span>
+</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="n">conll</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_text_as_conll</span><span class="p">(</span>
+</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>    <span class="s2">"I like cookies.</span><span class="se">\n</span><span class="s2">What about you?"</span><span class="p">,</span> <span class="n">sent_ids</span><span class="o">=</span><span class="p">[</span><span class="s2">"chat-008"</span><span class="p">,</span> <span class="s2">"chat-009"</span><span class="p">]</span>
+</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="p">)</span>
+</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">conll</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a># sent_id = chat-008
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a># text = I like cookies.
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>1   I   I   PRON    PRP Case=Nom|Number=Sing|Person=1|PronType=Prs  2   nsubj   _   _
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>...
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a># sent_id = chat-009
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a># text = What about you?
+</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>...
+</span></code></pre></div>
+<p><code>parse_file_as_conll</code> takes the same option. When you read the output back with <code>parse_conll_text_as_spacy</code>, the IDs stay in <code>Span._.conll_metadata</code> of every sentence.</p>
+<h3 id="pretokenized-input">Pretokenized input<a class="headerlink" href="#pretokenized-input" title="Permanent link">&para;</a></h3>
+<p>With <code>is_tokenized=True</code> spaCy splits the text on whitespace only and every line is one sentence:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_parser</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span><span class="s2">"en_core_web_sm"</span><span class="p">,</span> <span class="s2">"spacy"</span><span class="p">,</span> <span class="n">is_tokenized</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">"This is , a pretokenized sentence ."</span><span class="p">)</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_str</span><span class="p">)</span>
+</span></code></pre></div>
+<p>An empty string gives an empty <code>Doc</code> and no output.</p>
+<h2 id="reading-conll-u-into-spacy">Reading CoNLL-U into spaCy<a class="headerlink" href="#reading-conll-u-into-spacy" title="Permanent link">&para;</a></h2>
+<p><code>parse_conll_text_as_spacy(text)</code> and <code>parse_conll_file_as_spacy(input_file)</code> build a <code>Doc</code> from CoNLL-U. Sentences are separated by an empty line and <code>#</code> comment lines are allowed. The formatter has already run on the returned <code>Doc</code>, so all extensions are available.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConllParser</span><span class="p">,</span> <span class="n">init_parser</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="s2">"en_core_web_sm"</span><span class="p">,</span> <span class="s2">"spacy"</span><span class="p">,</span> <span class="n">formatter_config</span><span class="o">=</span><span class="p">{</span><span class="s2">"include_headers"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="p">)</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="n">parser</span> <span class="o">=</span> <span class="n">ConllParser</span><span class="p">(</span><span class="n">nlp</span><span class="p">)</span>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
+</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="n">conll</span> <span class="o">=</span> <span class="s2">"""# sent_id = a1</span>
+</span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="s2"># text = From the AP comes this story</span>
+</span><span id="__span-15-10"><a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="s2">1</span><span class="se">\t</span><span class="s2">From</span><span class="se">\t</span><span class="s2">from</span><span class="se">\t</span><span class="s2">ADP</span><span class="se">\t</span><span class="s2">IN</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">3</span><span class="se">\t</span><span class="s2">case</span><span class="se">\t</span><span class="s2">3:case</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-15-11"><a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="s2">2</span><span class="se">\t</span><span class="s2">the</span><span class="se">\t</span><span class="s2">the</span><span class="se">\t</span><span class="s2">DET</span><span class="se">\t</span><span class="s2">DT</span><span class="se">\t</span><span class="s2">Definite=Def|PronType=Art</span><span class="se">\t</span><span class="s2">3</span><span class="se">\t</span><span class="s2">det</span><span class="se">\t</span><span class="s2">3:det</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-15-12"><a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="s2">3</span><span class="se">\t</span><span class="s2">AP</span><span class="se">\t</span><span class="s2">AP</span><span class="se">\t</span><span class="s2">PROPN</span><span class="se">\t</span><span class="s2">NNP</span><span class="se">\t</span><span class="s2">Number=Sing</span><span class="se">\t</span><span class="s2">4</span><span class="se">\t</span><span class="s2">obl</span><span class="se">\t</span><span class="s2">4:obl:from</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-15-13"><a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="s2">4</span><span class="se">\t</span><span class="s2">comes</span><span class="se">\t</span><span class="s2">come</span><span class="se">\t</span><span class="s2">VERB</span><span class="se">\t</span><span class="s2">VBZ</span><span class="se">\t</span><span class="s2">Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin</span><span class="se">\t</span><span class="s2">0</span><span class="se">\t</span><span class="s2">root</span><span class="se">\t</span><span class="s2">0:root</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-15-14"><a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="s2">5</span><span class="se">\t</span><span class="s2">this</span><span class="se">\t</span><span class="s2">this</span><span class="se">\t</span><span class="s2">DET</span><span class="se">\t</span><span class="s2">DT</span><span class="se">\t</span><span class="s2">Number=Sing|PronType=Dem</span><span class="se">\t</span><span class="s2">6</span><span class="se">\t</span><span class="s2">det</span><span class="se">\t</span><span class="s2">6:det</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-15-15"><a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="s2">6</span><span class="se">\t</span><span class="s2">story</span><span class="se">\t</span><span class="s2">story</span><span class="se">\t</span><span class="s2">NOUN</span><span class="se">\t</span><span class="s2">NN</span><span class="se">\t</span><span class="s2">Number=Sing</span><span class="se">\t</span><span class="s2">4</span><span class="se">\t</span><span class="s2">nsubj</span><span class="se">\t</span><span class="s2">4:nsubj</span><span class="se">\t</span><span class="s2">SpaceAfter=No</span>
+</span><span id="__span-15-16"><a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="s2">"""</span>
+</span><span id="__span-15-17"><a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_conll_text_as_spacy</span><span class="p">(</span><span class="n">conll</span><span class="p">)</span>
+</span><span id="__span-15-18"><a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">:</span>
+</span><span id="__span-15-19"><a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">dep_</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">pos_</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>From case ADP AP
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>the det DET AP
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>AP obl PROPN comes
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>comes ROOT VERB comes
+</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>this det DET story
+</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>story nsubj NOUN comes
+</span></code></pre></div>
+<p>Both methods have two more keyword-only options for named entities that are stored in the MISC field. <code>ner_tag_pattern</code> is the regular expression that matches the BILUO tag (the default is the constant <code>spacy_conll.parser.NER_TAG_PATTERN</code>) and <code>ner_map</code> renames labels. A label that maps to <code>""</code> becomes <code>O</code>.</p>
+<p>Multi-word tokens and empty nodes (IDs such as <code>1-2</code> or <code>2.1</code>) raise a <code>NotImplementedError</code>. A <code>ValueError</code> names the line of the problem. It is raised for a line without 10 tab-separated fields, an empty field, a space in a field other than FORM, LEMMA and MISC, an ID or HEAD that is not a valid number, a HEAD or DEPREL that is <code>_</code>, and a sentence whose HEAD values do not form one tree. A trailing blank line and Windows line endings are allowed.</p>
+<p>A <code>_</code> in LEMMA, UPOS, XPOS or FEATS is a missing value: the spaCy attribute stays empty (<code>token.pos_ == ""</code>), and the formatter writes <code>_</code> again.</p>
+<h3 id="sentences-without-dependencies">Sentences without dependencies<a class="headerlink" href="#sentences-without-dependencies" title="Permanent link">&para;</a></h3>
+<p>Use <code>strict=False</code> for CoNLL-U that is tagged but not (completely) parsed. HEAD and DEPREL may then be <code>_</code>, as long as both are <code>_</code> on the same line. Such a token has no head in spaCy (<code>token.has_head()</code> is false and <code>token.dep_</code> is <code>""</code>), and the formatter writes <code>_</code> for both fields. Every sentence block still becomes one spaCy sentence, and a round trip gives the same CoNLL-U.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">conll</span> <span class="o">=</span> <span class="s2">"""1</span><span class="se">\t</span><span class="s2">ana</span><span class="se">\t</span><span class="s2">ana</span><span class="se">\t</span><span class="s2">ADP</span><span class="se">\t</span><span class="s2">PRP</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="s2">2</span><span class="se">\t</span><span class="s2">Šumaya</span><span class="se">\t</span><span class="s2">Šumaya</span><span class="se">\t</span><span class="s2">PROPN</span><span class="se">\t</span><span class="s2">PN</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="s2">3</span><span class="se">\t</span><span class="s2">ummā</span><span class="se">\t</span><span class="s2">ummu</span><span class="se">\t</span><span class="s2">NOUN</span><span class="se">\t</span><span class="s2">N</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="s2">"""</span>
+</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_conll_text_as_spacy</span><span class="p">(</span><span class="n">conll</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="nb">print</span><span class="p">(</span>
+</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    <span class="p">[(</span><span class="n">token</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">pos_</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">dep_</span><span class="p">,</span> <span class="n">token</span><span class="o">.</span><span class="n">has_head</span><span class="p">())</span> <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">]</span>
+</span><span id="__span-17-8"><a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>[('ana', 'ADP', '', False), ('Šumaya', 'PROPN', '', False), ('ummā', 'NOUN', '', False)]
+</span></code></pre></div>
+<p>A pipeline can then add the missing annotation to the returned <code>Doc</code>. Pass the <code>Doc</code> to <code>nlp</code> and enable only the components that you need, so that the tags from the file are kept. The parser keeps the sentence boundaries of the file. This example runs the parser of <code>en_core_web_sm</code> (which needs <code>tok2vec</code>) on tagged text:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">spacy</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConllParser</span>
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"en_core_web_sm"</span><span class="p">)</span>
+</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="s2">"conll_formatter"</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="n">parser</span> <span class="o">=</span> <span class="n">ConllParser</span><span class="p">(</span><span class="n">nlp</span><span class="p">)</span>
+</span><span id="__span-19-7"><a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>
+</span><span id="__span-19-8"><a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="n">conll</span> <span class="o">=</span> <span class="s2">"""1</span><span class="se">\t</span><span class="s2">I</span><span class="se">\t</span><span class="s2">I</span><span class="se">\t</span><span class="s2">PRON</span><span class="se">\t</span><span class="s2">PRP</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-19-9"><a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="s2">2</span><span class="se">\t</span><span class="s2">like</span><span class="se">\t</span><span class="s2">like</span><span class="se">\t</span><span class="s2">VERB</span><span class="se">\t</span><span class="s2">VBP</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-19-10"><a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="s2">3</span><span class="se">\t</span><span class="s2">cookies</span><span class="se">\t</span><span class="s2">cookie</span><span class="se">\t</span><span class="s2">NOUN</span><span class="se">\t</span><span class="s2">NNS</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">SpaceAfter=No</span>
+</span><span id="__span-19-11"><a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="s2">4</span><span class="se">\t</span><span class="s2">.</span><span class="se">\t</span><span class="s2">.</span><span class="se">\t</span><span class="s2">PUNCT</span><span class="se">\t</span><span class="s2">.</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span><span class="se">\t</span><span class="s2">_</span>
+</span><span id="__span-19-12"><a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="s2">"""</span>
+</span><span id="__span-19-13"><a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_conll_text_as_spacy</span><span class="p">(</span><span class="n">conll</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="__span-19-14"><a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="k">with</span> <span class="n">nlp</span><span class="o">.</span><span class="n">select_pipes</span><span class="p">(</span><span class="n">enable</span><span class="o">=</span><span class="p">[</span><span class="s2">"tok2vec"</span><span class="p">,</span> <span class="s2">"parser"</span><span class="p">,</span> <span class="s2">"conll_formatter"</span><span class="p">]):</span>
+</span><span id="__span-19-15"><a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a>    <span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+</span><span id="__span-19-16"><a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_str</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>1   I   I   PRON    PRP _   2   nsubj   _   _
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>2   like    like    VERB    VBP _   0   root    _   _
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>3   cookies cookie  NOUN    NNS _   2   dobj    _   SpaceAfter=No
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>4   .   .   PUNCT   .   _   2   punct   _   _
+</span></code></pre></div>
+<h3 id="fields-that-spacy-does-not-store">Fields that spaCy does not store<a class="headerlink" href="#fields-that-spacy-does-not-store" title="Permanent link">&para;</a></h3>
+<p><code>DEPS</code>, <code>MISC</code> and the comment lines have no spaCy equivalent. They are kept in custom extensions, which are registered by the formatter and by <code>ConllParser</code>:</p>
+<ul>
+<li><code>Token._.conll_deps_graphs_field</code>: the <code>DEPS</code> value of the token. Default <code>"_"</code>.</li>
+<li><code>Token._.conll_misc_field</code>: the <code>MISC</code> value of the token. Default <code>"_"</code>.</li>
+<li><code>Token._.conll_custom_columns</code>: a dict with the values of custom CoNLL-U Plus columns, see <a href="#conll-u-plus">CoNLL-U Plus</a>. Default <code>None</code>.</li>
+<li><code>Span._.conll_metadata</code>: the comment lines of a sentence, with a trailing newline. Default <code>None</code>.</li>
+</ul>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">sent</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">)</span>
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">sent</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_metadata</span><span class="p">))</span>
+</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_deps_graphs_field</span><span class="p">,</span> <span class="n">doc</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_misc_field</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>'# sent_id = a1\n# text = From the AP comes this story\n'
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>4:obl:from SpaceAfter=No
+</span></code></pre></div>
+<p>A round trip from CoNLL-U to spaCy and back keeps these values. When the formatter writes <code>MISC</code>, it only sets or removes the entries <code>SpaceAfter</code>, <code>SpacesAfter</code> and <code>SpacesBefore</code> and keeps all other entries in their order. An existing <code>SpacesAfter</code> stays when spaCy has a space after the token, because spaCy cannot store other whitespace between tokens of a doc that is read from CoNLL-U. With <code>include_headers=True</code>, the formatter writes an existing <code>conll_metadata</code> as the header of a sentence instead of generating <code># sent_id</code> and <code># text</code>.</p>
+<h2 id="conll-u-plus">CoNLL-U Plus<a class="headerlink" href="#conll-u-plus" title="Permanent link">&para;</a></h2>
+<p><a href="https://universaldependencies.org/ext-format.html">CoNLL-U Plus</a> files have a <code># global.columns</code> line that lists the columns of the file. The columns can be any subset of the ten CoNLL-U fields in any order, plus custom columns.</p>
+<h3 id="writing">Writing<a class="headerlink" href="#writing" title="Permanent link">&para;</a></h3>
+<p>Set <code>columns</code> in the formatter config. The names are the canonical CoNLL-U names (<code>ID</code>, <code>FORM</code>, <code>LEMMA</code>, <code>UPOS</code>, <code>XPOS</code>, <code>FEATS</code>, <code>HEAD</code>, <code>DEPREL</code>, <code>DEPS</code>, <code>MISC</code>) or custom names with a namespace, such as <code>PARSEME:MWE</code>. Custom names consist of uppercase letters and colons. A list that is empty, has duplicates or has another kind of name raises a <code>ValueError</code>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConllParser</span><span class="p">,</span> <span class="n">init_parser</span>
+</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>
+</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span>
+</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="s2">"en_core_web_sm"</span><span class="p">,</span>
+</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="s2">"spacy"</span><span class="p">,</span>
+</span><span id="__span-23-6"><a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="n">formatter_config</span><span class="o">=</span><span class="p">{</span><span class="s2">"columns"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"ID"</span><span class="p">,</span> <span class="s2">"FORM"</span><span class="p">,</span> <span class="s2">"UPOS"</span><span class="p">,</span> <span class="s2">"HEAD"</span><span class="p">,</span> <span class="s2">"DEPREL"</span><span class="p">]},</span>
+</span><span id="__span-23-7"><a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="p">)</span>
+</span><span id="__span-23-8"><a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">"I like cookies."</span><span class="p">)</span>
+</span><span id="__span-23-9"><a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_str</span><span class="p">)</span>
+</span><span id="__span-23-10"><a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll</span><span class="p">)</span>
+</span><span id="__span-23-11"><a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_pd</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a># global.columns = ID FORM UPOS HEAD DEPREL
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>1   I   PRON    2   nsubj
+</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>2   like    VERB    0   root
+</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>3   cookies NOUN    2   dobj
+</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>4   .   PUNCT   2   punct
+</span><span id="__span-24-6"><a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>
+</span><span id="__span-24-7"><a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>{'ID': 2, 'FORM': 'like', 'UPOS': 'VERB', 'HEAD': 0, 'DEPREL': 'root'}
+</span><span id="__span-24-8"><a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>['ID', 'FORM', 'UPOS', 'HEAD', 'DEPREL']
+</span></code></pre></div>
+<p>The <code>conll</code>, <code>conll_str</code> and <code>conll_pd</code> extensions of tokens, sentences and docs only have the selected columns. The <code>conll_str</code> of a <code>Doc</code> and the output of <code>ConllParser.parse_text_as_conll</code> start with the <code># global.columns</code> line. It is written whenever <code>columns</code> is set, also if the list has all ten columns.</p>
+<p>A custom column takes its value from the dict <code>Token._.conll_custom_columns</code> and is <code>_</code> for tokens without that key:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="n">doc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_custom_columns</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"PARSEME:MWE"</span><span class="p">:</span> <span class="s2">"1:VID"</span><span class="p">}</span>
+</span></code></pre></div>
+<p><code>field_names</code> and <code>columns</code> are independent. <code>field_names</code> renames the dict keys and the pandas columns only. <code>columns</code> and the <code># global.columns</code> line always use the canonical names. With <code>field_names={"UPOS": "upostag"}</code> and <code>columns=["FORM", "UPOS"]</code>, the keys of <code>._.conll</code> are <code>FORM</code> and <code>upostag</code> and the header is <code># global.columns = FORM UPOS</code>.</p>
+<h3 id="reading">Reading<a class="headerlink" href="#reading" title="Permanent link">&para;</a></h3>
+<p><code>parse_conll_text_as_spacy</code> and <code>parse_conll_file_as_spacy</code> read a <code># global.columns</code> first line. Every line must have as many tab-separated fields as there are columns, otherwise a <code>ValueError</code> is raised.</p>
+<ul>
+<li>A standard column that is missing is read as <code>_</code>. A missing <code>ID</code> is the position of the token in its sentence.</li>
+<li>Custom columns are stored in <code>Token._.conll_custom_columns</code>.</li>
+<li>The <code># global.columns</code> line is not part of <code>Span._.conll_metadata</code>.</li>
+<li>Without <code>HEAD</code> and <code>DEPREL</code> columns, the tokens have no dependency annotation. This needs <code>strict=False</code>, as for <code>_</code> in these fields.</li>
+</ul>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConllParser</span><span class="p">,</span> <span class="n">init_parser</span>
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span>
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>    <span class="s2">"en_core_web_sm"</span><span class="p">,</span>
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>    <span class="s2">"spacy"</span><span class="p">,</span>
+</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>    <span class="n">formatter_config</span><span class="o">=</span><span class="p">{</span><span class="s2">"columns"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"FORM"</span><span class="p">,</span> <span class="s2">"HEAD"</span><span class="p">,</span> <span class="s2">"DEPREL"</span><span class="p">,</span> <span class="s2">"PARSEME:MWE"</span><span class="p">]},</span>
+</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="p">)</span>
+</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="n">parser</span> <span class="o">=</span> <span class="n">ConllParser</span><span class="p">(</span><span class="n">nlp</span><span class="p">)</span>
+</span><span id="__span-26-9"><a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="n">text</span> <span class="o">=</span> <span class="s2">"""# global.columns = FORM HEAD DEPREL PARSEME:MWE</span>
+</span><span id="__span-26-10"><a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="s2">I</span><span class="se">\t</span><span class="s2">2</span><span class="se">\t</span><span class="s2">nsubj</span><span class="se">\t</span><span class="s2">*</span>
+</span><span id="__span-26-11"><a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a><span class="s2">take</span><span class="se">\t</span><span class="s2">0</span><span class="se">\t</span><span class="s2">root</span><span class="se">\t</span><span class="s2">1:VID</span>
+</span><span id="__span-26-12"><a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="s2">a</span><span class="se">\t</span><span class="s2">4</span><span class="se">\t</span><span class="s2">det</span><span class="se">\t</span><span class="s2">1</span>
+</span><span id="__span-26-13"><a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="s2">look</span><span class="se">\t</span><span class="s2">2</span><span class="se">\t</span><span class="s2">obj</span><span class="se">\t</span><span class="s2">1</span>
+</span><span id="__span-26-14"><a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a><span class="s2">"""</span>
+</span><span id="__span-26-15"><a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_conll_text_as_spacy</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+</span><span id="__span-26-16"><a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a><span class="nb">print</span><span class="p">([(</span><span class="n">t</span><span class="o">.</span><span class="n">i</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">dep_</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">])</span>
+</span><span id="__span-26-17"><a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_custom_columns</span><span class="p">)</span>
+</span><span id="__span-26-18"><a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_str</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>[(0, 'I', 'nsubj', 1), (1, 'take', 'ROOT', 1), (2, 'a', 'det', 3), (3, 'look', 'obj', 1)]
+</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>{'PARSEME:MWE': '1:VID'}
+</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a># global.columns = FORM HEAD DEPREL PARSEME:MWE
+</span><span id="__span-27-4"><a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>I   2   nsubj   *
+</span><span id="__span-27-5"><a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>take    0   root    1:VID
+</span><span id="__span-27-6"><a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>a   4   det 1
+</span><span id="__span-27-7"><a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>look    2   obj 1
+</span></code></pre></div>
+<p>The reader stores the columns of the header in <code>Doc._.conll_columns</code>. A formatter without <code>columns</code> writes the doc with these columns, so the example above also works with <code>init_parser("en_core_web_sm", "spacy")</code>. A formatter with <code>columns</code> uses its own columns instead. For a doc that is read from plain CoNLL-U, <code>conll_columns</code> is <code>None</code> and the output is plain CoNLL-U. <code>conll</code>, <code>conll_str</code>, <code>conll_pd</code> and the <code># global.columns</code> line all follow these columns. Parsing raw text with <code>parse_text_as_conll</code> does not set <code>conll_columns</code>.</p>
+<h2 id="pandas-and-multiprocessing">Pandas and multiprocessing<a class="headerlink" href="#pandas-and-multiprocessing" title="Permanent link">&para;</a></h2>
+<p>If pandas is installed, <code>conll_pd</code> is available automatically. It is computed from <code>conll</code> when you access it and is not stored in the doc, so docs with <code>conll_pd</code> can be saved with <code>DocBin</code> and processed with <code>n_process</code> other than 1:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConllParser</span><span class="p">,</span> <span class="n">init_parser</span>
+</span><span id="__span-28-2"><a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>
+</span><span id="__span-28-3"><a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span><span class="s2">"en_core_web_sm"</span><span class="p">,</span> <span class="s2">"spacy"</span><span class="p">)</span>
+</span><span id="__span-28-4"><a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="n">parser</span> <span class="o">=</span> <span class="n">ConllParser</span><span class="p">(</span><span class="n">nlp</span><span class="p">)</span>
+</span><span id="__span-28-5"><a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="n">conll</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_text_as_conll</span><span class="p">(</span>
+</span><span id="__span-28-6"><a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>    <span class="s2">"I like cookies.</span><span class="se">\n</span><span class="s2">What about you?"</span><span class="p">,</span> <span class="n">n_process</span><span class="o">=</span><span class="mi">2</span>
+</span><span id="__span-28-7"><a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="p">)</span>
+</span></code></pre></div>
+<p><code>n_process=-1</code> uses all cores. On Windows, UDPipe pipelines fail a check, because the models cannot be pickled. <code>ignore_pipe_errors=True</code> skips this check.</p>
+<p>A doc that is loaded from a <code>DocBin(store_user_data=True)</code> has <code>conll</code> and <code>conll_str</code>, and <code>conll_pd</code> is computed again from <code>conll</code> (see <code>examples/example-adding-conll-to-docbin.py</code>).</p>
+<p>Put the code that starts processes under <code>if __name__ == "__main__":</code>, as for any use of <code>multiprocessing</code> on Windows and macOS.</p>
+<h2 id="udpipe-backend">UDPipe backend<a class="headerlink" href="#udpipe-backend" title="Permanent link">&para;</a></h2>
+<p>Install the extra with <code>pip install "spacy-conll[udpipe]"</code>. The model for a language is downloaded on first use:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spacy_conll</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConllParser</span><span class="p">,</span> <span class="n">init_parser</span>
+</span><span id="__span-29-2"><a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>
+</span><span id="__span-29-3"><a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="n">nlp</span> <span class="o">=</span> <span class="n">init_parser</span><span class="p">(</span><span class="s2">"en"</span><span class="p">,</span> <span class="s2">"udpipe"</span><span class="p">,</span> <span class="n">formatter_config</span><span class="o">=</span><span class="p">{</span><span class="s2">"include_headers"</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+</span><span id="__span-29-4"><a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">ConllParser</span><span class="p">(</span><span class="n">nlp</span><span class="p">))</span>
+</span><span id="__span-29-5"><a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">nlp</span><span class="p">(</span><span class="s2">"I like cookies."</span><span class="p">)</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">conll_str</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>ConllParser(parser=udpipe)
+</span><span id="__span-30-2"><a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a># sent_id = 1
+</span><span id="__span-30-3"><a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a># text = I like cookies.
+</span><span id="__span-30-4"><a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>1   I   I   PRON    PRP Case=Nom|Number=Sing|Person=1|PronType=Prs  2   nsubj   _   _
+</span><span id="__span-30-5"><a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>2   like    like    VERB    VBP Mood=Ind|Tense=Pres|VerbForm=Fin    0   root    _   _
+</span><span id="__span-30-6"><a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a>3   cookies cookie  NOUN    NNS Number=Plur 2   obj _   SpaceAfter=No
+</span><span id="__span-30-7"><a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a>4   .   .   PUNCT   .   PunctType=Peri  2   punct   _   SpaceAfter=No
+</span></code></pre></div>
+<p><code>is_tokenized</code> and <code>disable_sbd</code> are not supported for UDPipe. The stanza backend was removed in v5, see the <a href="../migration/">migration guide</a>.</p>
+<h2 id="command-line">Command line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h2>
+<p>The installation adds the script <code>parse-as-conll</code>. It takes a model or language and a backend, plus either <code>-f/--input-file</code> or <code>--input-str</code>:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>parse-as-conll<span class="w"> </span>en_core_web_sm<span class="w"> </span>spacy<span class="w"> </span>--input-str<span class="w"> </span><span class="s2">"I like cookies. What about you?"</span><span class="w"> </span>--include-headers
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a># sent_id = 1
+</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a># text = I like cookies.
+</span><span id="__span-32-3"><a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>1   I   I   PRON    PRP Case=Nom|Number=Sing|Person=1|PronType=Prs  2   nsubj   _   _
+</span><span id="__span-32-4"><a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>2   like    like    VERB    VBP Tense=Pres|VerbForm=Fin 0   root    _   _
+</span><span id="__span-32-5"><a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>3   cookies cooky   NOUN    NNS Number=Plur 2   dobj    _   SpaceAfter=No
+</span><span id="__span-32-6"><a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>4   .   .   PUNCT   .   PunctType=Peri  2   punct   _   _
+</span><span id="__span-32-7"><a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>
+</span><span id="__span-32-8"><a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a># sent_id = 2
+</span><span id="__span-32-9"><a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a># text = What about you?
+</span><span id="__span-32-10"><a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>...
+</span></code></pre></div>
+<p>Parse a file with four processes and write the result to another file:</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>parse-as-conll<span class="w"> </span>en_core_web_sm<span class="w"> </span>spacy<span class="w"> </span>-f<span class="w"> </span>large-input.txt<span class="w"> </span>-o<span class="w"> </span>large-output.conll<span class="w"> </span>--include-headers<span class="w"> </span>--n-process<span class="w"> </span><span class="m">4</span>
+</span></code></pre></div>
+<p>The script runs the formatter with <code>disable_pandas=True</code>, so <code>--n-process</code> works without further setup. Options:</p>
+<ul>
+<li><code>-f, --input-file</code> and <code>--input-str</code>: the input. One of them is required.</li>
+<li><code>--input-encoding</code>: encoding of the input file. Default <code>utf-8</code>.</li>
+<li><code>-o, --output-file</code>: write to a file. Without it, the output goes to stdout.</li>
+<li><code>--output-encoding</code>: encoding of the output file. Default <code>utf-8</code>.</li>
+<li><code>--disable-sbd</code>: every line is one sentence. Not for UDPipe.</li>
+<li><code>--is-tokenized</code>: tokens are separated by whitespace and every line is one sentence. Not for UDPipe.</li>
+<li><code>--include-headers</code>: write <code># sent_id</code> and <code># text</code> lines.</li>
+<li><code>--renumber-sent-ids</code> and <code>--no-renumber-sent-ids</code>: see <code>renumber_sent_ids</code>. On by default.</li>
+<li><code>--n-process</code>: number of processes. <code>-1</code> uses all cores.</li>
+<li><code>--ignore-pipe-errors</code>: skip the multiprocessing checks.</li>
+<li><code>--split-on-newline</code> and <code>--no-split-on-newline</code>: see <code>split_on_newline</code>. On by default.</li>
+<li><code>--columns NAME [NAME ...]</code>: write CoNLL-U Plus with only these columns, in this order, and a <code># global.columns</code> line. Invalid names end the program with an error message.</li>
+<li><code>--sent-ids-file</code>: a UTF-8 text file with one sentence ID per line (blank lines are ignored). The IDs replace the numbers in the <code># sent_id</code> lines and the file needs one ID per output sentence. This implies <code>--include-headers</code>.</li>
+<li><code>-v, --verbose</code>: also print to stdout when <code>--output-file</code> is set.</li>
+</ul>
+<p>Select columns and use your own sentence IDs (<code>ids.txt</code> has the lines <code>doc1-008</code> and <code>doc1-009</code>):</p>
+<div class="language-shell highlight"><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>parse-as-conll<span class="w"> </span>en_core_web_sm<span class="w"> </span>spacy<span class="w"> </span>--input-str<span class="w"> </span><span class="s2">"First one.</span>
+</span><span id="__span-34-2"><a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="s2">Second one."</span><span class="w"> </span>--disable-sbd<span class="w"> </span>--columns<span class="w"> </span>ID<span class="w"> </span>FORM<span class="w"> </span>UPOS<span class="w"> </span>--sent-ids-file<span class="w"> </span>ids.txt
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a># global.columns = ID FORM UPOS
+</span><span id="__span-35-2"><a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a># sent_id = doc1-008
+</span><span id="__span-35-3"><a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a># text = First one.
+</span><span id="__span-35-4"><a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>1   First   ADJ
+</span><span id="__span-35-5"><a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>2   one NUM
+</span><span id="__span-35-6"><a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>3   .   PUNCT
+</span><span id="__span-35-7"><a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a>
+</span><span id="__span-35-8"><a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a># sent_id = doc1-009
+</span><span id="__span-35-9"><a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a># text = Second one.
+</span><span id="__span-35-10"><a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a>...
+</span></code></pre></div>
+<p>Run <code>parse-as-conll -h</code> for the full help text.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "content.code.annotate", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
