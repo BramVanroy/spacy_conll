@@ -183,7 +183,9 @@ def test_read_subsets_in_any_order(columns, row):
 
 def test_read_missing_id_uses_position():
     text = plus_text("FORM HEAD DEPREL", "Hi 2 intj", "there 0 root")
-    doc = blank_parser().parse_conll_text_as_spacy(text)
+    doc = blank_parser(columns=CONLL_FIELD_NAMES).parse_conll_text_as_spacy(
+        text
+    )
 
     assert [t._.conll["ID"] for t in doc] == [1, 2]
     assert doc[0].head.i == 1
@@ -277,3 +279,51 @@ def test_read_without_head_and_deprel_needs_strict_false():
         "1\tHi\tINTJ\t_\t_",
         "2\tthere\tADV\t_\t_",
     ]
+
+
+def test_read_sets_conll_columns_and_round_trips_without_formatter_columns():
+    parser = blank_parser(include_headers=True)
+    columns = SAMPLE.read_text(encoding="utf-8").split("\n")[0].split()[3:]
+
+    doc = parser.parse_conll_file_as_spacy(SAMPLE)
+
+    assert doc._.conll_columns == columns
+    assert doc._.conll_str == SAMPLE.read_text(encoding="utf-8")
+    assert list(doc[0]._.conll) == columns
+    assert list(doc._.conll_pd.columns) == columns
+
+
+def test_formatter_columns_override_doc_columns():
+    parser = blank_parser(columns=["ID", "FORM"])
+
+    doc = parser.parse_conll_file_as_spacy(SAMPLE)
+
+    assert doc._.conll_columns is not None
+    assert doc._.conll_str.startswith("# global.columns = ID FORM\n")
+    assert list(doc[0]._.conll) == ["ID", "FORM"]
+    assert list(doc._.conll_pd.columns) == ["ID", "FORM"]
+
+
+def test_plain_conllu_leaves_conll_columns_none():
+    doc = blank_parser().parse_conll_text_as_spacy(
+        "1\tHi\thi\tINTJ\tUH\t_\t0\troot\t_\t_\n"
+    )
+
+    assert doc._.conll_columns is None
+    assert "global.columns" not in doc._.conll_str
+
+
+def test_invalid_doc_columns_raise(spacy_parser_with):
+    parser = ConllParser(spacy_parser_with())
+    doc = parser.nlp("Hello world.")
+    doc._.conll_columns = ["ID", "upos"]
+
+    with pytest.raises(ValueError, match="Invalid column name"):
+        parser.nlp.get_pipe("conll_formatter")(doc)
+
+
+def test_parse_text_as_conll_ignores_doc_columns(spacy_parser_with):
+    parser = ConllParser(spacy_parser_with())
+    parser.parse_conll_file_as_spacy(SAMPLE)
+
+    assert "global.columns" not in parser.parse_text_as_conll(TEXT)

@@ -204,8 +204,10 @@ class ConllFormatter:
         disable_pandas: Whether to skip the `conll_pd` extension even if
             pandas is installed.
         columns: The CoNLL-U Plus columns to write, in this order. `None`
-            writes plain CoNLL-U. Otherwise `conll_str` of the doc starts
-            with a `# global.columns` line. The names are the CoNLL-U names
+            uses `Doc._.conll_columns` if the doc has it (a doc that was
+            read from CoNLL-U Plus text), and plain CoNLL-U otherwise. With
+            columns, `conll_str` of the doc starts with a `# global.columns`
+            line. The names are the CoNLL-U names
             (also when `field_names` renames them) or custom names such as
             `PARSEME:MWE`. A custom column takes its value from the dict in
             `Token._.conll_custom_columns`, and is `_` when the dict does
@@ -239,7 +241,6 @@ class ConllFormatter:
     disable_pandas: bool = False
     columns: list[str] | None = None
     columns_header: str = field(init=False, default="")
-    output_names: list[str] = field(init=False, default_factory=list)
 
     def __post_init__(self):
         """Merge the custom names into the defaults and register extensions."""
@@ -255,13 +256,7 @@ class ConllFormatter:
         )
         if self.columns is not None:
             check_columns(self.columns)
-            self.columns_header = (
-                f"# global.columns = {' '.join(self.columns)}\n"
-            )
-        self.output_names = [
-            self.field_names.get(c, c)
-            for c in self.columns or CONLL_FIELD_NAMES
-        ]
+            self.columns_header = self._make_columns_header(self.columns)
 
         self._set_extensions()
 
@@ -278,13 +273,14 @@ class ConllFormatter:
         # extensions (https://github.com/explosion/spaCy/issues/4903).
         self._set_extensions()
 
+        columns = self._get_columns(doc)
         sents = []
         for sent in doc.sents:
             if all(token.is_space for token in sent):
-                self._set_span_conll(sent)
+                self._set_span_conll(sent, columns=columns)
             else:
                 sents.append(sent)
-                self._set_span_conll(sent, len(sents))
+                self._set_span_conll(sent, len(sents), columns)
 
         doc._.set(
             self.ext_names["conll"],
@@ -292,11 +288,31 @@ class ConllFormatter:
         )
         doc._.set(
             self.ext_names["conll_str"],
-            self.columns_header
+            (self._make_columns_header(columns) if columns else "")
             + "\n".join([s._.get(self.ext_names["conll_str"]) for s in sents]),
         )
 
         return doc
+
+    @staticmethod
+    def _make_columns_header(columns: list[str]) -> str:
+        return f"# global.columns = {' '.join(columns)}\n"
+
+    def _get_columns(self, doc: Doc) -> list[str] | None:
+        """Get the CoNLL-U Plus columns to write for a doc.
+
+        Args:
+            doc: A doc.
+
+        Returns:
+            The `columns` of the formatter, otherwise the `conll_columns` of
+            the doc (validated), otherwise `None` for plain CoNLL-U.
+        """
+        if self.columns is not None:
+            return self.columns
+        if doc._.conll_columns is not None:
+            return check_columns(doc._.conll_columns)
+        return None
 
     def _map_conll(
         self, token_conll_d: dict[str, str | int]
@@ -318,7 +334,12 @@ class ConllFormatter:
 
         return token_conll_d
 
-    def _set_span_conll(self, span: Span, span_idx: int = 1):
+    def _set_span_conll(
+        self,
+        span: Span,
+        span_idx: int = 1,
+        columns: list[str] | None = None,
+    ):
         """Set the CoNLL extensions on a sentence and its tokens.
 
         Whitespace tokens get no CoNLL line and their extensions are `None`.
@@ -330,6 +351,8 @@ class ConllFormatter:
             span: A sentence.
             span_idx: The 1-based index of the sentence in its doc, used for
                 `# sent_id` when the sentence has no `conll_metadata`.
+            columns: The columns to write, `None` for the formatter's own
+                columns or plain CoNLL-U.
         """
         words = [t for t in span if not t.is_space]
         token_ids = {t.i: idx for idx, t in enumerate(words, 1)}
@@ -351,7 +374,9 @@ class ConllFormatter:
                 for key in ("conll", "conll_str"):
                     token._.set(self.ext_names[key], None)
             else:
-                self._set_token_conll(token, token_ids[token.i], token_ids)
+                self._set_token_conll(
+                    token, token_ids[token.i], token_ids, columns
+                )
 
         span._.set(
             self.ext_names["conll"],
@@ -367,6 +392,7 @@ class ConllFormatter:
         token: Token,
         token_idx: int = 1,
         token_ids: dict[int, int] | None = None,
+        columns: list[str] | None = None,
     ) -> Token:
         """Set the CoNLL extensions on a token that is not whitespace.
 
@@ -380,6 +406,8 @@ class ConllFormatter:
             token_ids: Maps the doc index of every token in the sentence that
                 is not whitespace to its CoNLL ID. If not given, the IDs are
                 the positions in the sentence.
+            columns: The columns to write, `None` for the formatter's own
+                columns or plain CoNLL-U.
 
         Returns:
             The same token.
@@ -423,7 +451,7 @@ class ConllFormatter:
         )
         token_conll_d = {
             self.field_names.get(c, c): values.get(c, "_")
-            for c in self.columns or CONLL_FIELD_NAMES
+            for c in columns or self.columns or CONLL_FIELD_NAMES
         }
 
         if self.conversion_maps:
@@ -455,7 +483,12 @@ class ConllFormatter:
             for conll in (t._.get(conll_ext) for t in obj)
             if conll is not None
         ]
-        return pd.DataFrame(rows, columns=self.output_names)
+        doc = obj if isinstance(obj, Doc) else obj.doc
+        output_names = [
+            self.field_names.get(c, c)
+            for c in self._get_columns(doc) or CONLL_FIELD_NAMES
+        ]
+        return pd.DataFrame(rows, columns=output_names)
 
     def _set_extensions(self):
         """Register the extensions that do not exist yet."""
@@ -484,6 +517,8 @@ class ConllFormatter:
             Token.set_extension("conll_misc_field", default="_")
         if not Token.has_extension("conll_custom_columns"):
             Token.set_extension("conll_custom_columns", default=None)
+        if not Doc.has_extension("conll_columns"):
+            Doc.set_extension("conll_columns", default=None)
         if not Span.has_extension("conll_metadata"):
             Span.set_extension("conll_metadata", default=None)
 

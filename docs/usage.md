@@ -435,7 +435,7 @@ a	4	det	1
 look	2	obj	1
 ```
 
-The reader does not configure the formatter. To write a Plus file back, as in the example, give the formatter the same `columns`. A formatter without `columns` writes all ten standard columns and drops the custom ones.
+The reader stores the columns of the header in `Doc._.conll_columns`. A formatter without `columns` writes the doc with these columns, so the example above also works with `init_parser("en_core_web_sm", "spacy")`. A formatter with `columns` uses its own columns instead. For a doc that is read from plain CoNLL-U, `conll_columns` is `None` and the output is plain CoNLL-U. `conll`, `conll_str`, `conll_pd` and the `# global.columns` line all follow these columns. Parsing raw text with `parse_text_as_conll` does not set `conll_columns`.
 
 ## Pandas and multiprocessing
 

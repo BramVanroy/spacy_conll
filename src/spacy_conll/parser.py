@@ -296,7 +296,9 @@ class ConllParser:
         `ID` column that is missing gets the token position. Custom columns
         such as `PARSEME:MWE` are kept in the dict
         `Token._.conll_custom_columns`. The `# global.columns` line is not
-        part of `Span._.conll_metadata`.
+        part of `Span._.conll_metadata`. The columns are stored in
+        `Doc._.conll_columns`, which the formatter uses to write the doc
+        again unless it has its own `columns`.
 
         Args:
             text: CoNLL-U text.
@@ -365,12 +367,15 @@ class ConllParser:
             Token.set_extension("conll_custom_columns", default=None)
         if not Span.has_extension("conll_metadata"):
             Span.set_extension("conll_metadata", default=None)
+        if not Doc.has_extension("conll_columns"):
+            Doc.set_extension("conll_columns", default=None)
 
         columns = CONLL_FIELD_NAMES
+        plus_columns = None
         chunk_lineno = 1
         first_line, _, rest = text.lstrip("\r\n").partition("\n")
         if match := GLOBAL_COLUMNS_RE.fullmatch(first_line.strip()):
-            columns = check_columns(match.group(1).split())
+            columns = plus_columns = check_columns(match.group(1).split())
             chunk_lineno += text[: len(text) - len(rest)].count("\n")
             text = rest
 
@@ -544,5 +549,6 @@ class ConllParser:
             ["SENT_START"],
             numpy.array(sent_starts, dtype="int64").astype("uint64"),
         )
+        doc._.conll_columns = plus_columns
 
         return self.nlp.get_pipe("conll_formatter")(doc)
